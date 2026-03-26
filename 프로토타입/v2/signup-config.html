@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마카다미아 멤버스 - 회원가입 약관 구성</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .badge-mgmt-common { background: #8C8C8C; color: #fff; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-mgmt-service { background: #1890FF; color: #fff; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            회원관리
+                            <span class="arrow">▼</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">✉️</span>
+                            메시지 발송
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            통계
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item active expanded">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            약관/처리방침 관리
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="index.html" class="submenu-link">약관 항목 관리</a></li>
+                            <li><a href="daekyo-terms.html" class="submenu-link">대교 약관</a></li>
+                            <li><a href="group-terms.html" class="submenu-link">그룹사 약관</a></li>
+                            <li><a href="signup-config.html" class="submenu-link active">회원가입 약관 구성</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">🔑</span>
+                            계정/권한 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            서비스 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            이력 관리
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>약관/처리방침 관리</span>
+                    <span class="separator">›</span>
+                    <span class="current">회원가입 약관 구성</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+                <div class="page-title-area">
+                    <h2 class="page-title">회원가입 약관 구성</h2>
+                    <p class="page-desc">가입 경로별로 회원가입 화면에 노출할 약관/동의서를 설정합니다.</p>
+                </div>
+
+                <!-- 가입 경로 선택 -->
+                <div class="search-card">
+                    <div class="search-row">
+                        <div class="search-group">
+                            <label class="search-label">가입 경로 선택</label>
+                            <select class="search-select" id="signupRoute" style="min-width: 240px;">
+                                <option value="DAEKYO">대교 (단독 가입)</option>
+                                <option value="GROUP_A" selected>에듀캠프 (그룹사 가입)</option>
+                                <option value="GROUP_B">대교 뉴이프 (그룹사 가입)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-outline" onclick="openPreview()">👁 미리보기</button>
+                    </div>
+                </div>
+
+                <!-- 그룹사 가입 시: 대교 약관 + 그룹사 약관 -->
+                <div id="groupSignupConfig">
+                    <!-- 대교 약관 영역 -->
+                    <div class="config-section">
+                        <div class="config-title">
+                            <span class="config-badge badge-daekyo">대교</span>
+                            대교 약관/동의서
+                        </div>
+                        <table class="config-table">
+                            <thead>
+                                <tr>
+                                    <th width="50">순서</th>
+                                    <th>약관 항목</th>
+                                    <th width="100">동의 유형</th>
+                                    <th width="100">현재 버전</th>
+                                    <th width="100">사용 여부</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">이용약관</td>
+                                    <td><span class="badge badge-required">필수</span></td>
+                                    <td>v3</td>
+                                    <td>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">개인정보 수집·이용 동의</td>
+                                    <td><span class="badge badge-required">필수</span></td>
+                                    <td>v2</td>
+                                    <td>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr style="background-color: #fff8e1;">
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">
+                                        개인정보 제3자 제공 동의 (대교→그룹사)
+                                        <span style="color: #f57c00; font-size: 12px; margin-left: 8px;">★ 그룹사 가입시만, 서비스별</span>
+                                    </td>
+                                    <td><span class="badge badge-required">필수</span></td>
+                                    <td>v1</td>
+                                    <td>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr style="background-color: #fff8e1;">
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">
+                                        마케팅 목적 제3자 제공 동의 (대교→그룹사)
+                                        <span style="color: #e65100; font-size: 12px; margin-left: 8px;" title="그룹사 법인 단위 강제 적용 (서비스별 해제 불가)">🔒 법인 단위 강제</span>
+                                    </td>
+                                    <td><span class="badge badge-optional">선택</span></td>
+                                    <td>v1</td>
+                                    <td>
+                                        <label class="toggle-switch" style="opacity:0.6; pointer-events:none;">
+                                            <input type="checkbox" checked disabled>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">마카다미아 마케팅 수신 동의</td>
+                                    <td><span class="badge badge-optional">선택</span></td>
+                                    <td>v1</td>
+                                    <td>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 그룹사 약관 영역 -->
+                    <div class="config-section">
+                        <div class="config-title">
+                            <span class="config-badge badge-group">에듀캠프</span>
+                            그룹사 약관/동의서
+                        </div>
+                        <table class="config-table">
+                            <thead>
+                                <tr>
+                                    <th width="50">순서</th>
+                                    <th>약관 항목</th>
+                                    <th width="90">관리 단위</th>
+                                    <th width="100">동의 유형</th>
+                                    <th width="100">현재 버전</th>
+                                    <th width="100">사용 여부</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">이용약관</td>
+                                    <td><span class="badge badge-mgmt-service">트니트니</span></td>
+                                    <td><span class="badge badge-required">필수</span></td>
+                                    <td>v2</td>
+                                    <td>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr style="background-color: #f3e5f5;">
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">
+                                        개인정보 제3자 제공 동의 (그룹사→대교)
+                                        <span style="color: #7b1fa2; font-size: 12px; margin-left: 8px;">★ 서비스 운영 필수</span>
+                                    </td>
+                                    <td><span class="badge badge-mgmt-service">트니트니</span></td>
+                                    <td><span class="badge badge-required">필수</span></td>
+                                    <td>v1</td>
+                                    <td>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="drag-handle">⋮⋮</span></td>
+                                    <td class="text-left">
+                                        마케팅 목적 제3자 제공 동의 (그룹사→대교)
+                                        <span style="color: #e65100; font-size: 12px; margin-left: 8px;" title="그룹사 법인 단위 강제 적용 (서비스별 해제 불가)">🔒 법인 단위 강제</span>
+                                    </td>
+                                    <td><span class="badge badge-mgmt-common">공통</span></td>
+                                    <td><span class="badge badge-optional">선택</span></td>
+                                    <td>v1</td>
+                                    <td>
+                                        <label class="toggle-switch" style="opacity:0.6; pointer-events:none;">
+                                            <input type="checkbox" checked disabled>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="button-group" style="border-top: none; padding-top: 0;">
+                    <button class="btn btn-secondary">취소</button>
+                    <button class="btn btn-primary" onclick="saveConfig()">저장</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 미리보기 모달 -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal" style="max-width: 600px; text-align: left;">
+            <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">회원가입 약관 동의 미리보기</h3>
+            <p style="color: #666; margin-bottom: 16px; font-size: 13px;">
+                <span class="badge badge-group">에듀캠프</span> 경로로 가입 시 노출되는 약관 목록
+            </p>
+
+            <div style="background-color: #f8f9fb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="font-size: 14px; font-weight: 600; color: #e65100; margin-bottom: 12px;">📋 대교 약관</h4>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #c62828; font-weight: 600;">[필수]</span>
+                        <span>이용약관</span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #c62828; font-weight: 600;">[필수]</span>
+                        <span>개인정보 수집·이용 동의</span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #c62828; font-weight: 600;">[필수]</span>
+                        <span>개인정보 제3자 제공 동의 (에듀캠프 제공) <span style="color:#f57c00; font-size:11px;">★ 서비스별</span></span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #1565c0; font-weight: 600;">[선택]</span>
+                        <span>마케팅 목적 제3자 제공 동의 (에듀캠프 제공) <span style="color:#e65100; font-size:11px;">🔒 법인 단위 강제</span></span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+                <div>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox">
+                        <span style="color: #1565c0; font-weight: 600;">[선택]</span>
+                        <span>마카다미아 마케팅 수신 동의</span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+            </div>
+
+            <div style="background-color: #f3e5f5; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <h4 style="font-size: 14px; font-weight: 600; color: #7b1fa2; margin-bottom: 12px;">📋 에듀캠프 약관</h4>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #c62828; font-weight: 600;">[필수]</span>
+                        <span>이용약관</span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #c62828; font-weight: 600;">[필수]</span>
+                        <span>개인정보 제3자 제공 동의 (대교 제공) <span style="color:#7b1fa2; font-size:11px;">★ 서비스별</span></span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked disabled>
+                        <span style="color: #1565c0; font-weight: 600;">[선택]</span>
+                        <span>마케팅 목적 제3자 제공 동의 (대교 제공) <span style="color:#e65100; font-size:11px;">🔒 법인 단위 강제</span></span>
+                        <a href="#" style="color: #4a90d9; font-size: 12px; margin-left: auto;">내용보기</a>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-buttons" style="justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closePreview()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 저장 확인 모달 -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-icon">✓</div>
+            <p class="modal-title">저장 완료</p>
+            <p class="modal-message">회원가입 약관 구성이 저장되었습니다.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeConfirm()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function openPreview() {
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+
+        function saveConfig() {
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+
+        // 가입 경로 변경 시
+        document.getElementById('signupRoute').addEventListener('change', function() {
+            const route = this.value;
+            const groupConfig = document.getElementById('groupSignupConfig');
+
+            // 대교 단독 가입 선택 시 그룹사 영역 숨김 처리
+            // 실제 구현 시 동적으로 처리
+            console.log('Selected route:', route);
+        });
+    </script>
+</body>
+</html>

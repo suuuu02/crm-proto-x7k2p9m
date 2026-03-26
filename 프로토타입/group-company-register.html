@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마카다미아 멤버스 - 그룹사 등록/수정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            회원관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📨</span>
+                            메시지 발송
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            통계
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item">
+                        <a href="../../04. 약관_처리방침 관리/약관관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            약관/처리방침 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">👤</span>
+                            계정/권한 관리
+                        </a>
+                    </li>
+                    <li class="nav-item active expanded">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🔗</span>
+                            서비스 관리
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="group-company.html" class="submenu-link active">그룹사 관리</a></li>
+                            <li><a href="index.html" class="submenu-link">서비스 관리</a></li>
+                            <li><a href="oauth-client.html" class="submenu-link">OAuth 클라이언트</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            이력 관리
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>서비스 관리</span>
+                    <span class="separator">›</span>
+                    <span>그룹사 관리</span>
+                    <span class="separator">›</span>
+                    <span class="current" id="breadcrumbTitle">그룹사 수정</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+                <div class="page-title-area">
+                    <div class="title-with-status">
+                        <h2 class="page-title" id="pageTitle">키즈코어</h2>
+                        <span class="status-badge active" id="statusBadge">사용중</span>
+                    </div>
+                    <p class="page-desc" id="pageDesc">그룹사 정보를 확인하고 수정합니다.</p>
+                </div>
+
+                <div class="form-card">
+                    <form id="groupCompanyForm">
+                        <!-- 기본 정보 섹션 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">기본 정보</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">그룹사 코드<span class="required">*</span></label>
+                                    <input type="text" class="form-input" id="companyCode" value="KIDSKORE" disabled maxlength="50" placeholder="영문대문자, 숫자, _ 조합">
+                                    <p class="form-help" id="codeHelp">그룹사 코드는 수정할 수 없습니다. (등록 시 영문대문자, 숫자, _ 사용)</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">그룹사명<span class="required">*</span></label>
+                                    <input type="text" class="form-input" id="companyName" value="키즈코어" maxlength="50" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">사업자등록번호</label>
+                                    <input type="text" class="form-input" id="businessNumber" value="110-81-45678"
+                                           placeholder="000-00-00000">
+                                    <p class="form-help">사업자등록번호를 입력합니다. (000-00-00000 형식)</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">대표자명</label>
+                                    <input type="text" class="form-input" id="representative" value="홍대표" maxlength="50"
+                                           placeholder="대표자명 입력">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 담당자 정보 섹션 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">담당자 정보</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">담당자명</label>
+                                    <input type="text" class="form-input" id="contactName" value="최키즈" maxlength="50"
+                                           placeholder="담당자명 입력">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">담당자 이메일</label>
+                                    <input type="email" class="form-input" id="contactEmail" value="kids@kidskore.com"
+                                           placeholder="example@email.com">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">담당자 연락처</label>
+                                    <input type="text" class="form-input" id="contactPhone" value="02-829-3333"
+                                           placeholder="02-000-0000">
+                                </div>
+                                <div class="form-group">
+                                    <!-- 빈 그룹 (레이아웃 맞춤) -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 부가 정보 섹션 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">부가 정보</h3>
+
+                            <div class="form-group">
+                                <label class="form-label">그룹사 설명</label>
+                                <textarea class="form-textarea" id="description" rows="3"
+                                          placeholder="그룹사에 대한 설명을 입력하세요">유아 교육 전문 기업</textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">사용 여부<span class="required">*</span></label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="isActive" value="Y" checked>
+                                            <span class="radio-custom"></span>
+                                            사용
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="isActive" value="N">
+                                            <span class="radio-custom"></span>
+                                            미사용
+                                        </label>
+                                    </div>
+                                    <p class="form-help">미사용 시 서비스 등록 셀렉트에서 제외됩니다.</p>
+                                </div>
+                                <div class="form-group">
+                                    <!-- 빈 그룹 (레이아웃 맞춤) -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 소속 서비스 정보 (수정 화면에서만 표시) -->
+                        <div class="form-section" id="servicesSection">
+                            <div class="section-header-with-btn">
+                                <h3 class="form-section-title">소속 서비스</h3>
+                                <a href="service-register.html?company=KIDSKORE" class="btn btn-outline btn-sm">+ 서비스 등록</a>
+                            </div>
+
+                            <div class="client-list">
+                                <table class="mini-table">
+                                    <thead>
+                                        <tr>
+                                            <th>서비스 코드</th>
+                                            <th>서비스명</th>
+                                            <th>서비스 분류</th>
+                                            <th>사용 여부</th>
+                                            <th>관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="code">TNITNI</span></td>
+                                            <td class="text-left">트니트니</td>
+                                            <td>교육</td>
+                                            <td><span class="status status-active">사용</span></td>
+                                            <td><a href="service-detail.html?id=TNITNI" class="link-btn-sm">상세</a></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 등록/수정 정보 -->
+                        <div class="form-section" id="auditSection">
+                            <h3 class="form-section-title">등록/수정 정보</h3>
+                            <div class="form-info-box">
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">등록자:</span>
+                                        <span class="form-info-value">홍길동</span>
+                                    </div>
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">등록일시:</span>
+                                        <span class="form-info-value">2023-12-15 09:30:00</span>
+                                    </div>
+                                </div>
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">수정자:</span>
+                                        <span class="form-info-value">박지영</span>
+                                    </div>
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">수정일시:</span>
+                                        <span class="form-info-value">2024-01-05 10:15:30</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 그룹 -->
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary" onclick="location.href='group-company.html'">목록</button>
+                            <button type="button" class="btn btn-danger" id="deleteBtn" onclick="openModal('deleteModal')">삭제</button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">수정</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 안내 박스 -->
+                <div class="notice-box">
+                    <h4>그룹사 관리 안내</h4>
+                    <ul>
+                        <li><strong>그룹사 코드</strong>: 등록 후 수정할 수 없으며, 서비스 연동 시 식별자로 사용됩니다.</li>
+                        <li><strong>미사용 처리</strong>: 미사용으로 변경하면 서비스 등록 시 해당 그룹사를 선택할 수 없습니다.</li>
+                        <li><strong>삭제 조건</strong>: 소속 서비스가 0건인 경우에만 삭제할 수 있습니다.</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 등록/수정 확인 모달 -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-icon">❓</div>
+            <p class="modal-title" id="confirmTitle">수정하시겠습니까?</p>
+            <p class="modal-message" id="confirmMessage">변경된 그룹사 정보가 저장됩니다.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">취소</button>
+                <button class="btn btn-primary" onclick="submitForm()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 등록/수정 완료 모달 -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-icon success">✓</div>
+            <p class="modal-title" id="successTitle">수정 완료</p>
+            <p class="modal-message" id="successMessage">그룹사 정보가 수정되었습니다.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="location.href='group-company.html'">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠</div>
+            <p class="modal-title">삭제하시겠습니까?</p>
+            <p class="modal-message">
+                <strong>키즈코어</strong> 그룹사를 삭제합니다.<br><br>
+                <span style="color: #e74c3c;">삭제된 데이터는 복구할 수 없습니다.</span>
+            </p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">취소</button>
+                <button class="btn btn-danger" onclick="deleteCompany()">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 불가 모달 -->
+    <div class="modal-overlay" id="cannotDeleteModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠</div>
+            <p class="modal-title">삭제할 수 없습니다</p>
+            <p class="modal-message">
+                소속 서비스가 존재하여 삭제할 수 없습니다.<br>
+                삭제하려면 먼저 소속 서비스를 다른 그룹사로 이동하거나 삭제해주세요.
+            </p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeModal('cannotDeleteModal')">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // URL 파라미터로부터 ID 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const companyId = urlParams.get('id');
+        const isEditMode = !!companyId; // ID가 있으면 수정 모드, 없으면 등록 모드
+
+        // 테스트 데이터
+        const testData = {
+            'DAEKYO': {
+                code: 'DAEKYO',
+                name: '대교',
+                businessNumber: '110-81-12345',
+                representative: '홍대표',
+                contactName: '김대교',
+                contactEmail: 'daekyo@daekyo.com',
+                contactPhone: '02-829-0000',
+                description: '대한민국 대표 교육기업',
+                isActive: 'Y',
+                services: [{code: 'MEMBERS', name: '마카다미아 멤버스', category: '인증', status: 'Y'}],
+                createdBy: '홍길동',
+                createdAt: '2023-12-01 09:30:00',
+                modifiedBy: '박지영',
+                modifiedAt: '2024-01-05 10:15:30'
+            },
+            'KIDSKORE': {
+                code: 'KIDSKORE',
+                name: '키즈코어',
+                businessNumber: '110-81-45678',
+                representative: '홍대표',
+                contactName: '최키즈',
+                contactEmail: 'kids@kidskore.com',
+                contactPhone: '02-829-3333',
+                description: '유아 교육 전문 기업',
+                isActive: 'Y',
+                services: [{code: 'TNITNI', name: '트니트니', category: '교육', status: 'Y'}],
+                createdBy: '홍길동',
+                createdAt: '2023-12-15 09:30:00',
+                modifiedBy: '박지영',
+                modifiedAt: '2024-01-05 10:15:30'
+            }
+        };
+
+        // 페이지 초기화
+        function initializePage() {
+            if (isEditMode) {
+                // 수정 모드
+                const data = testData[companyId] || testData['KIDSKORE'];
+
+                document.getElementById('breadcrumbTitle').textContent = '그룹사 수정';
+                document.getElementById('pageTitle').textContent = data.name;
+                document.getElementById('statusBadge').textContent = data.isActive === 'Y' ? '사용중' : '미사용';
+                document.getElementById('statusBadge').className = data.isActive === 'Y' ? 'status-badge active' : 'status-badge inactive';
+                document.getElementById('statusBadge').style.display = 'inline-block';
+                document.getElementById('pageDesc').textContent = '그룹사 정보를 확인하고 수정합니다.';
+
+                // 폼 데이터 채우기
+                document.getElementById('companyCode').value = data.code;
+                document.getElementById('companyCode').disabled = true;
+                document.getElementById('codeHelp').textContent = '그룹사 코드는 수정할 수 없습니다. (등록 시 영문대문자, 숫자, _ 사용)';
+
+                document.getElementById('companyName').value = data.name;
+                document.getElementById('businessNumber').value = data.businessNumber;
+                document.getElementById('representative').value = data.representative;
+                document.getElementById('contactName').value = data.contactName;
+                document.getElementById('contactEmail').value = data.contactEmail;
+                document.getElementById('contactPhone').value = data.contactPhone;
+                document.getElementById('description').value = data.description;
+                document.querySelector(`input[name="isActive"][value="${data.isActive}"]`).checked = true;
+
+                // 소속 서비스 섹션 표시
+                document.getElementById('servicesSection').style.display = 'block';
+
+                // 등록/수정 정보 섹션 표시
+                document.getElementById('auditSection').style.display = 'block';
+
+                // 버튼 설정
+                document.getElementById('deleteBtn').style.display = 'inline-block';
+                document.getElementById('submitBtn').textContent = '수정';
+
+                // 모달 메시지 설정
+                document.getElementById('confirmTitle').textContent = '수정하시겠습니까?';
+                document.getElementById('confirmMessage').textContent = '변경된 그룹사 정보가 저장됩니다.';
+                document.getElementById('successTitle').textContent = '수정 완료';
+                document.getElementById('successMessage').textContent = '그룹사 정보가 수정되었습니다.';
+
+            } else {
+                // 신규 등록 모드
+                document.getElementById('breadcrumbTitle').textContent = '그룹사 등록';
+                document.getElementById('pageTitle').textContent = '그룹사 등록';
+                document.getElementById('statusBadge').style.display = 'none';
+                document.getElementById('pageDesc').textContent = '새로운 그룹사 정보를 등록합니다.';
+
+                // 폼 데이터 초기화
+                document.getElementById('companyCode').value = '';
+                document.getElementById('companyCode').disabled = false;
+                document.getElementById('codeHelp').textContent = '영문대문자, 숫자, _(언더스코어)만 사용 가능합니다.';
+
+                document.getElementById('companyName').value = '';
+                document.getElementById('businessNumber').value = '';
+                document.getElementById('representative').value = '';
+                document.getElementById('contactName').value = '';
+                document.getElementById('contactEmail').value = '';
+                document.getElementById('contactPhone').value = '';
+                document.getElementById('description').value = '';
+                document.querySelector('input[name="isActive"][value="Y"]').checked = true;
+
+                // 소속 서비스 섹션 숨김
+                document.getElementById('servicesSection').style.display = 'none';
+
+                // 등록/수정 정보 섹션 숨김
+                document.getElementById('auditSection').style.display = 'none';
+
+                // 버튼 설정
+                document.getElementById('deleteBtn').style.display = 'none';
+                document.getElementById('submitBtn').textContent = '등록';
+
+                // 모달 메시지 설정
+                document.getElementById('confirmTitle').textContent = '등록하시겠습니까?';
+                document.getElementById('confirmMessage').textContent = '입력하신 그룹사 정보가 저장됩니다.';
+                document.getElementById('successTitle').textContent = '등록 완료';
+                document.getElementById('successMessage').textContent = '그룹사가 등록되었습니다.';
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        window.addEventListener('DOMContentLoaded', initializePage);
+
+        // 폼 제출
+        document.getElementById('groupCompanyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 유효성 검사
+            const companyCode = document.getElementById('companyCode').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+
+            if (!companyCode) {
+                alert('그룹사 코드를 입력해주세요.');
+                document.getElementById('companyCode').focus();
+                return;
+            }
+
+            if (!isEditMode) {
+                // 신규 등록 시 코드 형식 검사
+                const codePattern = /^[A-Z0-9_]+$/;
+                if (!codePattern.test(companyCode)) {
+                    alert('그룹사 코드는 영문대문자, 숫자, _(언더스코어)만 사용할 수 있습니다.');
+                    document.getElementById('companyCode').focus();
+                    return;
+                }
+            }
+
+            if (!companyName) {
+                alert('그룹사명을 입력해주세요.');
+                document.getElementById('companyName').focus();
+                return;
+            }
+
+            openModal('confirmModal');
+        });
+
+        function submitForm() {
+            closeModal('confirmModal');
+            openModal('successModal');
+        }
+
+        function deleteCompany() {
+            // 소속 서비스가 있는지 확인 (실제로는 API 호출)
+            const data = testData[companyId] || testData['KIDSKORE'];
+            const hasServices = data.services && data.services.length > 0;
+
+            closeModal('deleteModal');
+
+            if (hasServices) {
+                openModal('cannotDeleteModal');
+            } else {
+                alert('삭제되었습니다.');
+                location.href = 'group-company.html';
+            }
+        }
+    </script>
+</body>
+</html>

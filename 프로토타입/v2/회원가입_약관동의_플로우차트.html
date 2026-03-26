@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 약관 동의 플로우차트</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            padding: 40px 20px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+        }
+        .page-header .version {
+            display: inline-block;
+            background: #4a90d9;
+            color: #fff;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* 탭 네비게이션 */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 24px;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .tab-btn:hover { border-color: #4a90d9; color: #4a90d9; }
+        .tab-btn.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+        .tab-btn .tab-emoji { margin-right: 6px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 플로우차트 컨테이너 */
+        .flow-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .scenario-header {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 4px solid #4a90d9;
+        }
+        .scenario-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+        .scenario-header .scenario-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        .scenario-header .scenario-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        .tag-daekyo { background: #fff3e0; color: #e65100; }
+        .tag-group { background: #e8f5e9; color: #2e7d32; }
+        .tag-service { background: #e3f2fd; color: #1565c0; }
+
+        /* 플로우 */
+        .flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        /* 노드 공통 */
+        .node {
+            position: relative;
+            text-align: center;
+            z-index: 1;
+        }
+
+        /* 시작/종료 노드 */
+        .node-start, .node-end {
+            background: linear-gradient(135deg, #1a2a4a, #243b67);
+            color: #fff;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(26,42,74,0.3);
+        }
+        .node-end {
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            box-shadow: 0 4px 12px rgba(46,125,50,0.3);
+        }
+
+        /* 프로세스 노드 */
+        .node-process {
+            background: #fff;
+            border: 2px solid #4a90d9;
+            border-radius: 12px;
+            padding: 16px 28px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 280px;
+            box-shadow: 0 2px 8px rgba(74,144,217,0.15);
+        }
+        .node-process .node-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 판단 노드 */
+        .node-decision {
+            position: relative;
+            width: 260px;
+            padding: 20px;
+            text-align: center;
+        }
+        .node-decision .diamond {
+            background: #fff3e0;
+            border: 2px solid #f57c00;
+            transform: rotate(45deg);
+            width: 160px;
+            height: 160px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(245,124,0,0.15);
+        }
+        .node-decision .diamond-text {
+            transform: rotate(-45deg);
+            font-size: 13px;
+            font-weight: 600;
+            color: #e65100;
+            line-height: 1.4;
+        }
+
+        /* 약관 그룹 노드 */
+        .node-terms-group {
+            background: #fff;
+            border-radius: 12px;
+            padding: 0;
+            min-width: 500px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .terms-group-header {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .terms-group-header.daekyo { background: linear-gradient(135deg, #e65100, #f57c00); }
+        .terms-group-header.group { background: linear-gradient(135deg, #1565c0, #1e88e5); }
+        .terms-group-header .header-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .terms-list {
+            padding: 16px 20px;
+        }
+        .term-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            gap: 10px;
+        }
+        .term-item:last-child { border-bottom: none; }
+        .term-item .term-check { color: #4caf50; font-size: 16px; }
+        .term-item .term-name { flex: 1; text-align: left; }
+        .term-type {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .type-required { background: #ffebee; color: #c62828; }
+        .type-optional { background: #e3f2fd; color: #1565c0; }
+        .mgmt-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .mgmt-common { background: #8C8C8C; }
+        .mgmt-service { background: #1890FF; }
+
+        /* 상태 노드 */
+        .node-status {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        .node-status.skip {
+            background: #f3e5f5;
+            border-color: #9c27b0;
+            color: #7b1fa2;
+        }
+        .node-status.new-consent {
+            background: #fff3e0;
+            border-color: #f57c00;
+            color: #e65100;
+        }
+
+        /* 화살표 */
+        .arrow-down {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .arrow-line {
+            width: 2px;
+            height: 28px;
+            background: #bbb;
+        }
+        .arrow-head {
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 10px solid #bbb;
+        }
+        .arrow-label {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #999;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* 분기 레이아웃 */
+        .branch-row {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .branch-label {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+        .branch-label.yes { background: #e8f5e9; color: #2e7d32; }
+        .branch-label.no { background: #ffebee; color: #c62828; }
+
+        /* 병렬 처리 표시 */
+        .parallel-row {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            justify-content: center;
+        }
+
+        /* 구분선 */
+        .flow-divider {
+            width: 100%;
+            height: 1px;
+            background: #e0e0e0;
+            margin: 40px 0;
+        }
+
+        /* 범례 */
+        .legend {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-top: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .legend h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .legend-box {
+            width: 32px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        /* 핵심 포인트 박스 */
+        .key-point {
+            background: #fffde7;
+            border: 2px solid #fdd835;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 24px;
+        }
+        .key-point h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f57f17;
+            margin-bottom: 10px;
+        }
+        .key-point ul {
+            padding-left: 20px;
+        }
+        .key-point li {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #555;
+        }
+        .key-point li strong { color: #333; }
+
+        /* 비교 테이블 */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 13px;
+        }
+        .compare-table th {
+            background: #f8f9fb;
+            padding: 10px 14px;
+            text-align: center;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .compare-table td {
+            padding: 10px 14px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .compare-table td.text-left { text-align: left; }
+        .compare-table tr:hover { background: #f8f9fb; }
+
+        .badge-skip { background: #f3e5f5; color: #7b1fa2; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge-new { background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge-agree { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>회원가입 약관 동의 플로우차트</h1>
+    <p>마카다미아 멤버스 CRM — 가입 경로별 약관 동의 흐름 (하이브리드 관리 모델)</p>
+    <span class="version">v1.0 · 2026-03-12</span>
+</div>
+
+<!-- 탭 네비게이션 -->
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('tab1')"><span class="tab-emoji">1️⃣</span> 대교 단독 가입</button>
+    <button class="tab-btn" onclick="showTab('tab2')"><span class="tab-emoji">2️⃣</span> 그룹사 최초 가입</button>
+    <button class="tab-btn" onclick="showTab('tab3')"><span class="tab-emoji">3️⃣</span> 동일 그룹사 서비스 추가</button>
+    <button class="tab-btn" onclick="showTab('tab4')"><span class="tab-emoji">📊</span> 비교 요약</button>
+</div>
+
+<!-- ============================================ -->
+<!-- 시나리오 1: 대교 단독 가입 -->
+<!-- ============================================ -->
+<div class="tab-content active" id="tab1">
+<div class="flow-container">
+    <div class="scenario-header">
+        <h2>시나리오 1: 대교 단독 가입</h2>
+        <p class="scenario-desc">사용자가 대교 직접 서비스에 가입하는 경우. 그룹사 약관 없이 대교 약관만 동의합니다.</p>
+        <span class="scenario-tag tag-daekyo">대교 약관만 적용</span>
+    </div>
+
+    <div class="flow">
+        <!-- 시작 -->
+        <div class="node"><div class="node-start">👤 사용자 — 대교 서비스 가입 시작</div></div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <!-- PASS 본인인증 -->
+        <div class="node">
+            <div class="node-process">
+                <div class="node-label">📱 PASS 본인인증</div>
+                이름, 생년월일, 휴대폰번호 수집 및 본인확인
+            </div>
+        </div>
+
+        <div class="arrow-down">
+            <div class="arrow-line"></div>
+            <div class="arrow-head"></div>
+            <span class="arrow-label">이름 + 생년월일 + 휴대폰번호로 통합회원 DB 조회</span>
+        </div>
+
+        <!-- 회원 조회 결과 -->
+        <div class="node" style="margin: 8px 0;">
+            <div style="background:#e8f5e9; border:2px solid #2e7d32; border-radius:12px; padding:16px 28px; min-width:400px;">
+                <div style="font-size:13px; color:#2e7d32; font-weight:700; margin-bottom:4px;">🆕 조회 결과: 신규 회원</div>
+                <div style="font-size:13px; color:#555;">3가지 정보 일치하는 통합회원 없음 → 전체 약관 동의 필요</div>
+            </div>
+        </div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <!-- 대교 약관 동의 -->
+        <div class="node">
+            <div class="node-terms-group">
+                <div class="terms-group-header daekyo">📋 대교 약관/동의서 <span class="header-badge">STEP 1</span></div>
+                <div class="terms-list">
+                    <div class="term-item">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">이용약관</span>
+                        <span class="mgmt-badge mgmt-service">서비스</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">개인정보 수집·이용 동의</span>
+                        <span class="mgmt-badge mgmt-service">서비스</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item">
+                        <span class="term-check">☐</span>
+                        <span class="term-name">마카다미아 마케팅 수신 동의</span>
+                        <span class="mgmt-badge mgmt-common">공통</span>
+                        <span class="term-type type-optional">선택</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <div class="node"><div class="node-process"><div class="node-label">회원 정보 입력</div>이름, 이메일, 비밀번호 등 입력</div></div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <div class="node"><div class="node-end">✅ 대교 회원 가입 완료</div></div>
+    </div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 시나리오 2: 그룹사 최초 가입 (트니트니) -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab2">
+<div class="flow-container">
+    <div class="scenario-header">
+        <h2>시나리오 2: 그룹사(에듀캠프) 트니트니 최초 가입</h2>
+        <p class="scenario-desc">사용자가 에듀캠프의 트니트니을 통해 최초 통합회원 가입하는 경우. 대교 약관 + 그룹사 약관 모두 동의합니다.</p>
+        <span class="scenario-tag tag-daekyo">대교 약관</span>
+        <span class="scenario-tag tag-group">그룹사 공통 약관</span>
+        <span class="scenario-tag tag-service">트니트니 약관</span>
+    </div>
+
+    <div class="flow">
+        <!-- 시작 -->
+        <div class="node"><div class="node-start">👤 사용자 — 에듀캠프 트니트니 가입 시작</div></div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <!-- PASS 본인인증 -->
+        <div class="node">
+            <div class="node-process">
+                <div class="node-label">📱 PASS 본인인증</div>
+                이름, 생년월일, 휴대폰번호 수집 및 본인확인
+            </div>
+        </div>
+
+        <div class="arrow-down">
+            <div class="arrow-line"></div>
+            <div class="arrow-head"></div>
+            <span class="arrow-label">이름 + 생년월일 + 휴대폰번호로 통합회원 DB 조회</span>
+        </div>
+
+        <!-- 회원 조회 결과 -->
+        <div class="node" style="margin: 8px 0;">
+            <div style="background:#e8f5e9; border:2px solid #2e7d32; border-radius:12px; padding:16px 28px; min-width:400px;">
+                <div style="font-size:13px; color:#2e7d32; font-weight:700; margin-bottom:4px;">🆕 조회 결과: 신규 회원</div>
+                <div style="font-size:13px; color:#555;">3가지 정보 일치하는 통합회원 없음 → 대교 + 그룹사 전체 약관 동의 필요</div>
+            </div>
+        </div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <!-- 대교 약관 -->
+        <div class="node">
+            <div class="node-terms-group">
+                <div class="terms-group-header daekyo">📋 대교 약관/동의서 <span class="header-badge">STEP 1</span></div>
+                <div class="terms-list">
+                    <div class="term-item">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">이용약관</span>
+                        <span class="mgmt-badge mgmt-service">서비스</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">개인정보 수집·이용 동의</span>
+                        <span class="mgmt-badge mgmt-service">서비스</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item" style="background: #fff8e1; margin: 4px -8px; padding: 8px;">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">개인정보 제3자 제공 동의 (대교→에듀캠프) <span style="color:#f57c00; font-size:11px;">★ 그룹사 가입시만, 서비스별</span></span>
+                        <span class="mgmt-badge mgmt-service">서비스</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item" style="background: #fff8e1; margin: 4px -8px; padding: 8px;">
+                        <span class="term-check">☐</span>
+                        <span class="term-name">마케팅 목적 제3자 제공 동의 (대교→에듀캠프) <span style="color:#f57c00; font-size:11px;">★ 그룹사 가입시만</span></span>
+                        <span class="mgmt-badge mgmt-common">공통</span>
+                        <span class="term-type type-optional">선택</span>
+                    </div>
+                    <div class="term-item">
+                        <span class="term-check">☐</span>
+                        <span class="term-name">마카다미아 마케팅 수신 동의</span>
+                        <span class="mgmt-badge mgmt-common">공통</span>
+                        <span class="term-type type-optional">선택</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <!-- 그룹사 약관 -->
+        <div class="node">
+            <div class="node-terms-group">
+                <div class="terms-group-header group">📋 에듀캠프 약관/동의서 <span class="header-badge">STEP 2</span></div>
+                <div class="terms-list">
+                    <div class="term-item">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">이용약관 <span style="color:#1890FF; font-size:11px;">(트니트니)</span></span>
+                        <span class="mgmt-badge mgmt-service">트니트니</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item" style="background: #f3e5f5; margin: 4px -8px; padding: 8px;">
+                        <span class="term-check">☑</span>
+                        <span class="term-name">개인정보 제3자 제공 동의 (에듀캠프→대교) <span style="color:#7b1fa2; font-size:11px;">★ 대교 연동 필수, 서비스별</span></span>
+                        <span class="mgmt-badge mgmt-service">트니트니</span>
+                        <span class="term-type type-required">필수</span>
+                    </div>
+                    <div class="term-item" style="background: #f3e5f5; margin: 4px -8px; padding: 8px;">
+                        <span class="term-check">☐</span>
+                        <span class="term-name">마케팅 목적 제3자 제공 동의 (에듀캠프→대교)</span>
+                        <span class="mgmt-badge mgmt-common">공통</span>
+                        <span class="term-type type-optional">선택</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <div class="node"><div class="node-process"><div class="node-label">회원 정보 입력</div>이름, 이메일, 비밀번호 등 입력</div></div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <div class="node"><div class="node-end">✅ 에듀캠프 트니트니 통합회원 가입 완료</div></div>
+    </div>
+
+    <div class="key-point">
+        <h4>💡 핵심 포인트</h4>
+        <ul>
+            <li><strong>서비스 단위</strong>(이용약관, 개인정보 제3자 제공 동의): 트니트니 전용으로 동의 수집 → <code>service_id = 트니트니</code></li>
+            <li><strong>공통(그룹사 단위)</strong>(마케팅 목적 제3자 제공 동의): 에듀캠프 그룹사 전체에 적용 → <code>service_id = NULL</code></li>
+            <li>대교 약관과 그룹사 약관이 <strong>순차적으로</strong> 노출됨</li>
+        </ul>
+    </div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 시나리오 3: 동일 그룹사 오감올리 추가 가입 -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab3">
+<div class="flow-container">
+    <div class="scenario-header" style="border-left-color: #f57c00;">
+        <h2>시나리오 3: 이미 트니트니 가입 회원 → 오감올리 추가 가입</h2>
+        <p class="scenario-desc">에듀캠프 트니트니로 이미 통합회원 가입된 사용자가 동일 그룹사의 오감올리를 추가 이용하려는 경우.</p>
+        <span class="scenario-tag tag-group">그룹사 공통 → 이미 동의됨</span>
+        <span class="scenario-tag tag-service">오감올리 약관 → 신규 동의</span>
+    </div>
+
+    <div class="flow">
+        <!-- 시작 -->
+        <div class="node"><div class="node-start">👤 사용자 — 에듀캠프 오감올리 가입 시작</div></div>
+
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <!-- PASS 본인인증 -->
+        <div class="node">
+            <div class="node-process">
+                <div class="node-label">📱 PASS 본인인증</div>
+                이름, 생년월일, 휴대폰번호 수집 및 본인확인
+            </div>
+        </div>
+
+        <div class="arrow-down">
+            <div class="arrow-line"></div>
+            <div class="arrow-head"></div>
+            <span class="arrow-label">이름 + 생년월일 + 휴대폰번호로 통합회원 DB 조회</span>
+        </div>
+
+        <!-- 회원 특정 결과 -->
+        <div class="node" style="margin: 8px 0;">
+            <div style="background:#fff3e0; border:2px solid #f57c00; border-radius:12px; padding:16px 28px; min-width:440px;">
+                <div style="font-size:13px; color:#f57c00; font-weight:700; margin-bottom:8px;">🔍 조회 결과: 기존 회원 특정</div>
+                <div style="font-size:13px; color:#555; line-height:1.8;">
+                    3가지 정보 일치하는 통합회원 발견<br>
+                    <span style="font-weight:600; color:#333;">→ 기존 아이디: <code style="background:#fff8e1; padding:2px 8px; border-radius:4px; color:#e65100;">user123@email.com</code></span><br>
+                    <span style="font-weight:600; color:#333;">→ 가입 서비스: <code style="background:#e3f2fd; padding:2px 8px; border-radius:4px; color:#1565c0;">에듀캠프 트니트니</code></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow-down">
+            <div class="arrow-line"></div>
+            <div class="arrow-head"></div>
+            <span class="arrow-label">특정된 회원의 기동의 이력 조회</span>
+        </div>
+
+        <!-- 판단: 기동의 여부 -->
+        <div class="node" style="margin: 8px 0;">
+            <div style="background:#fff; border:2px solid #f57c00; border-radius:12px; padding:20px 32px; min-width:440px;">
+                <div style="font-size:13px; color:#f57c00; font-weight:700; margin-bottom:8px;">⚡ 기동의 판단 기준</div>
+                <div style="font-size:13px; color:#555; line-height:1.8;">
+                    <strong style="color:#333;">판단 시점</strong>: 회원이 특정된 직후 (PASS 인증 → 회원 조회 완료 후)<br>
+                    <strong style="color:#333;">판단 기준</strong>: 동일 그룹사(에듀캠프)의 공통 약관(service_id = NULL)에 동의 이력이 있는가?
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow-down"><div class="arrow-line" style="height:16px;"></div></div>
+
+        <!-- 분기 -->
+        <div class="branch-row">
+            <!-- 공통 약관: 스킵 -->
+            <div class="branch">
+                <span class="branch-label yes">✅ 이미 동의됨</span>
+                <div class="arrow-down"><div class="arrow-line" style="height:12px;"></div><div class="arrow-head"></div></div>
+                <div class="node">
+                    <div class="node-terms-group" style="min-width:360px; opacity:0.7;">
+                        <div class="terms-group-header" style="background:linear-gradient(135deg,#8C8C8C,#a0a0a0);">
+                            🔒 그룹사 공통 약관 <span class="header-badge">SKIP</span>
+                        </div>
+                        <div class="terms-list">
+                            <div class="term-item" style="text-decoration: line-through; color:#999;">
+                                <span style="color:#999;">—</span>
+                                <span class="term-name" style="color:#999;">마케팅 목적 제3자 제공 동의 (에듀캠프→대교)</span>
+                                <span class="badge-skip">스킵</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:12px; font-size:12px; color:#7b1fa2; font-weight:600; background:#f3e5f5; padding:6px 14px; border-radius:20px;">
+                    service_id = NULL → 그룹사 단위 1회 동의로 충분
+                </div>
+            </div>
+
+            <!-- 서비스 약관: 신규 동의 -->
+            <div class="branch">
+                <span class="branch-label no">🆕 신규 동의 필요</span>
+                <div class="arrow-down"><div class="arrow-line" style="height:12px;"></div><div class="arrow-head"></div></div>
+                <div class="node">
+                    <div class="node-terms-group" style="min-width:360px;">
+                        <div class="terms-group-header group">
+                            📋 오감올리 전용 약관 <span class="header-badge">STEP 1</span>
+                        </div>
+                        <div class="terms-list">
+                            <div class="term-item">
+                                <span class="term-check">☑</span>
+                                <span class="term-name">이용약관 <span style="color:#1890FF; font-size:11px;">(오감올리)</span></span>
+                                <span class="mgmt-badge mgmt-service">오감올리</span>
+                                <span class="term-type type-required">필수</span>
+                            </div>
+                            <div class="term-item" style="background: #f3e5f5; margin: 4px -8px; padding: 8px;">
+                                <span class="term-check">☑</span>
+                                <span class="term-name">개인정보 제3자 제공 동의 (에듀캠프→대교) <span style="color:#7b1fa2; font-size:11px;">★ 대교 연동 필수, 서비스별</span></span>
+                                <span class="mgmt-badge mgmt-service">오감올리</span>
+                                <span class="term-type type-required">필수</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:12px; font-size:12px; color:#1565c0; font-weight:600; background:#e3f2fd; padding:6px 14px; border-radius:20px;">
+                    service_id = 오감올리 → 서비스별 별도 동의
+                </div>
+            </div>
+        </div>
+
+        <div style="height:24px;"></div>
+        <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+        <div class="node"><div class="node-end">✅ 오감올리 이용 등록 완료</div></div>
+    </div>
+
+    <div class="key-point">
+        <h4>💡 핵심 포인트 — 하이브리드 모델의 핵심 시나리오</h4>
+        <ul>
+            <li><strong>공통(그룹사 단위) 약관</strong>은 동일 그룹사 내에서 <strong>1회 동의로 충분</strong> → 오감올리 가입 시 재수집 안 함</li>
+            <li><strong>서비스 단위 약관</strong>은 서비스별로 이용 조건·수집 항목이 다르므로 <strong>오감올리 전용 동의를 별도 수집</strong></li>
+            <li>DB에서 <code>service_id IS NULL</code>이면 공통, <code>service_id = 오감올리</code>이면 서비스 단위로 구분</li>
+            <li>사용자 UX: 이미 동의한 공통 약관은 노출하지 않고, <strong>오감올리 전용 약관만 간소화하여 노출</strong></li>
+        </ul>
+    </div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 비교 요약 -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab4">
+<div class="flow-container">
+    <div class="scenario-header" style="border-left-color: #9c27b0;">
+        <h2>시나리오별 약관 동의 비교</h2>
+        <p class="scenario-desc">각 가입 경로별로 어떤 약관이 동의 수집되고, 어떤 약관이 스킵되는지 한눈에 비교합니다.</p>
+    </div>
+
+    <!-- 대교 약관 영역 -->
+    <div style="background:#fff; border-radius:12px; padding:24px; margin-bottom:24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:16px; color:#e65100;">🏢 대교 약관 영역</h3>
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th width="240">약관 항목</th>
+                    <th width="90">관리 단위</th>
+                    <th width="80">동의유형</th>
+                    <th>① 대교 단독</th>
+                    <th>② 그룹사 최초</th>
+                    <th>③ 서비스 추가</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">이용약관</td>
+                    <td><span class="mgmt-badge mgmt-service">서비스</span></td>
+                    <td><span class="term-type type-required">필수</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-skip">기동의</span></td>
+                </tr>
+                <tr>
+                    <td class="text-left">개인정보 수집·이용 동의</td>
+                    <td><span class="mgmt-badge mgmt-service">서비스</span></td>
+                    <td><span class="term-type type-required">필수</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-skip">기동의</span></td>
+                </tr>
+                <tr style="background:#fff8e1;">
+                    <td class="text-left">개인정보 제3자 제공 동의 (대교→그룹사)</td>
+                    <td><span class="mgmt-badge mgmt-service">서비스</span></td>
+                    <td><span class="term-type type-required">필수</span></td>
+                    <td><span style="color:#999;">—</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-new">서비스별 신규동의</span></td>
+                </tr>
+                <tr style="background:#fff8e1;">
+                    <td class="text-left">마케팅 목적 제3자 제공 동의 (대교→그룹사)</td>
+                    <td><span class="mgmt-badge mgmt-common">공통</span></td>
+                    <td><span class="term-type type-optional">선택</span></td>
+                    <td><span style="color:#999;">—</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-skip">기동의</span></td>
+                </tr>
+                <tr>
+                    <td class="text-left">마케팅 수신 동의</td>
+                    <td><span class="mgmt-badge mgmt-common">공통</span></td>
+                    <td><span class="term-type type-optional">선택</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-skip">기동의</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 그룹사 약관 영역 -->
+    <div style="background:#fff; border-radius:12px; padding:24px; margin-bottom:24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:16px; color:#1565c0;">🏬 그룹사(에듀캠프) 약관 영역</h3>
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th width="240">약관 항목</th>
+                    <th width="90">관리 단위</th>
+                    <th width="80">동의유형</th>
+                    <th>① 대교 단독</th>
+                    <th>② 그룹사 최초<br><small style="color:#999;">(트니트니)</small></th>
+                    <th>③ 서비스 추가<br><small style="color:#999;">(오감올리)</small></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">이용약관</td>
+                    <td><span class="mgmt-badge mgmt-service">서비스</span></td>
+                    <td><span class="term-type type-required">필수</span></td>
+                    <td><span style="color:#999;">—</span></td>
+                    <td><span class="badge-agree">트니트니 동의</span></td>
+                    <td><span class="badge-new">오감올리 신규동의</span></td>
+                </tr>
+                <tr style="background:#f3e5f5;">
+                    <td class="text-left">개인정보 제3자 제공 동의 (그룹사→대교)</td>
+                    <td><span class="mgmt-badge mgmt-service">서비스</span></td>
+                    <td><span class="term-type type-required">필수</span></td>
+                    <td><span style="color:#999;">—</span></td>
+                    <td><span class="badge-agree">트니트니 동의</span></td>
+                    <td><span class="badge-new">오감올리 신규동의</span></td>
+                </tr>
+                <tr style="background:#f3e5f5;">
+                    <td class="text-left">마케팅 목적 제3자 제공 동의 (그룹사→대교)</td>
+                    <td><span class="mgmt-badge mgmt-common">공통</span></td>
+                    <td><span class="term-type type-optional">선택</span></td>
+                    <td><span style="color:#999;">—</span></td>
+                    <td><span class="badge-agree">동의</span></td>
+                    <td><span class="badge-skip">기동의 (스킵)</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 범례 -->
+    <div class="legend">
+        <h3>범례</h3>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <span class="mgmt-badge mgmt-common">공통</span>
+                그룹사 단위 관리 (service_id = NULL)
+            </div>
+            <div class="legend-item">
+                <span class="mgmt-badge mgmt-service">서비스</span>
+                서비스 단위 관리 (service_id = 값)
+            </div>
+            <div class="legend-item">
+                <span class="badge-agree">동의</span>
+                해당 시점에 동의 수집
+            </div>
+            <div class="legend-item">
+                <span class="badge-skip">기동의 (스킵)</span>
+                이미 동의하여 재수집 불필요
+            </div>
+            <div class="legend-item">
+                <span class="badge-new">신규동의</span>
+                서비스별 별도 동의 필요
+            </div>
+            <div class="legend-item">
+                <span style="color:#999;">—</span>
+                해당 없음 (가입 경로에 미적용)
+            </div>
+        </div>
+    </div>
+
+    <div class="key-point" style="margin-top:24px;">
+        <h4>📌 하이브리드 관리 모델 핵심 원칙</h4>
+        <ul>
+            <li><strong>공통(그룹사 단위)</strong>: 마케팅 목적 제3자 제공 동의 등 → 법인이 수신 주체이므로 <strong>그룹사 1회 동의</strong>로 충분</li>
+            <li><strong>서비스 단위</strong>: 이용약관·개인정보 제3자 제공 동의 → 서비스별 이용 조건·제공 항목이 다르므로 <strong>서비스별 별도 동의</strong></li>
+            <li><strong>DB 구분</strong>: <code>term_items.service_id IS NULL</code> → 공통 / <code>service_id = 값</code> → 서비스 단위</li>
+            <li><strong>UX 최적화</strong>: 서비스 추가 시 이미 동의한 공통 약관은 미노출 → 간소화된 동의 화면 제공</li>
+        </ul>
+    </div>
+</div>
+</div>
+
+<script>
+    function showTab(tabId) {
+        // 모든 탭 콘텐츠 숨기기
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        // 선택된 탭 활성화
+        document.getElementById(tabId).classList.add('active');
+
+        // 탭 버튼 활성화
+        const btns = document.querySelectorAll('.tab-btn');
+        const tabIndex = {'tab1':0, 'tab2':1, 'tab3':2, 'tab4':3};
+        btns[tabIndex[tabId]].classList.add('active');
+    }
+</script>
+
+</body>
+</html>

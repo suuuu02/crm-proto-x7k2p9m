@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마카다미아 멤버스 - 약관 항목 등록</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            회원관리
+                            <span class="arrow">▼</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">✉️</span>
+                            메시지 발송
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            통계
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item active expanded">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            약관/처리방침 관리
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="index.html" class="submenu-link active">약관 항목 관리</a></li>
+                            <li><a href="daekyo-terms.html" class="submenu-link">대교 약관</a></li>
+                            <li><a href="group-terms.html" class="submenu-link">그룹사 약관</a></li>
+                            <li><a href="signup-config.html" class="submenu-link">회원가입 약관 구성</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">🔑</span>
+                            계정/권한 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            서비스 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            이력 관리
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>약관/처리방침 관리</span>
+                    <span class="separator">›</span>
+                    <span>약관 항목 관리</span>
+                    <span class="separator">›</span>
+                    <span class="current">항목 등록</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+                <div class="page-title-area">
+                    <h2 class="page-title">약관 항목 등록</h2>
+                    <p class="page-desc">새로운 약관/동의서 항목을 등록합니다.</p>
+                </div>
+
+                <div class="form-card">
+                    <form id="itemForm">
+                        <!-- 기본 정보 섹션 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">기본 정보</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">소속<span class="required">*</span></label>
+                                    <select class="form-select" id="ownerType" required onchange="handleOwnerTypeChange(this)">
+                                        <option value="">소속을 선택하세요</option>
+                                        <option value="DAEKYO">대교</option>
+                                        <option value="GROUP">그룹사</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="groupCompanyGroup" style="display: none;">
+                                    <label class="form-label">그룹사<span class="required">*</span></label>
+                                    <select class="form-select" id="groupCompanySelect">
+                                        <option value="">그룹사를 선택하세요</option>
+                                        <option value="TNITNI">에듀캠프</option>
+                                        <option value="NEWIF">대교 뉴이프</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">동의 목적 분류<span class="required">*</span></label>
+                                    <select class="form-select" id="consentPurpose" required onchange="handlePurposeChange(this)">
+                                        <option value="">분류를 선택하세요</option>
+                                        <option value="SERVICE_USE">서비스이용</option>
+                                        <option value="PRIVACY">개인정보</option>
+                                        <option value="THIRD_PARTY">제3자제공</option>
+                                        <option value="MARKETING">마케팅</option>
+                                        <option value="THIRD_PARTY_MARKETING">제3자제공(마케팅)</option>
+                                        <option value="CROSS_MARKETING">교차마케팅</option>
+                                    </select>
+                                    <p class="form-help" id="purposeHelp">동의 목적에 따라 관리 단위(서비스/공통)가 자동 결정됩니다.</p>
+                                </div>
+                                <div class="form-group" id="serviceGroup" style="display: none;">
+                                    <label class="form-label">서비스<span class="required" id="serviceRequired">*</span></label>
+                                    <select class="form-select" id="serviceSelect">
+                                        <option value="">서비스를 선택하세요</option>
+                                        <option value="SVC_1">트니트니</option>
+                                        <option value="SVC_2">오감올리</option>
+                                    </select>
+                                    <p class="form-help">서비스 단위 약관 — 서비스별로 별도 관리됩니다.</p>
+                                </div>
+                            </div>
+
+                            <!-- 관리 단위 안내 -->
+                            <div id="mgmtLevelInfo" style="display:none; background:#e3f2fd; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#1565c0;">
+                                <strong>관리 단위:</strong> <span id="mgmtLevelText"></span>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">항목 코드<span class="required">*</span></label>
+                                    <input type="text" class="form-input" id="itemCode" maxlength="50"
+                                           placeholder="예: TERMS_USE, PRIVACY_COLLECT" required
+                                           oninput="codeFormat(this)">
+                                    <p class="form-help">영문 대문자, 숫자, 언더스코어(_)만 사용 가능합니다.</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">항목명<span class="required">*</span></label>
+                                    <input type="text" class="form-input" id="itemName" maxlength="100"
+                                           placeholder="예: 이용약관, 개인정보 수집·이용 동의" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">동의 유형<span class="required">*</span></label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="consentType" value="REQUIRED" checked>
+                                            <span class="radio-custom"></span>
+                                            필수
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="consentType" value="OPTIONAL">
+                                            <span class="radio-custom"></span>
+                                            선택
+                                        </label>
+                                    </div>
+                                    <p class="form-help">필수: 동의하지 않으면 가입 불가 / 선택: 동의 없이도 가입 가능</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">사용 여부<span class="required">*</span></label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="isActive" value="Y" checked>
+                                            <span class="radio-custom"></span>
+                                            사용
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="isActive" value="N">
+                                            <span class="radio-custom"></span>
+                                            미사용
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">설명</label>
+                                <textarea class="form-textarea" id="description" rows="3"
+                                          placeholder="항목에 대한 설명을 입력하세요 (관리자용, 프론트 미노출)"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 등록 정보 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">등록 정보</h3>
+                            <div class="form-info-box">
+                                <div class="form-info-item">
+                                    <span class="form-info-label">등록자:</span>
+                                    <span class="form-info-value">홍길동</span>
+                                </div>
+                                <div class="form-info-item">
+                                    <span class="form-info-label">등록 예정 일시:</span>
+                                    <span class="form-info-value">저장 시 자동 기록</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 그룹 -->
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary" onclick="location.href='index.html'">취소</button>
+                            <button type="submit" class="btn btn-primary">등록</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 확인 모달 -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-icon">❓</div>
+            <p class="modal-title">등록하시겠습니까?</p>
+            <p class="modal-message">
+                입력하신 정보로 새 약관 항목을 등록합니다.
+            </p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">취소</button>
+                <button class="btn btn-primary" onclick="submitForm()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 완료 모달 -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-icon success">✓</div>
+            <p class="modal-title">등록 완료</p>
+            <p class="modal-message">약관 항목이 등록되었습니다.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="location.href='index.html'">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 코드 중복 경고 모달 -->
+    <div class="modal-overlay" id="duplicateModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠</div>
+            <p class="modal-title">중복된 항목 코드</p>
+            <p class="modal-message">이미 사용 중인 항목 코드입니다.<br>다른 코드를 입력해주세요.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeModal('duplicateModal')">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // 동의 목적 분류별 관리 단위 매핑
+        const purposeConfig = {
+            'SERVICE_USE': { level: 'SERVICE', label: '서비스 단위 — 서비스별로 별도 관리됩니다.', needService: true },
+            'PRIVACY':     { level: 'SERVICE', label: '서비스 단위 — 서비스별 수집 항목이 상이하여 별도 관리됩니다.', needService: true },
+            'THIRD_PARTY': { level: 'SERVICE', label: '서비스 단위 — 서비스 운영을 위한 제3자 제공, 서비스별 제공 항목이 상이합니다.', needService: true },
+            'MARKETING':   { level: 'COMMON',  label: '공통(그룹사 단위) — 그룹사 전체에 공통 적용됩니다.', needService: false },
+            'THIRD_PARTY_MARKETING': { level: 'COMMON', label: '공통(그룹사 단위) — 마케팅 목적 제3자 제공, 법인 단위로 관리됩니다. (선택 동의)', needService: false },
+            'CROSS_MARKETING': { level: 'COMMON', label: '공통(그룹사 단위) — 그룹사 전체에 공통 적용됩니다.', needService: false }
+        };
+
+        // 동의 목적 분류 변경 핸들러
+        function handlePurposeChange(select) {
+            const value = select.value;
+            const serviceGroup = document.getElementById('serviceGroup');
+            const serviceSelect = document.getElementById('serviceSelect');
+            const mgmtLevelInfo = document.getElementById('mgmtLevelInfo');
+            const mgmtLevelText = document.getElementById('mgmtLevelText');
+
+            if (value && purposeConfig[value]) {
+                const config = purposeConfig[value];
+
+                // 서비스 필드 표시/숨김
+                if (config.needService) {
+                    serviceGroup.style.display = '';
+                    serviceSelect.setAttribute('required', 'required');
+                } else {
+                    serviceGroup.style.display = 'none';
+                    serviceSelect.removeAttribute('required');
+                    serviceSelect.value = '';
+                }
+
+                // 관리 단위 안내 표시
+                mgmtLevelInfo.style.display = '';
+                mgmtLevelText.textContent = config.label;
+            } else {
+                serviceGroup.style.display = 'none';
+                serviceSelect.removeAttribute('required');
+                serviceSelect.value = '';
+                mgmtLevelInfo.style.display = 'none';
+                mgmtLevelText.textContent = '';
+            }
+        }
+
+        // 폼 제출
+        document.getElementById('itemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 그룹사 선택 확인
+            const ownerType = document.getElementById('ownerType').value;
+            if (ownerType === 'GROUP') {
+                const groupCompany = document.getElementById('groupCompanySelect').value;
+                if (!groupCompany) {
+                    alert('그룹사를 선택해주세요.');
+                    document.getElementById('groupCompanySelect').focus();
+                    return;
+                }
+            }
+
+            // 동의 목적 분류 확인
+            const consentPurpose = document.getElementById('consentPurpose').value;
+            if (!consentPurpose) {
+                alert('동의 목적 분류를 선택해주세요.');
+                document.getElementById('consentPurpose').focus();
+                return;
+            }
+
+            // 서비스 단위일 때 서비스 선택 확인
+            if (purposeConfig[consentPurpose] && purposeConfig[consentPurpose].needService) {
+                const serviceVal = document.getElementById('serviceSelect').value;
+                if (!serviceVal) {
+                    alert('서비스를 선택해주세요.');
+                    document.getElementById('serviceSelect').focus();
+                    return;
+                }
+            }
+
+            // 코드 중복 체크 (실제로는 API 호출)
+            const itemCode = document.getElementById('itemCode').value;
+            const existingCodes = ['TERMS_USE', 'PRIVACY_COLLECT', 'THIRD_PARTY', 'THIRD_PARTY_MKT', 'MARKETING'];
+
+            if (existingCodes.includes(itemCode)) {
+                openModal('duplicateModal');
+                return;
+            }
+
+            openModal('confirmModal');
+        });
+
+        function submitForm() {
+            closeModal('confirmModal');
+            openModal('successModal');
+        }
+    </script>
+</body>
+</html>

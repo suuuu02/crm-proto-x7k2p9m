@@ -1,0 +1,3000 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원관리 - 마카다미아 멤버스 CRM 관리자</title>
+    <link rel="stylesheet" href="../../common/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 회원관리 페이지 전용 스타일 */
+
+        /* 페이지 전환 */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ========== 하단 프로토타입 바 ========== */
+        .proto-bar {
+            position: fixed; bottom: 0; left: 260px; right: 0; height: 56px;
+            background: #1a1a2e; display: flex; align-items: center; gap: 12px; padding: 0 24px; z-index: 1000;
+        }
+        .proto-badge {
+            background: #ff6b6b; color: #fff; padding: 4px 10px; border-radius: 4px;
+            font-size: 11px; font-weight: 700; letter-spacing: 1px;
+        }
+        .proto-desc { color: rgba(255,255,255,0.7); font-size: 13px; margin-right: auto; }
+        .proto-nav-btn {
+            padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+            background: transparent; color: #fff; font-size: 12px; cursor: pointer; transition: all 0.2s;
+        }
+        .proto-nav-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); }
+        .proto-nav-btn.active { background: #4a90d9; border-color: #4a90d9; }
+        .proto-test-info { color: rgba(255,255,255,0.5); font-size: 11px; }
+
+        /* Toast 애니메이션 */
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* 인증 카드 */
+        .auth-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .auth-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .auth-info {
+            background: #f8f9fb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .auth-info-item {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .auth-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .auth-info-item label {
+            width: 120px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .auth-info-item span {
+            color: #333;
+        }
+
+        /* SNS 연동 뱃지 */
+        .sns-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .sns-badge.kakao { background: #FEE500; color: #3C1E1E; }
+        .sns-badge.naver { background: #03C75A; color: #fff; }
+        .sns-badge.google { background: #fff; color: #333; border: 1px solid #ddd; }
+        .sns-badge.apple { background: #000; color: #fff; }
+
+        .sns-status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .sns-status-badge.active { background: #e8f5e9; color: #2e7d32; }
+        .sns-status-badge.inactive { background: #f5f5f5; color: #999; }
+
+        /* 검색 영역 스타일 확장 */
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .search-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .search-field label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .search-field input {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-field input:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+
+        /* 회원 상세 페이지 */
+        .detail-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .detail-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #4a90d9;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .detail-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-field.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .detail-field label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-field label .required {
+            color: #e53935;
+        }
+
+        .detail-field input,
+        .detail-field select {
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .detail-field input:disabled,
+        .detail-field select:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+        }
+
+        .detail-field input:focus,
+        .detail-field select:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+
+        .detail-field .field-error {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .detail-field input.input-error,
+        .detail-field select.input-error {
+            border-color: #e74c3c;
+        }
+
+        .field-with-button {
+            display: flex;
+            gap: 8px;
+        }
+
+        .field-with-button input {
+            flex: 1;
+        }
+
+        /* 회원 타입 뱃지 */
+        .member-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        .member-type-badge.student {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .member-type-badge.parent {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .member-type-badge.employee {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .member-type-badge.general {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+
+        /* 자녀 테이블 */
+        .child-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .child-table th,
+        .child-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .child-table th {
+            background-color: #f8f9fb;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .child-table td {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 버튼 그룹 확장 */
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .action-buttons .left-buttons,
+        .action-buttons .right-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-text-danger {
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 10px;
+        }
+
+        .btn-text-danger:hover {
+            color: #e74c3c;
+        }
+
+        /* 더보기 버튼 */
+        .load-more-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 20px;
+            gap: 12px;
+        }
+
+        .load-more-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .load-more-info strong {
+            color: #4a90d9;
+            font-weight: 600;
+        }
+
+        .btn-load-more {
+            padding: 12px 32px;
+            background: #fff;
+            border: 2px solid #4a90d9;
+            border-radius: 8px;
+            color: #4a90d9;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load-more:hover {
+            background: #4a90d9;
+            color: #fff;
+        }
+    </style>
+    <!-- 카카오 주소 API -->
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스 CRM</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item active">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            <span>회원관리</span>
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="#" class="submenu-link active" data-page="search">회원 조회</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📨</span>
+                            <span>메시지 발송</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            <span>통계</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item">
+                        <a href="../../04. 약관_처리방침 관리/약관관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            <span>약관/처리방침 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">👤</span>
+                            <span>계정/권한 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            <span>서비스 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            <span>이력 관리</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content" style="padding-bottom: 64px;">
+            <!-- 헤더 -->
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>홈</span>
+                    <span class="separator">›</span>
+                    <span>회원관리</span>
+                    <span class="separator">›</span>
+                    <span class="current">회원 조회</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <!-- 회원 조회 페이지 -->
+            <div class="content-section page active" id="search-page">
+                <div class="page-title-area">
+                    <h2 class="page-title">회원 조회</h2>
+                    <p class="page-desc">등록된 회원 정보를 조회하고 관리합니다.</p>
+                </div>
+
+                <!-- 검색 영역 -->
+                <div class="search-card">
+                    <form id="search-form">
+                        <div class="search-grid">
+                            <div class="search-field">
+                                <label>이름</label>
+                                <input type="text" id="name" placeholder="이름을 입력하세요">
+                            </div>
+                            <div class="search-field">
+                                <label>아이디</label>
+                                <input type="text" id="userId" placeholder="아이디를 입력하세요">
+                            </div>
+                            <div class="search-field">
+                                <label>이메일</label>
+                                <input type="email" id="email" placeholder="이메일을 입력하세요">
+                            </div>
+                            <div class="search-field">
+                                <label>휴대폰 번호</label>
+                                <input type="tel" id="phone" placeholder="01012345678 (숫자만 입력)" maxlength="11">
+                            </div>
+                            <div class="search-field">
+                                <label>회원번호 (숫자 10자리)</label>
+                                <input type="text" id="memberNo" placeholder="회원번호를 입력하세요" maxlength="10">
+                            </div>
+                            <div class="search-field">
+                                <label>사번 (숫자 8자리)</label>
+                                <input type="text" id="employeeNo" placeholder="사번을 입력하세요" maxlength="8">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button type="submit" class="btn btn-primary">조회</button>
+                            <button type="reset" class="btn btn-secondary">초기화</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 안내 메시지 -->
+                <div class="info-box" id="search-placeholder">
+                    <h4>💡 회원 조회 안내</h4>
+                    <ul style="margin: 0; padding-left: 20px; list-style: disc; display: flex; flex-direction: column; gap: 4px;">
+                        <li>최소 1가지 이상의 정보를 입력해야 합니다.</li>
+                        <li>모든 검색 조건은 완전 일치 방식으로 동작합니다.</li>
+                        <li>휴대폰번호는 전체번호(예: 01012345678)를 입력해야 조회됩니다.</li>
+                    </ul>
+                </div>
+
+                <!-- 검색 결과 -->
+                <div class="table-card" id="result-section" style="display: none;">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0;">
+                        <span class="result-count">검색 결과: <strong id="result-count">0</strong>건</span>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>회원번호</th>
+                                <th>이름</th>
+                                <th>아이디</th>
+                                <th>회원타입</th>
+                                <th>실명인증</th>
+                                <th>휴대폰번호</th>
+                                <th>이메일</th>
+                                <th>가입일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-tbody">
+                        </tbody>
+                    </table>
+
+                    <!-- 더보기 버튼 -->
+                    <div id="load-more-container" class="load-more-container" style="display: none;">
+                        <div class="load-more-info">
+                            현재 <strong id="displayed-count">20</strong>건 / 전체 <strong id="total-count">0</strong>건
+                        </div>
+                        <button id="btn-load-more" class="btn-load-more">더보기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 회원 상세/수정 페이지 -->
+            <div class="content-section page" id="detail-page">
+                <div class="page-title-area">
+                    <h2 class="page-title">회원 상세/수정</h2>
+                    <p class="page-desc">회원의 상세 정보를 확인하고 수정합니다.</p>
+                </div>
+
+                <!-- 기본 정보 -->
+                <div class="detail-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 class="detail-section-title" style="margin-bottom: 0;">기본 정보</h3>
+                        <div>
+                            <button type="button" class="btn btn-outline btn-sm" id="edit-btn">수정</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="save-btn" style="display: none;">저장</button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn" style="display: none;">취소</button>
+                        </div>
+                    </div>
+                    <form id="detail-form">
+                        <div class="detail-grid">
+                            <div class="detail-field">
+                                <label>회원번호</label>
+                                <input type="text" id="detail-memberNo" disabled>
+                            </div>
+                            <div class="detail-field">
+                                <label>아이디</label>
+                                <input type="text" id="detail-userId" disabled>
+                            </div>
+                            <div class="detail-field">
+                                <label>이름 <span class="required">*</span></label>
+                                <input type="text" id="detail-name" disabled>
+                                <div class="field-error" id="error-name"></div>
+                                <div class="field-info" id="info-name" style="display: none; color: #1565c0; font-size: 12px; margin-top: 4px;">
+                                    학습회원번호가 인증된 상태에서는 이름을 변경할 수 없습니다. 이름 변경이 필요한 경우 먼저 학습회원 인증을 해제해 주세요.
+                                </div>
+                            </div>
+                            <div class="detail-field">
+                                <label>생년월일 <span class="required">*</span></label>
+                                <div class="field-with-button">
+                                    <input type="text" id="detail-birth" disabled maxlength="10" placeholder="YYYYMMDD 또는 달력 선택">
+                                    <input type="date" id="detail-birth-picker" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;" tabindex="-1">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="birth-calendar-btn" style="display:none;" title="달력 선택">📅</button>
+                                </div>
+                                <div class="field-error" id="error-birth"></div>
+                            </div>
+                            <div class="detail-field">
+                                <label>휴대폰번호 <span class="required">*</span></label>
+                                <input type="tel" id="detail-phone" disabled maxlength="13" placeholder="010-1234-5678">
+                                <div class="field-error" id="error-phone"></div>
+                            </div>
+                            <div class="detail-field">
+                                <label>이메일주소 <span class="required">*</span></label>
+                                <input type="email" id="detail-email" disabled>
+                                <div class="field-error" id="error-email"></div>
+                            </div>
+                            <div class="detail-field">
+                                <label>학교 <span class="required">*</span></label>
+                                <div class="field-with-button">
+                                    <input type="text" id="detail-school" disabled readonly>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="school-search-btn" style="display: none;">검색</button>
+                                </div>
+                            </div>
+                            <div class="detail-field">
+                                <label>학년 <span class="required">*</span></label>
+                                <div class="field-with-button">
+                                    <select id="detail-grade" disabled>
+                                        <option value="">선택 안함</option>
+                                        <option value="P1">초등학교 1학년</option>
+                                        <option value="P2">초등학교 2학년</option>
+                                        <option value="P3">초등학교 3학년</option>
+                                        <option value="P4">초등학교 4학년</option>
+                                        <option value="P5">초등학교 5학년</option>
+                                        <option value="P6">초등학교 6학년</option>
+                                        <option value="M1">중학교 1학년</option>
+                                        <option value="M2">중학교 2학년</option>
+                                        <option value="M3">중학교 3학년</option>
+                                        <option value="H1">고등학교 1학년</option>
+                                        <option value="H2">고등학교 2학년</option>
+                                        <option value="H3">고등학교 3학년</option>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="grade-delete-btn" style="display: none;">삭제</button>
+                                </div>
+                            </div>
+                            <div class="detail-field full-width">
+                                <label>주소 <span class="required">*</span></label>
+                                <div class="field-with-button">
+                                    <input type="text" id="detail-address" disabled readonly>
+                                    <button type="button" class="btn btn-primary btn-sm" id="address-register-btn" style="display: none;">등록</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="address-edit-btn" style="display: none;">수정</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="address-delete-btn" style="display: none;">삭제</button>
+                                </div>
+                            </div>
+                            <div class="detail-field">
+                                <label>CN</label>
+                                <input type="text" id="detail-cn" disabled style="background-color: #f5f5f5; color: #999;">
+                            </div>
+                            <div class="detail-field">
+                                <label>본인인증여부</label>
+                                <input type="text" id="detail-identityAuth" disabled style="background-color: #f5f5f5; color: #999;">
+                            </div>
+                            <!-- 법정대리인 정보 (법정대리인인증일 때만 표시) -->
+                            <div class="detail-field full-width" id="guardian-info-area" style="display: none;">
+                                <div style="background: #f8f9fb; border: 1px solid #e8eaed; border-radius: 8px; padding: 14px 20px; margin-left: 4px;">
+                                    <div style="font-size: 12px; font-weight: 600; color: #888; margin-bottom: 10px; letter-spacing: 0.3px;">법정대리인 정보</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px;">
+                                        <div>
+                                            <label style="font-size: 12px; color: #888; font-weight: 500; display: block; margin-bottom: 4px;">이름</label>
+                                            <span id="detail-guardianName" style="font-size: 14px; color: #333; font-weight: 500;">-</span>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 12px; color: #888; font-weight: 500; display: block; margin-bottom: 4px;">휴대폰번호</label>
+                                            <span id="detail-guardianPhone" style="font-size: 14px; color: #333; font-weight: 500;">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-field">
+                                <label>가입일시</label>
+                                <input type="text" id="detail-joinDate" disabled style="background-color: #f5f5f5; color: #999;">
+                            </div>
+                            <div class="detail-field">
+                                <label>마지막로그인일시</label>
+                                <input type="text" id="detail-lastLogin" disabled style="background-color: #f5f5f5; color: #999;">
+                            </div>
+                        </div>
+
+                        <div class="info-box" style="margin-top: 20px;">
+                            <p>* 표시 항목은 수정 가능합니다. 우측 상단 수정 버튼을 클릭하여 편집하세요.</p>
+                        </div>
+
+                        <div class="action-buttons">
+                            <div class="left-buttons">
+                                <button type="button" class="btn btn-secondary" id="temp-password-btn">임시비밀번호 발급</button>
+                                <button type="button" class="btn btn-secondary" id="list-btn">목록</button>
+                            </div>
+                            <div class="right-buttons">
+                                <button type="button" class="btn-text-danger" id="withdraw-btn">회원탈퇴</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 정보동의 관리 -->
+                <div class="detail-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 class="detail-section-title" style="margin-bottom: 0;">정보동의 관리</h3>
+                        <div>
+                            <button type="button" class="btn btn-outline btn-sm" id="consent-edit-btn">변경</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="consent-save-btn" style="display: none;">저장</button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="consent-cancel-btn" style="display: none;">취소</button>
+                        </div>
+                    </div>
+
+                    <!-- 공통 동의 항목 -->
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px;">공통 동의 항목</p>
+                        <div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="detail-field">
+                                <label>마카다미아 마케팅 수신 동의 <span style="font-size: 11px; font-weight: 400; color: #999;">(TM-005)</span></label>
+                                <select id="detail-marketing" disabled>
+                                    <option>동의</option>
+                                    <option>미동의</option>
+                                </select>
+                            </div>
+                            <div class="detail-field">
+                                <label>위치정보 수신 동의 <span style="font-size: 11px; font-weight: 400; color: #999;">(14세 이상, 회원관리 전용)</span></label>
+                                <select id="detail-locationConsent" disabled>
+                                    <option>동의</option>
+                                    <option>미동의</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 마케팅 목적 제3자 제공 동의 -->
+                    <div style="margin-bottom: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0;">
+                        <p style="font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px;">마케팅 목적 제3자 제공 동의</p>
+
+                        <div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <!-- 대교→그룹사 (통합 1개 항목) -->
+                            <div class="detail-field">
+                                <label>대교 → 그룹사 <span style="font-size: 11px; font-weight: 400; color: #999;">(TM-004)</span></label>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <select id="detail-tp-daekyo-to-group" disabled style="width: 120px;">
+                                        <option>동의</option>
+                                        <option>미동의</option>
+                                    </select>
+                                    <span id="tp-group-list" style="font-size: 12px; color: #888;">제공받는 곳: <span style="color: #333; font-weight: 500;">에듀캠프</span></span>
+                                </div>
+                            </div>
+                            <!-- 그룹사→대교 (그룹사별 개별 항목) -->
+                            <div class="detail-field" id="tp-group-to-daekyo-area">
+                                <label>에듀캠프 → 대교 <span style="font-size: 11px; font-weight: 400; color: #999;">(TG-EC03)</span></label>
+                                <select id="detail-tp-educamp-to-daekyo" disabled>
+                                    <option>동의</option>
+                                    <option>미동의</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- SNS 연동 정보 -->
+                <div class="detail-section">
+                    <h3 class="detail-section-title">SNS 연동 정보</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="sns-table" style="margin: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;">SNS 종류</th>
+                                    <th style="width: 180px;">SNS ID</th>
+                                    <th style="width: 80px;">사용여부</th>
+                                    <th style="width: 150px;">연동일시</th>
+                                    <th style="width: 150px;">마지막 로그인</th>
+                                    <th style="width: 150px;">해제일시</th>
+                                    <th style="width: 100px;">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sns-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 학습회원 인증 정보 -->
+                <div class="detail-section">
+                    <h3 class="detail-section-title">학습회원 인증 정보</h3>
+
+                    <!-- 인증 미등록 상태 -->
+                    <div id="student-unauth" style="display: none;">
+                        <div class="detail-field" style="max-width: 400px;">
+                            <label>학습회원번호 (숫자 10자리)</label>
+                            <input type="text" id="student-memberNo" placeholder="학습회원번호를 입력하세요" maxlength="10">
+                        </div>
+                        <button type="button" class="btn btn-primary" id="student-register-btn" style="margin-top: 16px;">학습회원 인증 등록</button>
+                        <p style="margin-top: 12px; font-size: 13px; color: #666;">뉴드림스의 이름/생년월일 일치 시 학습정보가 연동됩니다.</p>
+                    </div>
+
+                    <!-- 인증 등록 상태 -->
+                    <div id="student-auth" style="display: none;">
+                        <div class="auth-info" style="margin-bottom: 16px;">
+                            <div class="auth-info-item">
+                                <label>학습회원번호:</label>
+                                <span id="auth-student-no">1234567890</span>
+                            </div>
+                            <div class="auth-info-item">
+                                <label>인증일자:</label>
+                                <span id="auth-student-date">2025.01.09</span>
+                            </div>
+                        </div>
+                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">학습현황</h4>
+                        <div style="overflow-x: auto;">
+                            <table class="child-table" id="student-learning-table">
+                                <thead>
+                                    <tr>
+                                        <th>브랜드</th>
+                                        <th>제품명</th>
+                                        <th>제품코드</th>
+                                        <th>학습시작일</th>
+                                        <th>담당지점/센터</th>
+                                        <th>담당교사</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-learning-tbody"></tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-danger" id="student-unregister-btn" style="margin-top: 16px;">인증 해제</button>
+                    </div>
+                </div>
+
+                <!-- 자녀 인증 정보 -->
+                <div class="detail-section" id="child-section">
+                    <h3 class="detail-section-title">자녀 인증 정보</h3>
+
+                    <!-- 등록된 자녀 목록 -->
+                    <div id="child-list" style="margin-bottom: 24px; display: none;">
+                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">등록된 자녀 (<span id="child-count">0</span>명)</h4>
+                        <table class="child-table" id="child-table">
+                            <thead>
+                                <tr>
+                                    <th>이름</th>
+                                    <th>생년월일</th>
+                                    <th>회원번호</th>
+                                    <th>아이디</th>
+                                    <th>자녀등록일</th>
+                                    <th>학습현황</th>
+                                    <th>담당지점/센터</th>
+                                    <th>담당교사</th>
+                                    <th>연결해제</th>
+                                </tr>
+                            </thead>
+                            <tbody id="child-tbody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="info-box" style="margin-bottom: 20px;">
+                        <h4>자녀 등록 안내</h4>
+                        <p><strong>Case 1)</strong> 이름 + 생년월일 입력 시 기본정보만 등록됩니다.</p>
+                        <p><strong>Case 2)</strong> 이름 + 생년월일 + 학습회원번호 입력 시 뉴드림스 API(API_DR_314)를 통해 학습회원 정보를 검증한 뒤, 이름/생년월일 일치 시 학습정보가 연동됩니다.</p>
+                        <p style="color: #666; font-size: 12px; margin-top: 4px;">* 이름은 회원정보 수정과 동일한 입력 정책이 적용됩니다.</p>
+                    </div>
+
+                    <div class="detail-grid" style="max-width: 800px;">
+                        <div class="detail-field">
+                            <label>자녀 이름 <span class="required">*</span></label>
+                            <input type="text" id="child-name" placeholder="자녀 이름을 입력하세요">
+                            <div class="field-error" id="error-child-name" style="display: none;"></div>
+                        </div>
+                        <div class="detail-field">
+                            <label>자녀 생년월일 (숫자 8자리) <span class="required">*</span></label>
+                            <input type="text" id="child-birth" placeholder="19901231 (숫자만 입력)" maxlength="8">
+                            <div class="field-error" id="error-child-birth" style="display: none;"></div>
+                        </div>
+                        <div class="detail-field">
+                            <label>학습회원번호 (10자리) - 선택</label>
+                            <input type="text" id="child-memberNo" placeholder="미입력 시 학습정보 연동 안됨" maxlength="10">
+                            <div class="field-error" id="error-child-memberNo" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" id="child-register-btn" style="margin-top: 16px;">자녀 등록</button>
+                </div>
+
+                <!-- 조직원 인증 정보 -->
+                <div class="detail-section">
+                    <h3 class="detail-section-title">조직원 인증 정보</h3>
+
+                    <!-- 인증 미등록 상태 -->
+                    <div id="employee-unauth" style="display: none;">
+                        <div class="detail-field" style="max-width: 400px;">
+                            <label>사번 (숫자 8자리)</label>
+                            <input type="text" id="employee-no" placeholder="사번을 입력하세요" maxlength="8">
+                        </div>
+                        <button type="button" class="btn btn-primary" id="employee-register-btn" style="margin-top: 16px;">조직원 인증 등록</button>
+                        <p style="margin-top: 12px; font-size: 13px; color: #666;">뉴드림스/SAP HR 인사정보의 이름 일치 시 인증이 완료됩니다.</p>
+                    </div>
+
+                    <!-- 인증 등록 상태 -->
+                    <div id="employee-auth" style="display: none;">
+                        <div class="auth-info">
+                            <div class="auth-info-item">
+                                <label>사번:</label>
+                                <span id="auth-employee-no">12345678</span>
+                            </div>
+                            <div class="auth-info-item">
+                                <label>인증일자:</label>
+                                <span id="auth-employee-date">2025.01.09</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-danger" id="employee-unregister-btn">인증 해제</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 하단 프로토타입 바 -->
+    <div class="proto-bar">
+        <span class="proto-badge">PROTOTYPE</span>
+        <span class="proto-desc">회원관리 프로토타입 (MBR-001 ~ MBR-002)</span>
+        <button class="proto-nav-btn active" id="proto-nav-search" onclick="protoNavigate('search')">MBR-001 회원 조회</button>
+        <button class="proto-nav-btn" id="proto-nav-detail" onclick="protoNavigate('detail')">MBR-002 회원 상세/수정</button>
+        <span class="proto-test-info">테스트: admin@daekyo.co.kr / test1234</span>
+    </div>
+
+    <!-- 확인 모달 -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-title" id="modal-title">확인</div>
+            <div class="modal-message" id="modal-body"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="modal-cancel">취소</button>
+                <button class="btn btn-primary" id="modal-confirm">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 학교 검색 모달 -->
+    <div class="modal-overlay" id="school-search-modal">
+        <div class="modal" style="min-width: 600px; max-width: 700px;">
+            <div class="modal-title" style="text-align: left; margin-bottom: 20px;">학교 찾기</div>
+
+            <!-- 등록된 학교 정보 -->
+            <div id="registered-school-area" style="display: none; margin-bottom: 16px; padding: 12px 16px; background: #f0f7ff; border: 1px solid #d0e4ff; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 12px; color: #666;">등록된 학교</span>
+                        <div style="font-size: 14px; font-weight: 600; color: #333; margin-top: 4px;" id="registered-school-name"></div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm" id="registered-school-delete-btn">삭제</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <input type="text" class="form-input" id="school-search-input" placeholder="학교명을 입력하세요" style="flex: 1;">
+                <button type="button" class="btn btn-primary" id="school-search-execute">조회</button>
+            </div>
+
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <table class="data-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">학교명</th>
+                            <th style="width: 60%;">주소</th>
+                        </tr>
+                    </thead>
+                    <tbody id="school-search-tbody">
+                        <tr>
+                            <td colspan="2" style="padding: 40px; text-align: center; color: #999;">검색조건을 입력하세요.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="btn btn-secondary" id="school-cancel-btn">닫기</button>
+                <button class="btn btn-primary" id="school-select-btn">선택하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 임시비밀번호 발급 모달 -->
+    <div class="modal-overlay" id="temp-password-modal">
+        <div class="modal">
+            <div class="modal-title">임시비밀번호 발급</div>
+            <div class="modal-message">
+                <p style="margin-bottom: 16px;">발급 방식을 선택해주세요.</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="temp-pw-method" value="sms" checked>
+                        <span>SMS 발송</span>
+                        <span id="temp-pw-phone" style="color: #666; margin-left: auto;"></span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="temp-pw-method" value="email">
+                        <span>이메일 발송</span>
+                        <span id="temp-pw-email" style="color: #666; margin-left: auto;"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="temp-pw-cancel">취소</button>
+                <button class="btn btn-primary" id="temp-pw-confirm">발급</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원탈퇴 모달 -->
+    <div class="modal-overlay" id="withdraw-modal">
+        <div class="modal" style="max-width: 480px;">
+            <div class="modal-title" style="color: #e74c3c;">회원탈퇴</div>
+            <div class="modal-message" style="text-align: left;">
+                <p style="margin-bottom: 16px;">해당 계정을 탈퇴처리하시겠습니까?</p>
+                <div style="background: #f8f9fb; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px;">
+                    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                        <span><strong>아이디</strong> <span id="withdraw-userId" style="color: #666; margin-left: 6px;"></span></span>
+                        <span><strong>이름</strong> <span id="withdraw-name" style="color: #666; margin-left: 6px;"></span></span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 14px; font-weight: 600; color: #333;">탈퇴 사유 <span style="color: #e53935;">*</span></label>
+                </div>
+                <textarea id="withdraw-reason" rows="4" placeholder="탈퇴 사유를 입력해주세요." style="width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+                <div class="field-error" id="error-withdraw-reason" style="display: none; font-size: 12px; color: #e74c3c; margin-top: 4px;"></div>
+                <div style="background: #fff3e0; border-radius: 8px; padding: 12px 16px; margin-top: 16px; font-size: 13px; color: #e65100;">
+                    ⚠ 탈퇴 처리 시 계정이 삭제되며, 이 작업은 되돌릴 수 없습니다.
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="withdraw-cancel">취소</button>
+                <button class="btn btn-danger" id="withdraw-confirm">탈퇴 처리</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../common/script.js"></script>
+    <script>
+        // 현재 로그인한 사용자 정보
+        let currentUser = {
+            name: '홍길동',
+            role: 'DAEKYO_ADMIN', // DAEKYO_ADMIN 또는 GROUP_ADMIN
+            service: null, // GROUP_ADMIN인 경우 서비스 코드 (NOONOPEE, CHAIHONG, DAEKYO_CSN 등)
+            serviceName: null // 서비스명 (눈높이, 차이홍, 대교CSN 등)
+        };
+
+        // 샘플 데이터 (페이지네이션 테스트를 위해 30개 생성)
+        const sampleMembers = [
+            {
+                memberNo: '1234567890',
+                name: '한교동',
+                userId: 'hankyodong',
+                memberType: '학부모, 조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'hankyodong@example.com',
+                joinDate: '2024.01.15 09:23',
+                birth: '1990-05-20',
+                school: '서울초등학교',
+                grade: 'P3',
+                address: '서울시 강남구 테헤란로 123',
+                marketing: '동의',
+                locationConsent: '동의',
+                thirdPartyConsent: '동의',
+                cn: 'CN-2024-00001234',
+                lastLogin: '2026.02.11 18:45',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE', // 서비스 코드
+                serviceName: '눈높이', // 서비스명
+                studentAuthYn: false, // 학습회원 인증 여부
+                employeeAuthYn: true, // 조직원 인증 여부
+                children: [
+                    { name: '도구리', birth: '2015.05.05', memberNo: '0055123456', oderId: 'adcde', regDate: '2025.10.20', learning: '눈높이', center: '관악 러닝센터', teacher: '김미미' },
+                    { name: '동구리', birth: '2015.05.05', memberNo: '0055123456', oderId: 'adcde', regDate: '2025.10.20', learning: '눈높이', center: '관악 러닝센터', teacher: '김미미' },
+                    { name: '봉구리', birth: '-', memberNo: '-', oderId: 'adcde', regDate: '2025.10.20', learning: '-', center: '-', teacher: '-' }
+                ]
+            },
+            {
+                memberNo: '9876543210',
+                name: '한강',
+                userId: 'hankang',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'hankang@example.com',
+                joinDate: '2024.03.20 14:05',
+                birth: '1988-11-10',
+                school: '서울중학교',
+                grade: 'M1',
+                address: '서울시 서초구 반포대로 456',
+                marketing: '미동의',
+                locationConsent: '동의',
+                thirdPartyConsent: '동의',
+                cn: 'CN-2024-00009876',
+                lastLogin: '2026.02.11 20:30',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍',
+                studentAuthYn: true, // 학습회원 인증 완료
+                studentAuthNo: '0087654321',
+                studentAuthDate: '2025.06.15',
+                learningStatus: [
+                    { memberNo: '0087654321', brand: '차이홍', productName: '차이홍 중국어 초급', productCode: 'CH-CN-001', startDate: '2025.06.20', center: '서초 러닝센터', teacher: '박선생' },
+                    { memberNo: '0087654321', brand: '눈높이', productName: '눈높이 수학 중1', productCode: 'NH-MA-201', startDate: '2025.07.01', center: '서초 러닝센터', teacher: '김선생' }
+                ],
+                employeeAuthYn: false
+            },
+            {
+                memberNo: '1111111111',
+                name: '김민수',
+                userId: 'kimminsu',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'minsu@example.com',
+                joinDate: '2024.02.10 11:30',
+                birth: '2013-03-15',
+                school: '강남초등학교',
+                grade: 'P5',
+                address: '서울시 강남구 강남대로 100',
+                marketing: '동의',
+                locationConsent: '미동의',
+                thirdPartyConsent: '미동의',
+                cn: 'CN-2024-00001111',
+                lastLogin: '2026.02.08 15:20',
+                identityAuth: '법정대리인인증',
+                guardianName: '김영희',
+                guardianPhone: '010-9876-5432',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '2222222222',
+                name: '이영희',
+                userId: 'leeyoung',
+                memberType: '학부모',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'younghee@example.com',
+                joinDate: '2024.01.25 16:42',
+                birth: '1985-07-20',
+                school: '',
+                grade: '',
+                address: '서울시 서초구 서초대로 200',
+                marketing: '동의',
+                locationConsent: '동의',
+                thirdPartyConsent: '미동의',
+                cn: 'CN-2024-00002222',
+                lastLogin: '2026.02.09 08:55',
+                identityAuth: '본인인증',
+                service: 'DAEKYO_CSN',
+                serviceName: '대교CSN'
+            },
+            {
+                memberNo: '3333333333',
+                name: '박철수',
+                userId: 'parkchul',
+                memberType: '조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'chulsoo@example.com',
+                joinDate: '2023.12.05 08:15',
+                birth: '1992-11-30',
+                school: '',
+                grade: '',
+                address: '서울시 강남구 테헤란로 300',
+                marketing: '미동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO',
+                serviceName: '대교'
+            },
+            {
+                memberNo: '4444444444',
+                name: '최지우',
+                userId: 'choijiwoo',
+                memberType: '일반',
+                realNameAuth: 'N',
+                phone: '01012345678',
+                email: 'jiwoo@example.com',
+                joinDate: '2024.03.01 10:50',
+                birth: '1995-05-12',
+                school: '',
+                grade: '',
+                address: '서울시 송파구 올림픽로 400',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '5555555555',
+                name: '정수현',
+                userId: 'jungsoo',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'soohyun@example.com',
+                joinDate: '2024.02.20 13:18',
+                birth: '2011-09-08',
+                school: '서초중학교',
+                grade: 'M2',
+                address: '서울시 서초구 반포대로 500',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '6666666666',
+                name: '강민지',
+                userId: 'kangminji',
+                memberType: '학부모, 조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'minji@example.com',
+                joinDate: '2024.01.10 17:33',
+                birth: '1988-02-14',
+                school: '',
+                grade: '',
+                address: '서울시 강남구 역삼로 600',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '7777777777',
+                name: '윤서준',
+                userId: 'yoonseo',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'seojun@example.com',
+                joinDate: '2024.03.15 09:45',
+                birth: '2012-06-20',
+                school: '관악초등학교',
+                grade: 'P4',
+                address: '서울시 관악구 관악로 700',
+                marketing: '미동의',
+                identityAuth: '법정대리인인증',
+                guardianName: '윤정숙',
+                guardianPhone: '010-7777-0001',
+                service: 'DAEKYO_CSN',
+                serviceName: '대교CSN'
+            },
+            {
+                memberNo: '8888888888',
+                name: '임하은',
+                userId: 'limhaeun',
+                memberType: '일반',
+                realNameAuth: 'N',
+                phone: '01012345678',
+                email: 'haeun@example.com',
+                joinDate: '2024.02.28 15:22',
+                birth: '1997-12-05',
+                school: '',
+                grade: '',
+                address: '서울시 마포구 마포대로 800',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '9999999999',
+                name: '오지훈',
+                userId: 'ohjihoon',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'jihoon@example.com',
+                joinDate: '2024.01.20 12:08',
+                birth: '2010-04-18',
+                school: '서울초등학교',
+                grade: 'P6',
+                address: '서울시 강남구 테헤란로 900',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '1010101010',
+                name: '송예린',
+                userId: 'songyerin',
+                memberType: '학부모',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'yerin@example.com',
+                joinDate: '2024.03.05 18:40',
+                birth: '1990-08-22',
+                school: '',
+                grade: '',
+                address: '서울시 용산구 한강대로 1000',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '2020202020',
+                name: '배준호',
+                userId: 'baejoon',
+                memberType: '조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'joonho@example.com',
+                joinDate: '2023.11.15 07:55',
+                birth: '1991-01-30',
+                school: '',
+                grade: '',
+                address: '서울시 종로구 종로 1100',
+                marketing: '미동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO',
+                serviceName: '대교'
+            },
+            {
+                memberNo: '3030303030',
+                name: '안서연',
+                userId: 'anseoyeon',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'seoyeon@example.com',
+                joinDate: '2024.02.15 11:12',
+                birth: '2013-10-11',
+                school: '관악중학교',
+                grade: 'M1',
+                address: '서울시 관악구 봉천로 1200',
+                marketing: '동의',
+                identityAuth: '법정대리인인증',
+                guardianName: '안미경',
+                guardianPhone: '010-3030-1234',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '4040404040',
+                name: '장우진',
+                userId: 'jangwoojin',
+                memberType: '일반',
+                realNameAuth: 'N',
+                phone: '01012345678',
+                email: 'woojin@example.com',
+                joinDate: '2024.03.10 14:37',
+                birth: '1996-07-25',
+                school: '',
+                grade: '',
+                address: '서울시 광진구 광나루로 1300',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO_CSN',
+                serviceName: '대교CSN'
+            },
+            {
+                memberNo: '5050505050',
+                name: '홍지아',
+                userId: 'hongjia',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'jia@example.com',
+                joinDate: '2024.01.30 16:05',
+                birth: '2011-11-03',
+                school: '강남초등학교',
+                grade: 'P5',
+                address: '서울시 강남구 강남대로 1400',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '6060606060',
+                name: '서민준',
+                userId: 'seominjun',
+                memberType: '학부모',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'minjun@example.com',
+                joinDate: '2024.02.05 10:28',
+                birth: '1987-04-16',
+                school: '',
+                grade: '',
+                address: '서울시 동작구 동작대로 1500',
+                marketing: '미동의',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '7070707070',
+                name: '조은서',
+                userId: 'joeunseo',
+                memberType: '조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'eunseo@example.com',
+                joinDate: '2023.12.20 09:15',
+                birth: '1993-09-28',
+                school: '',
+                grade: '',
+                address: '서울시 성북구 성북로 1600',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO',
+                serviceName: '대교'
+            },
+            {
+                memberNo: '8080808080',
+                name: '황도윤',
+                userId: 'hwangdoyun',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'doyun@example.com',
+                joinDate: '2024.03.20 13:50',
+                birth: '2012-12-07',
+                school: '서초중학교',
+                grade: 'M2',
+                address: '서울시 서초구 반포대로 1700',
+                marketing: '동의',
+                identityAuth: '법정대리인인증',
+                guardianName: '황수진',
+                guardianPhone: '010-8080-5678',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '9090909090',
+                name: '고수아',
+                userId: 'kosua',
+                memberType: '일반',
+                realNameAuth: 'N',
+                phone: '01012345678',
+                email: 'sua@example.com',
+                joinDate: '2024.02.25 08:42',
+                birth: '1998-03-19',
+                school: '',
+                grade: '',
+                address: '서울시 영등포구 여의대로 1800',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '1122334455',
+                name: '남태양',
+                userId: 'namtae',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'taeyang@example.com',
+                joinDate: '2024.01.18 15:10',
+                birth: '2010-05-30',
+                school: '관악초등학교',
+                grade: 'P6',
+                address: '서울시 관악구 관악로 1900',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO_CSN',
+                serviceName: '대교CSN'
+            },
+            {
+                memberNo: '2233445566',
+                name: '문하늘',
+                userId: 'moonhaneul',
+                memberType: '학부모',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'haneul@example.com',
+                joinDate: '2024.03.08 17:25',
+                birth: '1989-06-12',
+                school: '',
+                grade: '',
+                address: '서울시 은평구 통일로 2000',
+                marketing: '미동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '3344556677',
+                name: '신별이',
+                userId: 'shinbyul',
+                memberType: '조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'byul@example.com',
+                joinDate: '2023.11.28 12:38',
+                birth: '1994-02-08',
+                school: '',
+                grade: '',
+                address: '서울시 중랑구 망우로 2100',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO',
+                serviceName: '대교'
+            },
+            {
+                memberNo: '4455667788',
+                name: '표바다',
+                userId: 'pyobada',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'bada@example.com',
+                joinDate: '2024.02.12 10:05',
+                birth: '2013-07-14',
+                school: '서울초등학교',
+                grade: 'P4',
+                address: '서울시 강남구 테헤란로 2200',
+                marketing: '동의',
+                identityAuth: '법정대리인인증',
+                guardianName: '표은정',
+                guardianPhone: '010-4455-9900',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '5566778899',
+                name: '도산들',
+                userId: 'dosan',
+                memberType: '일반',
+                realNameAuth: 'N',
+                phone: '01012345678',
+                email: 'sandeul@example.com',
+                joinDate: '2024.03.18 14:52',
+                birth: '1997-10-21',
+                school: '',
+                grade: '',
+                address: '서울시 노원구 노원로 2300',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '6677889900',
+                name: '소강산',
+                userId: 'sokang',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'kangsan@example.com',
+                joinDate: '2024.01.22 11:40',
+                birth: '2011-01-26',
+                school: '관악중학교',
+                grade: 'M3',
+                address: '서울시 관악구 봉천로 2400',
+                marketing: '미동의',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            },
+            {
+                memberNo: '7788990011',
+                name: '연달님',
+                userId: 'yeondal',
+                memberType: '학부모',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'dalnim@example.com',
+                joinDate: '2024.02.08 16:18',
+                birth: '1986-11-05',
+                school: '',
+                grade: '',
+                address: '서울시 도봉구 도봉로 2500',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO_CSN',
+                serviceName: '대교CSN'
+            },
+            {
+                memberNo: '8899001122',
+                name: '석구름',
+                userId: 'seokgureum',
+                memberType: '조직원',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'gureum@example.com',
+                joinDate: '2023.12.10 09:33',
+                birth: '1992-08-17',
+                school: '',
+                grade: '',
+                address: '서울시 강북구 도봉로 2600',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'DAEKYO',
+                serviceName: '대교'
+            },
+            {
+                memberNo: '9900112233',
+                name: '빛나래',
+                userId: 'bitnare',
+                memberType: '학생',
+                realNameAuth: 'Y',
+                phone: '01012345678',
+                email: 'nare@example.com',
+                joinDate: '2024.03.12 13:20',
+                birth: '2012-04-09',
+                school: '강남초등학교',
+                grade: 'P5',
+                address: '서울시 강남구 강남대로 2700',
+                marketing: '동의',
+                identityAuth: '법정대리인인증',
+                guardianName: '빛하늘',
+                guardianPhone: '010-9900-3344',
+                service: 'NOONOPEE',
+                serviceName: '눈높이'
+            },
+            {
+                memberNo: '0011223344',
+                name: '온새미',
+                userId: 'onsaemi',
+                memberType: '일반',
+                realNameAuth: 'N',
+                phone: '01012345678',
+                email: 'saemi@example.com',
+                joinDate: '2024.01.28 18:07',
+                birth: '1999-12-31',
+                school: '',
+                grade: '',
+                address: '서울시 금천구 시흥대로 2800',
+                marketing: '동의',
+                identityAuth: '본인인증',
+                service: 'CHAIHONG',
+                serviceName: '차이홍'
+            }
+        ];
+
+        let currentMember = null;
+        let isEditMode = false;
+        let studentAuth = false;
+        let employeeAuth = false;
+        let childList = [];
+        let selectedSchool = null;
+
+        // 더보기 관련 변수
+        let allSearchResults = [];
+        let displayedCount = 0;
+        const itemsPerLoad = 20;
+
+        // 학교 데이터베이스
+        const schoolDatabase = [
+            { name: '관악초등학교', address: '서울특별시 관악구 관악로 123', type: '초등학교' },
+            { name: '관악중학교', address: '서울특별시 관악구 봉천로 45', type: '중학교' },
+            { name: '서울초등학교', address: '서울특별시 강남구 테헤란로 100', type: '초등학교' },
+            { name: '강남초등학교', address: '서울특별시 강남구 강남대로 200', type: '초등학교' },
+            { name: '서초중학교', address: '서울특별시 서초구 반포대로 250', type: '중학교' }
+        ];
+
+        // 학년코드 정의
+        const gradeCodeMap = {
+            P1: '초등학교 1학년', P2: '초등학교 2학년', P3: '초등학교 3학년',
+            P4: '초등학교 4학년', P5: '초등학교 5학년', P6: '초등학교 6학년',
+            M1: '중학교 1학년', M2: '중학교 2학년', M3: '중학교 3학년',
+            H1: '고등학교 1학년', H2: '고등학교 2학년', H3: '고등학교 3학년'
+        };
+
+        // 학교 유형별 학년 옵션 필터
+        const gradesBySchoolType = {
+            '초등학교': ['P1','P2','P3','P4','P5','P6'],
+            '중학교': ['M1','M2','M3'],
+            '고등학교': ['H1','H2','H3']
+        };
+
+        // 학년 셀렉트박스 옵션 업데이트
+        function updateGradeOptions(schoolType) {
+            const gradeSelect = document.getElementById('detail-grade');
+            const currentValue = gradeSelect.value;
+            gradeSelect.innerHTML = '<option value="">선택 안함</option>';
+            let codes;
+            if (schoolType && gradesBySchoolType[schoolType]) {
+                codes = gradesBySchoolType[schoolType];
+            } else {
+                // 미선택: 전체 학년 표시
+                codes = Object.keys(gradeCodeMap);
+            }
+            codes.forEach(code => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = gradeCodeMap[code];
+                gradeSelect.appendChild(opt);
+            });
+            // 기존 선택값이 새 옵션에 포함되면 유지, 아니면 초기화
+            if (codes.includes(currentValue)) {
+                gradeSelect.value = currentValue;
+            } else {
+                gradeSelect.value = currentValue; // 유지 시도 (학교 삭제 시 기존 학년 유지)
+            }
+        }
+
+        // 학교명으로 학교 유형 판별
+        function getSchoolType(schoolName) {
+            const school = schoolDatabase.find(s => s.name === schoolName);
+            return school ? school.type : null;
+        }
+
+        // 네비게이션
+        document.querySelectorAll('.submenu-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = e.target.dataset.page;
+
+                document.querySelectorAll('.submenu-link').forEach(l => l.classList.remove('active'));
+                e.target.classList.add('active');
+
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page + '-page').classList.add('active');
+
+                // 브레드크럼 업데이트
+                const breadcrumb = document.querySelector('.breadcrumb .current');
+                const breadcrumbMap = { search: '회원 조회', detail: '회원 상세/수정' };
+                breadcrumb.textContent = breadcrumbMap[page] || page;
+            });
+        });
+
+        // 마스킹 함수들
+        function maskMemberNo(no) {
+            return no.slice(0, -3) + '***';
+        }
+
+        function maskName(name) {
+            if (name.length === 2) return name[0] + '*';
+            if (name.length === 3) return name[0] + '*' + name[2];
+            return name.slice(0, -2) + '*' + name.slice(-1);
+        }
+
+        function maskUserId(id) {
+            if (id.length <= 3) return id;
+            return id.slice(0, 3) + '*'.repeat(id.length - 3);
+        }
+
+        function maskPhone(phone) {
+            const digits = phone.replace(/[^0-9]/g, '');
+            if (digits.length < 10) return phone;
+            const front = digits.slice(0, 3);
+            const middle = digits.slice(3, 7);
+            const last = digits.slice(7);
+            const maskedMiddle = middle.slice(0, 2) + '*'.repeat(middle.length - 2);
+            const maskedLast = '*' + last.slice(1);
+            return front + '-' + maskedMiddle + '-' + maskedLast;
+        }
+
+        function formatPhone(phone) {
+            const digits = phone.replace(/[^0-9]/g, '');
+            if (digits.length < 10) return phone;
+            if (digits.length === 10) {
+                return digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6);
+            }
+            return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7);
+        }
+
+        function maskEmail(email) {
+            const [local, domain] = email.split('@');
+            if (local.length <= 2) return email;
+            return local.slice(0, 2) + '*'.repeat(local.length - 2) + '@' + domain;
+        }
+
+        // 권한 전환 함수
+        function switchRole(role, service = null, serviceName = null) {
+            currentUser.role = role;
+            currentUser.service = service;
+            currentUser.serviceName = serviceName;
+        }
+
+        // Toast 알림 함수
+        function showToast(title, message, type = 'info') {
+            const toast = document.createElement('div');
+            const colors = {
+                success: { bg: '#e8f5e9', text: '#2e7d32', icon: '✓' },
+                error: { bg: '#ffebee', text: '#e74c3c', icon: '✕' },
+                info: { bg: '#e3f2fd', text: '#1565c0', icon: 'ℹ' },
+                warning: { bg: '#fff3e0', text: '#e65100', icon: '⚠' }
+            };
+            const color = colors[type];
+
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: ${color.bg};
+                color: ${color.text};
+                padding: 16px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                max-width: 400px;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.innerHTML = `
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <span style="font-size: 20px;">${color.icon}</span>
+                    <div>
+                        <div style="font-weight: 700; margin-bottom: 4px;">${title}</div>
+                        <div style="font-size: 13px; opacity: 0.9;">${message}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // 검색 폼 처리 (서비스 자동 필터 적용)
+        document.getElementById('search-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const userId = document.getElementById('userId').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const memberNo = document.getElementById('memberNo').value;
+            const employeeNo = document.getElementById('employeeNo').value;
+
+            if (!name && !userId && !email && !phone && !memberNo && !employeeNo) {
+                showModal('알림', '최소 1가지 이상의 정보를 입력해주세요.', true);
+                return;
+            }
+
+            const results = sampleMembers.filter(member => {
+                // 그룹사 관리자인 경우 서비스 자동 필터 적용
+                if (currentUser.role === 'GROUP_ADMIN' && currentUser.service) {
+                    if (member.service !== currentUser.service) return false;
+                }
+
+                // 검색 조건 (완전 일치 - ISMS-P 기준)
+                if (name && member.name !== name) return false;
+                if (userId && member.userId !== userId) return false;
+                if (email && member.email !== email) return false;
+                if (phone && member.phone !== phone) return false;
+                if (memberNo && member.memberNo !== memberNo) return false;
+                if (employeeNo && member.employeeNo !== employeeNo) return false;
+                return true;
+            });
+
+            displayResults(results);
+        });
+
+        document.getElementById('search-form').addEventListener('reset', () => {
+            allSearchResults = [];
+            displayedCount = 0;
+            document.getElementById('result-section').style.display = 'none';
+
+            // 원래 안내 메시지로 복구
+            const placeholder = document.getElementById('search-placeholder');
+            placeholder.style.display = 'block';
+            placeholder.innerHTML = `
+                <h4>💡 회원 조회</h4>
+                <p>조회 조건을 입력하고 조회 버튼을 클릭하세요. 최소 1가지 이상의 정보를 입력해야 합니다.</p>
+            `;
+
+            document.getElementById('load-more-container').style.display = 'none';
+        });
+
+        function displayResults(results) {
+            allSearchResults = results;
+            displayedCount = 0;
+
+            // 테이블 초기화
+            const tbody = document.getElementById('result-tbody');
+            tbody.innerHTML = '';
+
+            // 결과가 0건인 경우
+            if (allSearchResults.length === 0) {
+                document.getElementById('result-section').style.display = 'none';
+                const placeholder = document.getElementById('search-placeholder');
+                placeholder.style.display = 'block';
+
+                if (currentUser.role === 'GROUP_ADMIN' && currentUser.service) {
+                    // 그룹사 관리자인 경우 서비스명을 명시한 메시지
+                    placeholder.innerHTML = `
+                        <h4>🔍 검색 결과 없음</h4>
+                        <p><strong>${currentUser.serviceName} 서비스</strong>에 등록된 회원이 없습니다.</p>
+                        <p style="font-size: 13px; color: #666; margin-top: 12px;">
+                            입력하신 조건과 일치하는 ${currentUser.serviceName} 회원을 찾을 수 없습니다.<br>
+                            검색 조건을 확인하거나 다른 조건으로 다시 검색해주세요.
+                        </p>
+                    `;
+                } else {
+                    // 대교 관리자인 경우 기본 메시지
+                    placeholder.innerHTML = `
+                        <h4>🔍 검색 결과 없음</h4>
+                        <p>입력하신 조건과 일치하는 회원을 찾을 수 없습니다.</p>
+                        <p style="font-size: 13px; color: #666; margin-top: 12px;">
+                            검색 조건을 확인하거나 다른 조건으로 다시 검색해주세요.
+                        </p>
+                    `;
+                }
+                return;
+            }
+
+            // 결과가 있는 경우
+            document.getElementById('search-placeholder').style.display = 'none';
+            document.getElementById('result-section').style.display = 'block';
+
+            // 전체 결과 카운트 업데이트 (서비스명 포함)
+            const countText = currentUser.role === 'GROUP_ADMIN' && currentUser.service
+                ? `${currentUser.serviceName} 서비스 회원: <strong id="result-count">${allSearchResults.length}</strong>건`
+                : `검색 결과: <strong id="result-count">${allSearchResults.length}</strong>건`;
+
+            document.querySelector('.result-count').innerHTML = countText;
+
+            // 초기 20건 로드
+            loadMore();
+        }
+
+        function loadMore() {
+            const tbody = document.getElementById('result-tbody');
+
+            // 다음 20건 가져오기
+            const nextItems = allSearchResults.slice(displayedCount, displayedCount + itemsPerLoad);
+
+            // 테이블에 항목 추가
+            nextItems.forEach(member => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${maskMemberNo(member.memberNo)}</td>
+                    <td>${maskName(member.name)}</td>
+                    <td>${maskUserId(member.userId)}</td>
+                    <td>${member.memberType}</td>
+                    <td>${member.realNameAuth}</td>
+                    <td>${maskPhone(member.phone)}</td>
+                    <td>${maskEmail(member.email)}</td>
+                    <td>${member.joinDate}</td>
+                `;
+                tr.addEventListener('click', () => showMemberDetail(member));
+                tbody.appendChild(tr);
+            });
+
+            // 표시된 건수 업데이트
+            displayedCount += nextItems.length;
+
+            // 더보기 버튼 표시/숨김 처리
+            updateLoadMoreButton();
+        }
+
+        function updateLoadMoreButton() {
+            const container = document.getElementById('load-more-container');
+            const displayedCountEl = document.getElementById('displayed-count');
+            const totalCountEl = document.getElementById('total-count');
+
+            displayedCountEl.textContent = displayedCount;
+            totalCountEl.textContent = allSearchResults.length;
+
+            // 20건 초과이고 아직 더 표시할 항목이 있으면 더보기 버튼 표시
+            if (allSearchResults.length > itemsPerLoad && displayedCount < allSearchResults.length) {
+                container.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        // 더보기 버튼 클릭 이벤트
+        document.getElementById('btn-load-more').addEventListener('click', loadMore);
+
+        function showMemberDetail(member) {
+            currentMember = member;
+
+            // 페이지 전환
+            document.querySelectorAll('.submenu-link').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('detail-page').classList.add('active');
+
+            // 브레드크럼 업데이트
+            document.querySelector('.breadcrumb .current').textContent = '회원 상세/수정';
+
+            // 폼 채우기
+            document.getElementById('detail-memberNo').value = member.memberNo;
+            document.getElementById('detail-userId').value = member.userId;
+            document.getElementById('detail-name').value = member.name;
+            document.getElementById('detail-phone').value = formatPhone(member.phone);
+            document.getElementById('detail-email').value = member.email;
+            document.getElementById('detail-birth').value = member.birth;
+            document.getElementById('detail-school').value = member.school;
+            // 학교 유형에 따라 학년 옵션 필터링 후 값 세팅
+            const schoolType = getSchoolType(member.school);
+            updateGradeOptions(schoolType);
+            document.getElementById('detail-grade').value = member.grade;
+            document.getElementById('detail-address').value = member.address;
+            document.getElementById('detail-marketing').value = member.marketing;
+
+            // 신규 추가 필드
+            document.getElementById('detail-cn').value = member.cn || '-';
+            document.getElementById('detail-identityAuth').value = member.identityAuth || '미인증';
+
+            // 법정대리인 정보 조건부 표시
+            const guardianArea = document.getElementById('guardian-info-area');
+            if (member.identityAuth === '법정대리인인증' && member.guardianName) {
+                document.getElementById('detail-guardianName').textContent = member.guardianName;
+                document.getElementById('detail-guardianPhone').textContent = member.guardianPhone || '-';
+                guardianArea.style.display = '';
+            } else {
+                guardianArea.style.display = 'none';
+            }
+
+            document.getElementById('detail-joinDate').value = member.joinDate || '-';
+            document.getElementById('detail-lastLogin').value = member.lastLogin || '-';
+            document.getElementById('detail-locationConsent').value = member.locationConsent || '미동의';
+
+            // 마케팅 목적 제3자 제공 동의 (양방향·그룹사별 동적 select)
+            document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                sel.value = member.thirdPartyConsent || '동의';
+            });
+
+            // 14세 미만 위치정보 수신 동의 비활성화
+            const birthYear = member.birth ? parseInt(member.birth.split('-')[0]) : 0;
+            const age = new Date().getFullYear() - birthYear;
+            const locationSelect = document.getElementById('detail-locationConsent');
+            if (age < 14) {
+                locationSelect.disabled = true;
+                locationSelect.title = '14세 이상만 설정 가능합니다';
+                locationSelect.style.backgroundColor = '#f5f5f5';
+                locationSelect.style.color = '#999';
+                locationSelect.dataset.underAge = 'true';
+            } else {
+                locationSelect.dataset.underAge = 'false';
+            }
+
+            // 인증 상태 설정 (회원 데이터 기준 — 회원유형 무관, 모든 회원에게 인증 영역 표시)
+            studentAuth = member.studentAuthYn || false;
+            employeeAuth = member.employeeAuthYn || false;
+
+            // 자녀 정보
+            if (member.children && member.children.length > 0) {
+                childList = [...member.children];
+            } else {
+                childList = [];
+            }
+
+            // SNS 연동 정보 렌더링
+            renderSnsInfo(member);
+
+            // 이름 필드 안내 문구 숨김 (조회 모드)
+            document.getElementById('info-name').style.display = 'none';
+
+            updateAuthDisplay();
+        }
+
+        // SNS 연동 데이터 (회원별 시뮬레이션)
+        function getSnsData(member) {
+            const baseData = [
+                { type: 'kakao', name: '카카오', cssClass: 'kakao', linked: false, snsId: '-', useYn: false, linkedAt: '-', lastLogin: '-', unlinkedAt: '-' },
+                { type: 'naver', name: '네이버', cssClass: 'naver', linked: false, snsId: '-', useYn: false, linkedAt: '-', lastLogin: '-', unlinkedAt: '-' },
+                { type: 'google', name: '구글', cssClass: 'google', linked: false, snsId: '-', useYn: false, linkedAt: '-', lastLogin: '-', unlinkedAt: '-' },
+                { type: 'apple', name: '애플', cssClass: 'apple', linked: false, snsId: '-', useYn: false, linkedAt: '-', lastLogin: '-', unlinkedAt: '-' }
+            ];
+            // 테스트용: 일부 회원에 SNS 연동 시뮬레이션
+            if (member.name === '한교동') {
+                baseData[0] = { type: 'kakao', name: '카카오', cssClass: 'kakao', linked: true, snsId: 'kakao_hankyo1234', useYn: true, linkedAt: '2025.06.15 14:30', lastLogin: '2026.02.10 09:22', unlinkedAt: '-' };
+                baseData[1] = { type: 'naver', name: '네이버', cssClass: 'naver', linked: false, snsId: 'naver_hankyodong', useYn: false, linkedAt: '2025.08.20 11:00', lastLogin: '2025.12.15 10:33', unlinkedAt: '2026.01.05 14:20' };
+            } else if (member.name === '한강') {
+                baseData[0] = { type: 'kakao', name: '카카오', cssClass: 'kakao', linked: true, snsId: 'kakao_han99', useYn: true, linkedAt: '2025.09.01 10:15', lastLogin: '2026.02.11 20:30', unlinkedAt: '-' };
+                baseData[2] = { type: 'google', name: '구글', cssClass: 'google', linked: false, snsId: 'han.gang@gmail.com', useYn: false, linkedAt: '2025.03.10 08:00', lastLogin: '2025.07.22 13:10', unlinkedAt: '2025.09.01 10:14' };
+            } else if (member.name === '이영희') {
+                baseData[3] = { type: 'apple', name: '애플', cssClass: 'apple', linked: true, snsId: 'apple_younghee01', useYn: true, linkedAt: '2025.11.05 17:20', lastLogin: '2026.02.09 08:55', unlinkedAt: '-' };
+            }
+            return baseData;
+        }
+
+        function renderSnsInfo(member) {
+            const tbody = document.getElementById('sns-tbody');
+            const snsData = getSnsData(member);
+            // SNS ID가 있는 항목만 필터링
+            const visibleData = snsData.filter(sns => sns.snsId && sns.snsId !== '-');
+            tbody.innerHTML = '';
+
+            if (visibleData.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="7" style="padding: 32px; text-align: center; color: #999;">연동된 SNS 정보가 없습니다.</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+
+            visibleData.forEach((sns) => {
+                const originalIdx = snsData.indexOf(sns);
+                const tr = document.createElement('tr');
+                const statusBadge = sns.useYn
+                    ? '<span class="sns-status-badge active">사용</span>'
+                    : '<span class="sns-status-badge inactive">미사용</span>';
+                const actionBtn = sns.linked
+                    ? `<button class="btn btn-danger btn-sm" onclick="snsAction('unlink', ${originalIdx})">연동 해제</button>`
+                    : `<button class="btn btn-primary btn-sm" onclick="snsAction('link', ${originalIdx})">연동</button>`;
+                tr.innerHTML = `
+                    <td><span class="sns-badge ${sns.cssClass}">${sns.name}</span></td>
+                    <td style="font-size: 13px;">${sns.snsId}</td>
+                    <td>${statusBadge}</td>
+                    <td style="font-size: 13px;">${sns.linkedAt}</td>
+                    <td style="font-size: 13px;">${sns.lastLogin}</td>
+                    <td style="font-size: 13px;">${sns.unlinkedAt}</td>
+                    <td>${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function snsAction(action, idx) {
+            const snsData = getSnsData(currentMember);
+            const sns = snsData[idx];
+            if (action === 'unlink') {
+                showModal('확인', `<strong>${sns.name}</strong> 연동을 해제하시겠습니까?<br><span style="font-size:13px;color:#666;">해제 시 해당 SNS로 로그인이 불가합니다.</span>`, false, () => {
+                    showToast('연동 해제', `${sns.name} 연동이 해제되었습니다.`, 'success');
+                    // 시뮬레이션: 해제 후 재렌더링
+                    renderSnsInfo(currentMember);
+                });
+            } else {
+                showModal('확인', `<strong>${sns.name}</strong> 계정을 연동하시겠습니까?`, false, () => {
+                    showToast('연동 완료', `${sns.name} 연동이 완료되었습니다.`, 'success');
+                    renderSnsInfo(currentMember);
+                });
+            }
+        }
+
+        function updateAuthDisplay() {
+            // 학습회원 인증
+            if (studentAuth) {
+                document.getElementById('student-unauth').style.display = 'none';
+                document.getElementById('student-auth').style.display = 'block';
+                // 인증 기본 정보
+                document.getElementById('auth-student-no').textContent = currentMember.studentAuthNo || '-';
+                document.getElementById('auth-student-date').textContent = currentMember.studentAuthDate || '-';
+                // 학습현황 테이블 렌더링
+                renderStudentLearningTable(currentMember.learningStatus || []);
+            } else {
+                document.getElementById('student-unauth').style.display = 'block';
+                document.getElementById('student-auth').style.display = 'none';
+            }
+
+            // 조직원 인증
+            if (employeeAuth) {
+                document.getElementById('employee-unauth').style.display = 'none';
+                document.getElementById('employee-auth').style.display = 'block';
+            } else {
+                document.getElementById('employee-unauth').style.display = 'block';
+                document.getElementById('employee-auth').style.display = 'none';
+            }
+
+            // 자녀 목록
+            if (childList.length > 0) {
+                document.getElementById('child-list').style.display = 'block';
+                document.getElementById('child-count').textContent = childList.length;
+                renderChildList();
+            } else {
+                document.getElementById('child-list').style.display = 'none';
+            }
+        }
+
+        function renderChildList() {
+            const tbody = document.getElementById('child-tbody');
+            tbody.innerHTML = '';
+
+            childList.forEach((child, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${child.name}</td>
+                    <td>${child.birth}</td>
+                    <td>${child.memberNo || '-'}</td>
+                    <td>${child.oderId || '-'}</td>
+                    <td>${child.regDate || '-'}</td>
+                    <td>${child.learning || '-'}</td>
+                    <td>${child.center || '-'}</td>
+                    <td>${child.teacher || '-'}</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick="removeChild(${index})">연결해제</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 학습현황 테이블 렌더링 (학습회원 인증 완료 시)
+        function renderStudentLearningTable(learningData) {
+            const tbody = document.getElementById('student-learning-tbody');
+            tbody.innerHTML = '';
+            if (!learningData || learningData.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="6" style="padding: 24px; text-align: center; color: #999;">학습현황 정보가 없습니다.</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+            learningData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.brand || '-'}</td>
+                    <td>${item.productName || '-'}</td>
+                    <td>${item.productCode || '-'}</td>
+                    <td>${item.startDate || '-'}</td>
+                    <td>${item.center || '-'}</td>
+                    <td>${item.teacher || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.removeChild = function(index) {
+            showModal('확인', '자녀 연결을 해제하시겠습니까?', false, () => {
+                childList.splice(index, 1);
+                updateAuthDisplay();
+                showModal('완료', '자녀 연결이 해제되었습니다.', true);
+            });
+        };
+
+        // 수정 모드
+        document.getElementById('edit-btn').addEventListener('click', () => {
+            isEditMode = true;
+            const editableFields = ['detail-name', 'detail-phone', 'detail-email', 'detail-birth', 'detail-grade'];
+            editableFields.forEach(id => {
+                document.getElementById(id).disabled = false;
+            });
+
+            // 학습회원번호 인증된 경우 이름 필드 비활성화 및 안내 문구 표시
+            if (studentAuth) {
+                document.getElementById('detail-name').disabled = true;
+                document.getElementById('info-name').style.display = 'block';
+            } else {
+                document.getElementById('info-name').style.display = 'none';
+            }
+
+            document.getElementById('birth-calendar-btn').style.display = 'inline-flex';
+            document.getElementById('school-search-btn').style.display = 'inline-flex';
+            document.getElementById('grade-delete-btn').style.display = 'inline-flex';
+            updateAddressButtons();
+            document.getElementById('edit-btn').style.display = 'none';
+            document.getElementById('save-btn').style.display = 'inline-flex';
+            document.getElementById('cancel-btn').style.display = 'inline-flex';
+        });
+
+        // 휴대폰번호: 입력 시 자동 하이픈 포맷 (01012345678 → 010-1234-5678)
+        document.getElementById('detail-phone').addEventListener('input', function() {
+            let val = this.value.replace(/[^0-9]/g, '');
+            if (val.length > 11) val = val.substring(0, 11);
+            if (val.length <= 3) {
+                this.value = val;
+            } else if (val.length <= 7) {
+                this.value = val.substring(0, 3) + '-' + val.substring(3);
+            } else if (val.length <= 10) {
+                this.value = val.substring(0, 3) + '-' + val.substring(3, 6) + '-' + val.substring(6);
+            } else {
+                this.value = val.substring(0, 3) + '-' + val.substring(3, 7) + '-' + val.substring(7);
+            }
+        });
+
+        // 이메일주소: 한글 입력 차단
+        document.getElementById('detail-email').addEventListener('input', function() {
+            this.value = this.value.replace(/[가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
+        });
+
+        // 생년월일: 직접 입력 자동 포맷 (YYYYMMDD → YYYY-MM-DD)
+        document.getElementById('detail-birth').addEventListener('input', function(e) {
+            let val = this.value.replace(/[^0-9]/g, '');
+            if (val.length > 8) val = val.substring(0, 8);
+            if (val.length >= 5 && val.length <= 6) {
+                val = val.substring(0, 4) + '-' + val.substring(4);
+            } else if (val.length > 6) {
+                val = val.substring(0, 4) + '-' + val.substring(4, 6) + '-' + val.substring(6);
+            }
+            this.value = val;
+        });
+
+        // 생년월일: 달력 버튼 클릭 시 date picker 열기
+        document.getElementById('birth-calendar-btn').addEventListener('click', () => {
+            const picker = document.getElementById('detail-birth-picker');
+            picker.style.pointerEvents = 'auto';
+            picker.showPicker();
+            picker.style.pointerEvents = 'none';
+        });
+
+        // 생년월일: date picker 선택 시 텍스트 필드에 반영
+        document.getElementById('detail-birth-picker').addEventListener('change', function() {
+            document.getElementById('detail-birth').value = this.value;
+        });
+
+        // 유효성 검사
+        function clearFieldErrors() {
+            document.querySelectorAll('.field-error').forEach(el => { el.style.display = 'none'; el.textContent = ''; });
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+        }
+
+        function showFieldError(fieldId, errorId, msg) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(errorId);
+            if (field) field.classList.add('input-error');
+            if (error) { error.textContent = msg; error.style.display = 'block'; }
+        }
+
+        function validateDetailForm() {
+            clearFieldErrors();
+            let isValid = true;
+
+            // 이름: 학습회원번호 인증 상태가 아닌 경우에만 유효성 검사
+            const nameField = document.getElementById('detail-name');
+            if (!nameField.disabled) {
+                const name = nameField.value.trim();
+                const restrictedNames = ['대교','눈높이','써밋','SUMMIT','차이홍','솔루니','대교교과서','톡앤큐','talk&q','드림멘토','드림멘토상담센터','눈높이아티맘','HSK시험센터','소빅스','대교북스주니어','꿈꾸는달팽이','상상키즈','상상kids','트니트니','teuniteuni','BOOX','내신완공','세상에서가장큰책방','수능독해트레이닝','수독트','마이랭킹','크리드','마카다미아올인원','올인원','반보','vanvo','눈높이스쿨원','스쿨원','내일의학습','전국학력진단','뉴이프','브레인트레이닝','리딩핏'];
+                if (!name) {
+                    showFieldError('detail-name', 'error-name', '필수 항목입니다.');
+                    isValid = false;
+                } else if (restrictedNames.some(rn => name.toLowerCase().startsWith(rn.toLowerCase()))) {
+                    showFieldError('detail-name', 'error-name', '대교 서비스/브랜드명으로 시작하는 이름은 사용할 수 없습니다.');
+                    isValid = false;
+                } else {
+                    const isKorean = /^[가-힣]+$/.test(name);
+                    const isEnglishWithSpecial = /^[a-zA-Z][a-zA-Z\s'\-]*[a-zA-Z]$/.test(name) || /^[a-zA-Z]{1}$/.test(name);
+                    const isEnglishOnly = /^[a-zA-Z\s]+$/.test(name);
+                    if (isKorean) {
+                        if (name.length < 2 || name.length > 25) {
+                            showFieldError('detail-name', 'error-name', '이름은 한글 2~25자로 입력해주세요.');
+                            isValid = false;
+                        }
+                    } else if (isEnglishOnly || isEnglishWithSpecial) {
+                        if (name.length < 2 || name.length > 35) {
+                            showFieldError('detail-name', 'error-name', '이름은 영문 2~35자로 입력해주세요.');
+                            isValid = false;
+                        } else if (/^['\-]|['\-]$/.test(name)) {
+                            showFieldError('detail-name', 'error-name', '이름은 기호(-, \')로 시작하거나 끝날 수 없습니다.');
+                            isValid = false;
+                        }
+                    } else {
+                        showFieldError('detail-name', 'error-name', '이름은 한글 또는 영문만 입력 가능합니다. (영문은 하이픈, 어포스트로피 허용)');
+                        isValid = false;
+                    }
+                }
+            }
+
+            // 생년월일: YYYY-MM-DD 형식, 유효한 날짜, 미래 날짜 불가
+            const birth = document.getElementById('detail-birth').value.trim();
+            if (!birth) {
+                showFieldError('detail-birth', 'error-birth', '필수 항목입니다.');
+                isValid = false;
+            } else if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) {
+                showFieldError('detail-birth', 'error-birth', '생년월일은 숫자 8자리로 입력해주세요.');
+                isValid = false;
+            } else {
+                const [y, m, d] = birth.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+                if (dateObj.getFullYear() !== y || dateObj.getMonth() !== m - 1 || dateObj.getDate() !== d) {
+                    showFieldError('detail-birth', 'error-birth', '올바른 생년월일을 입력해주세요.');
+                    isValid = false;
+                } else if (dateObj > new Date()) {
+                    showFieldError('detail-birth', 'error-birth', '미래 날짜는 입력할 수 없습니다.');
+                    isValid = false;
+                }
+            }
+
+            // 휴대폰번호: 숫자 10~11자리
+            const phone = document.getElementById('detail-phone').value.replace(/[^0-9]/g, '');
+            if (!phone) {
+                showFieldError('detail-phone', 'error-phone', '필수 항목입니다.');
+                isValid = false;
+            } else if (phone.length < 10 || phone.length > 11) {
+                showFieldError('detail-phone', 'error-phone', '휴대폰번호는 숫자 10~11자리로 입력해주세요.');
+                isValid = false;
+            }
+
+            // 이메일주소: 이메일 형식
+            const email = document.getElementById('detail-email').value.trim();
+            if (!email) {
+                showFieldError('detail-email', 'error-email', '필수 항목입니다.');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showFieldError('detail-email', 'error-email', '올바른 이메일 형식으로 입력해주세요.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        document.getElementById('save-btn').addEventListener('click', () => {
+            if (!validateDetailForm()) {
+                showToast('입력 정보를 확인해주세요.', 'error');
+                return;
+            }
+            showModal('저장 확인', '기본정보를 저장하시겠습니까?', false, () => {
+                isEditMode = false;
+                clearFieldErrors();
+                const editableFields = ['detail-name', 'detail-phone', 'detail-email', 'detail-birth', 'detail-grade'];
+                editableFields.forEach(id => {
+                    document.getElementById(id).disabled = true;
+                });
+                document.getElementById('info-name').style.display = 'none';
+                document.getElementById('birth-calendar-btn').style.display = 'none';
+                document.getElementById('school-search-btn').style.display = 'none';
+                document.getElementById('grade-delete-btn').style.display = 'none';
+                updateAddressButtons();
+                document.getElementById('edit-btn').style.display = 'inline-flex';
+                document.getElementById('save-btn').style.display = 'none';
+                document.getElementById('cancel-btn').style.display = 'none';
+                showModal('완료', '기본정보가 저장되었습니다.', true);
+            });
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            isEditMode = false;
+            clearFieldErrors();
+            // 동의 변경 모드 중이면 동의 현재 값 보존
+            const isConsentEditing = document.getElementById('consent-save-btn').style.display !== 'none';
+            let consentValues = {};
+            if (isConsentEditing) {
+                consentValues = {
+                    marketing: document.getElementById('detail-marketing').value,
+                    location: document.getElementById('detail-locationConsent').value
+                };
+                // 마케팅 목적 제3자 제공 동의 셀렉트박스 값 백업
+                document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                    consentValues[sel.id] = sel.value;
+                });
+            }
+            showMemberDetail(currentMember);
+            // 동의 변경 모드 복원
+            if (isConsentEditing) {
+                document.getElementById('detail-marketing').value = consentValues.marketing;
+                document.getElementById('detail-locationConsent').value = consentValues.location;
+                document.getElementById('detail-marketing').disabled = false;
+                document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                    if (consentValues[sel.id]) sel.value = consentValues[sel.id];
+                    sel.disabled = false;
+                });
+                const locSelect = document.getElementById('detail-locationConsent');
+                if (locSelect.dataset.underAge !== 'true') locSelect.disabled = false;
+                document.getElementById('consent-edit-btn').style.display = 'none';
+                document.getElementById('consent-save-btn').style.display = 'inline-flex';
+                document.getElementById('consent-cancel-btn').style.display = 'inline-flex';
+            }
+            document.getElementById('birth-calendar-btn').style.display = 'none';
+            document.getElementById('school-search-btn').style.display = 'none';
+            document.getElementById('grade-delete-btn').style.display = 'none';
+            updateAddressButtons();
+            document.getElementById('edit-btn').style.display = 'inline-flex';
+            document.getElementById('save-btn').style.display = 'none';
+            document.getElementById('cancel-btn').style.display = 'none';
+        });
+
+        // 정보동의 관리 - 변경 모드
+        let consentOriginalValues = {};
+
+        document.getElementById('consent-edit-btn').addEventListener('click', () => {
+            // 변경 전 값 백업
+            consentOriginalValues = {
+                marketing: document.getElementById('detail-marketing').value,
+                location: document.getElementById('detail-locationConsent').value
+            };
+            // 마케팅 목적 제3자 제공 동의 값 백업
+            document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                consentOriginalValues[sel.id] = sel.value;
+            });
+            // 셀렉트박스 활성화
+            document.getElementById('detail-marketing').disabled = false;
+            document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                sel.disabled = false;
+            });
+            const locSelect = document.getElementById('detail-locationConsent');
+            if (locSelect.dataset.underAge !== 'true') {
+                locSelect.disabled = false;
+            }
+            // 버튼 전환
+            document.getElementById('consent-edit-btn').style.display = 'none';
+            document.getElementById('consent-save-btn').style.display = 'inline-flex';
+            document.getElementById('consent-cancel-btn').style.display = 'inline-flex';
+        });
+
+        document.getElementById('consent-save-btn').addEventListener('click', () => {
+            showModal('동의 변경 확인', '동의 설정을 변경하시겠습니까?', false, () => {
+                // 셀렉트박스 비활성화
+                document.getElementById('detail-marketing').disabled = true;
+                document.getElementById('detail-locationConsent').disabled = true;
+                document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                    sel.disabled = true;
+                });
+                // 버튼 전환
+                document.getElementById('consent-edit-btn').style.display = 'inline-flex';
+                document.getElementById('consent-save-btn').style.display = 'none';
+                document.getElementById('consent-cancel-btn').style.display = 'none';
+                showModal('완료', '동의 설정이 변경되었습니다.', true);
+            });
+        });
+
+        document.getElementById('consent-cancel-btn').addEventListener('click', () => {
+            // 변경 전 값으로 복원
+            document.getElementById('detail-marketing').value = consentOriginalValues.marketing;
+            document.getElementById('detail-locationConsent').value = consentOriginalValues.location;
+            document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                if (consentOriginalValues[sel.id]) sel.value = consentOriginalValues[sel.id];
+            });
+            // 셀렉트박스 비활성화
+            document.getElementById('detail-marketing').disabled = true;
+            document.getElementById('detail-locationConsent').disabled = true;
+            document.querySelectorAll('select[id^="detail-tp-"]').forEach(sel => {
+                sel.disabled = true;
+            });
+            // 버튼 전환
+            document.getElementById('consent-edit-btn').style.display = 'inline-flex';
+            document.getElementById('consent-save-btn').style.display = 'none';
+            document.getElementById('consent-cancel-btn').style.display = 'none';
+        });
+
+        // 임시비밀번호 발급
+        document.getElementById('temp-password-btn').addEventListener('click', () => {
+            document.getElementById('temp-pw-phone').textContent = currentMember.phone;
+            document.getElementById('temp-pw-email').textContent = currentMember.email;
+            document.querySelector('input[name="temp-pw-method"][value="sms"]').checked = true;
+            document.getElementById('temp-password-modal').classList.add('active');
+        });
+
+        document.getElementById('temp-pw-cancel').addEventListener('click', () => {
+            document.getElementById('temp-password-modal').classList.remove('active');
+        });
+
+        document.getElementById('temp-pw-confirm').addEventListener('click', () => {
+            const method = document.querySelector('input[name="temp-pw-method"]:checked').value;
+            const methodText = method === 'sms' ? `SMS (${currentMember.phone})` : `이메일 (${currentMember.email})`;
+            document.getElementById('temp-password-modal').classList.remove('active');
+            showModal('완료', `임시비밀번호가 ${methodText}(으)로 발급되었습니다.`, true);
+        });
+
+        // 회원탈퇴
+        document.getElementById('withdraw-btn').addEventListener('click', () => {
+            if (!currentMember) return;
+            // 모달에 회원 정보 표시
+            document.getElementById('withdraw-userId').textContent = currentMember.userId;
+            document.getElementById('withdraw-name').textContent = currentMember.name;
+            // 초기화
+            document.getElementById('withdraw-reason').value = '';
+            document.getElementById('error-withdraw-reason').style.display = 'none';
+            document.getElementById('withdraw-reason').classList.remove('input-error');
+            document.getElementById('withdraw-modal').classList.add('active');
+        });
+
+        document.getElementById('withdraw-cancel').addEventListener('click', () => {
+            document.getElementById('withdraw-modal').classList.remove('active');
+        });
+
+        document.getElementById('withdraw-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'withdraw-modal') {
+                document.getElementById('withdraw-modal').classList.remove('active');
+            }
+        });
+
+        document.getElementById('withdraw-confirm').addEventListener('click', () => {
+            const reason = document.getElementById('withdraw-reason').value.trim();
+            const errorEl = document.getElementById('error-withdraw-reason');
+            const textareaEl = document.getElementById('withdraw-reason');
+            // 사유 필수 검증
+            if (!reason) {
+                errorEl.textContent = '탈퇴 사유를 입력해주세요.';
+                errorEl.style.display = 'block';
+                textareaEl.classList.add('input-error');
+                textareaEl.focus();
+                return;
+            }
+            errorEl.style.display = 'none';
+            textareaEl.classList.remove('input-error');
+            // 최종 확인
+            document.getElementById('withdraw-modal').classList.remove('active');
+            showModal('최종 확인', '정말 탈퇴 처리하시겠습니까?<br>이 작업은 되돌릴 수 없습니다.', false, () => {
+                showModal('완료', '회원탈퇴가 완료되었습니다.<br><small style="color:#666;">이력 관리에 탈퇴 사유가 기록되었습니다.</small>', true, () => {
+                    document.querySelectorAll('.submenu-link')[0].click();
+                });
+            });
+        });
+
+        // 목록 버튼
+        document.getElementById('list-btn').addEventListener('click', () => {
+            document.querySelectorAll('.submenu-link')[0].click();
+        });
+
+        // 학습회원 인증
+        document.getElementById('student-register-btn').addEventListener('click', () => {
+            const memberNo = document.getElementById('student-memberNo').value;
+            if (memberNo.length !== 10) {
+                showModal('오류', '학습회원번호를 정확히 입력해 주세요.', true);
+                return;
+            }
+            showModal('확인', '학습회원 인증을 등록하시겠습니까?', false, () => {
+                studentAuth = true;
+                currentMember.studentAuthNo = memberNo;
+                currentMember.studentAuthDate = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+                // 시뮬레이션: 인증 성공 시 학습현황 데이터 생성
+                currentMember.learningStatus = [
+                    { memberNo: memberNo, brand: '눈높이', productName: '눈높이 수학', productCode: 'NH-MA-101', startDate: currentMember.studentAuthDate, center: '서울 러닝센터', teacher: '홍선생' }
+                ];
+                updateAuthDisplay();
+                showModal('완료', '학습회원 인증이 완료되었습니다.', true);
+            });
+        });
+
+        document.getElementById('student-unregister-btn').addEventListener('click', () => {
+            showModal('확인', '인증을 해제하시겠습니까?', false, () => {
+                studentAuth = false;
+                updateAuthDisplay();
+                showModal('완료', '인증이 해제되었습니다.', true);
+            });
+        });
+
+        // 조직원 인증
+        document.getElementById('employee-register-btn').addEventListener('click', () => {
+            const empNo = document.getElementById('employee-no').value.trim();
+            if (!/^\d{8}$/.test(empNo)) {
+                showModal('오류', '사번을 정확히 입력해주세요.', true);
+                return;
+            }
+            showModal('확인', '조직원 인증을 등록하시겠습니까?', false, () => {
+                employeeAuth = true;
+                document.getElementById('auth-employee-no').textContent = empNo;
+                document.getElementById('auth-employee-date').textContent = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+                updateAuthDisplay();
+                showModal('완료', '조직원 인증이 완료되었습니다.', true);
+            });
+        });
+
+        document.getElementById('employee-unregister-btn').addEventListener('click', () => {
+            showModal('확인', '인증을 해제하시겠습니까?', false, () => {
+                employeeAuth = false;
+                updateAuthDisplay();
+                showModal('완료', '인증이 해제되었습니다.', true);
+            });
+        });
+
+        // 자녀 등록 - 유효성 검사
+        function validateChildForm() {
+            // 자녀 필드 에러 초기화
+            ['child-name', 'child-birth', 'child-memberNo'].forEach(id => {
+                const field = document.getElementById(id);
+                const error = document.getElementById('error-' + id);
+                if (field) field.classList.remove('input-error');
+                if (error) { error.textContent = ''; error.style.display = 'none'; }
+            });
+
+            let isValid = true;
+            const childName = document.getElementById('child-name').value.trim();
+            const childBirth = document.getElementById('child-birth').value.trim();
+            const childMemberNo = document.getElementById('child-memberNo').value.trim();
+
+            // === 이름 유효성 검사 (기본정보 수정과 동일 정책) ===
+            const restrictedNames = ['대교','눈높이','써밋','SUMMIT','차이홍','솔루니','대교교과서','톡앤큐','talk&q','드림멘토','드림멘토상담센터','눈높이아티맘','HSK시험센터','소빅스','대교북스주니어','꿈꾸는달팽이','상상키즈','상상kids','트니트니','teuniteuni','BOOX','내신완공','세상에서가장큰책방','수능독해트레이닝','수독트','마이랭킹','크리드','마카다미아올인원','올인원','반보','vanvo','눈높이스쿨원','스쿨원','내일의학습','전국학력진단','뉴이프','브레인트레이닝','리딩핏'];
+
+            if (!childName) {
+                showFieldError('child-name', 'error-child-name', '필수 항목입니다.');
+                isValid = false;
+            } else if (restrictedNames.some(rn => childName.toLowerCase().startsWith(rn.toLowerCase()))) {
+                showFieldError('child-name', 'error-child-name', '대교 서비스/브랜드명으로 시작하는 이름은 사용할 수 없습니다.');
+                isValid = false;
+            } else {
+                const isKorean = /^[가-힣]+$/.test(childName);
+                const isEnglishWithSpecial = /^[a-zA-Z][a-zA-Z\s'\-]*[a-zA-Z]$/.test(childName) || /^[a-zA-Z]{1}$/.test(childName);
+                const isEnglishOnly = /^[a-zA-Z\s]+$/.test(childName);
+
+                if (isKorean) {
+                    if (childName.length < 2 || childName.length > 25) {
+                        showFieldError('child-name', 'error-child-name', '이름은 한글 2~25자로 입력해주세요.');
+                        isValid = false;
+                    }
+                } else if (isEnglishOnly || isEnglishWithSpecial) {
+                    if (childName.length < 2 || childName.length > 35) {
+                        showFieldError('child-name', 'error-child-name', '이름은 영문 2~35자로 입력해주세요.');
+                        isValid = false;
+                    } else if (/^['\-]|['\-]$/.test(childName)) {
+                        showFieldError('child-name', 'error-child-name', '이름은 기호(-, \')로 시작하거나 끝날 수 없습니다.');
+                        isValid = false;
+                    }
+                } else {
+                    showFieldError('child-name', 'error-child-name', '이름은 한글 또는 영문만 입력 가능합니다. (영문은 하이픈, 어포스트로피 허용)');
+                    isValid = false;
+                }
+            }
+
+            // === 생년월일 유효성 검사 (상세 검증) ===
+            if (!childBirth) {
+                showFieldError('child-birth', 'error-child-birth', '필수 항목입니다.');
+                isValid = false;
+            } else if (!/^\d{8}$/.test(childBirth)) {
+                showFieldError('child-birth', 'error-child-birth', '생년월일은 숫자 8자리(YYYYMMDD)로 입력해주세요.');
+                isValid = false;
+            } else {
+                const y = parseInt(childBirth.slice(0, 4), 10);
+                const m = parseInt(childBirth.slice(4, 6), 10);
+                const d = parseInt(childBirth.slice(6, 8), 10);
+
+                // 월 범위 검증
+                if (m < 1 || m > 12) {
+                    showFieldError('child-birth', 'error-child-birth', '월은 1~12 사이로 입력해주세요.');
+                    isValid = false;
+                } else {
+                    // 해당 월의 최대 일수 계산
+                    const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                    const isLeapYear = (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+                    const maxDay = (m === 2 && isLeapYear) ? 29 : daysInMonth[m - 1];
+
+                    if (d < 1 || d > maxDay) {
+                        // 윤년 특수 케이스: 2월 29일인데 윤년이 아닌 경우
+                        if (m === 2 && d === 29 && !isLeapYear) {
+                            showFieldError('child-birth', 'error-child-birth', `${y}년 2월은 28일까지만 유효합니다.`);
+                        } else {
+                            showFieldError('child-birth', 'error-child-birth', '해당 월에 유효한 날짜를 입력해주세요.');
+                        }
+                        isValid = false;
+                    } else {
+                        // 미래 날짜 검증
+                        const birthDate = new Date(y, m - 1, d);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (birthDate > today) {
+                            showFieldError('child-birth', 'error-child-birth', '미래 날짜는 입력할 수 없습니다.');
+                            isValid = false;
+                        }
+                    }
+                }
+            }
+
+            // === 학습회원번호 유효성 검사 (입력된 경우만) ===
+            if (childMemberNo) {
+                if (!/^\d{10}$/.test(childMemberNo)) {
+                    showFieldError('child-memberNo', 'error-child-memberNo', '학습회원번호는 숫자 10자리로 입력해주세요.');
+                    isValid = false;
+                }
+            }
+
+            // === 중복 등록 방어 ===
+            if (isValid) {
+                const formattedBirthCheck = childBirth ? `${childBirth.slice(0, 4)}.${childBirth.slice(4, 6)}.${childBirth.slice(6, 8)}` : '';
+
+                // 이름 + 생년월일 중복 검사
+                const duplicateChild = childList.find(c => c.name === childName && c.birth === formattedBirthCheck);
+                if (duplicateChild) {
+                    showModal('오류', '동일한 이름과 생년월일의 자녀가 이미 등록되어 있습니다.', true);
+                    isValid = false;
+                }
+
+                // 학습회원번호 중복 검사
+                if (isValid && childMemberNo) {
+                    const duplicateMemberNo = childList.find(c => c.memberNo === childMemberNo);
+                    if (duplicateMemberNo) {
+                        showFieldError('child-memberNo', 'error-child-memberNo', '해당 학습회원번호는 이미 등록된 자녀에게 연결되어 있습니다.');
+                        isValid = false;
+                    }
+                }
+            }
+
+            return isValid;
+        }
+
+        // API_DR_314 시뮬레이션 데이터 (뉴드림스 학습회원 조회)
+        const learningMemberDB = {
+            '0055123456': { name: '도구리', birth: '20150505', learning: '눈높이', center: '관악 러닝센터', teacher: '김미미' },
+            '0055123457': { name: '동구리', birth: '20150505', learning: '써밋', center: '강남 러닝센터', teacher: '이선생' },
+            '0055123458': { name: '봉구리', birth: '20180315', learning: '차이홍', center: '서초 러닝센터', teacher: '박선생' },
+            '0012345678': { name: '김하늘', birth: '20160720', learning: '솔루니', center: '송파 러닝센터', teacher: '최선생' },
+            '0098765432': { name: '이바다', birth: '20170101', learning: '눈높이', center: '마포 러닝센터', teacher: '정선생' }
+        };
+
+        // 자녀 등록 버튼
+        document.getElementById('child-register-btn').addEventListener('click', () => {
+            if (!validateChildForm()) return;
+
+            const childName = document.getElementById('child-name').value.trim();
+            const childBirth = document.getElementById('child-birth').value.trim();
+            const childMemberNo = document.getElementById('child-memberNo').value.trim();
+
+            const formattedBirth = `${childBirth.slice(0, 4)}.${childBirth.slice(4, 6)}.${childBirth.slice(6, 8)}`;
+            const today = new Date();
+            const regDate = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+
+            // Case 2: 학습회원번호 입력 시 → API_DR_314 검증
+            if (childMemberNo) {
+                const apiResult = learningMemberDB[childMemberNo];
+
+                // 조회 실패 (존재하지 않는 번호)
+                if (!apiResult) {
+                    showFieldError('child-memberNo', 'error-child-memberNo', '학습회원번호를 정확히 입력해 주세요.');
+                    return;
+                }
+
+                // 이름 + 생년월일 일치 여부 판단
+                const nameMatch = apiResult.name === childName;
+                const birthMatch = apiResult.birth === childBirth;
+
+                if (!nameMatch && !birthMatch) {
+                    showModal('오류', '입력한 이름과 생년월일이 학습회원 정보와 일치하지 않습니다.', true);
+                    return;
+                } else if (!nameMatch) {
+                    showModal('오류', '입력한 이름이 학습회원 정보와 일치하지 않습니다.', true);
+                    return;
+                } else if (!birthMatch) {
+                    showModal('오류', '입력한 생년월일이 학습회원 정보와 일치하지 않습니다.', true);
+                    return;
+                }
+
+                // 일치 → 학습정보 연동 등록
+                showModal('확인', `자녀를 등록하시겠습니까?<br><small style="color:#666;">이름: ${childName}, 생년월일: ${formattedBirth}<br>학습회원번호: ${childMemberNo} (학습정보 연동)</small>`, false, () => {
+                    childList.push({
+                        name: childName,
+                        birth: formattedBirth,
+                        memberNo: childMemberNo,
+                        oderId: '-',
+                        regDate: regDate,
+                        learning: apiResult.learning,
+                        center: apiResult.center,
+                        teacher: apiResult.teacher
+                    });
+                    updateAuthDisplay();
+                    document.getElementById('child-name').value = '';
+                    document.getElementById('child-birth').value = '';
+                    document.getElementById('child-memberNo').value = '';
+                    showModal('완료', '자녀가 등록되었습니다. 학습정보가 연동되었습니다.', true);
+                });
+
+            } else {
+                // Case 1: 이름 + 생년월일만 → 바로 등록 (기본정보만)
+                showModal('확인', `자녀를 등록하시겠습니까?<br><small style="color:#666;">이름: ${childName}, 생년월일: ${formattedBirth}</small>`, false, () => {
+                    childList.push({
+                        name: childName,
+                        birth: formattedBirth,
+                        memberNo: '-',
+                        oderId: '-',
+                        regDate: regDate,
+                        learning: '-',
+                        center: '-',
+                        teacher: '-'
+                    });
+                    updateAuthDisplay();
+                    document.getElementById('child-name').value = '';
+                    document.getElementById('child-birth').value = '';
+                    document.getElementById('child-memberNo').value = '';
+                    showModal('완료', '자녀가 등록되었습니다.', true);
+                });
+            }
+        });
+
+        // 주소 버튼 상태 업데이트
+        function updateAddressButtons() {
+            const currentAddress = document.getElementById('detail-address').value;
+            const hasAddress = currentAddress && currentAddress.trim() !== '';
+
+            if (isEditMode) {
+                if (hasAddress) {
+                    document.getElementById('address-register-btn').style.display = 'none';
+                    document.getElementById('address-edit-btn').style.display = 'inline-flex';
+                    document.getElementById('address-delete-btn').style.display = 'inline-flex';
+                } else {
+                    document.getElementById('address-register-btn').style.display = 'inline-flex';
+                    document.getElementById('address-edit-btn').style.display = 'none';
+                    document.getElementById('address-delete-btn').style.display = 'none';
+                }
+            } else {
+                document.getElementById('address-register-btn').style.display = 'none';
+                document.getElementById('address-edit-btn').style.display = 'none';
+                document.getElementById('address-delete-btn').style.display = 'none';
+            }
+        }
+
+        // 카카오 주소 검색
+        function openAddressSearch() {
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    let fullAddress = data.roadAddress || data.jibunAddress;
+                    if (data.buildingName !== '') {
+                        fullAddress += ' (' + data.buildingName + ')';
+                    }
+                    document.getElementById('detail-address').value = fullAddress;
+                    updateAddressButtons();
+                    showModal('완료', '주소가 등록되었습니다.', true);
+                }
+            }).open();
+        }
+
+        document.getElementById('address-register-btn').addEventListener('click', openAddressSearch);
+        document.getElementById('address-edit-btn').addEventListener('click', openAddressSearch);
+        document.getElementById('address-delete-btn').addEventListener('click', () => {
+            showModal('확인', '주소 정보를 삭제하시겠습니까?', false, () => {
+                document.getElementById('detail-address').value = '';
+                updateAddressButtons();
+                showModal('완료', '주소 정보가 삭제되었습니다.', true);
+            });
+        });
+
+        // 학교 검색
+        document.getElementById('school-search-btn').addEventListener('click', () => {
+            document.getElementById('school-search-input').value = '';
+            document.getElementById('school-search-tbody').innerHTML = '<tr><td colspan="2" style="padding: 40px; text-align: center; color: #999;">검색조건을 입력하세요.</td></tr>';
+            selectedSchool = null;
+
+            const currentSchool = document.getElementById('detail-school').value;
+            if (currentSchool && currentSchool.trim() !== '') {
+                document.getElementById('registered-school-area').style.display = 'block';
+                document.getElementById('registered-school-name').textContent = currentSchool;
+            } else {
+                document.getElementById('registered-school-area').style.display = 'none';
+            }
+
+            document.getElementById('school-search-modal').classList.add('active');
+        });
+
+        document.getElementById('school-search-execute').addEventListener('click', () => {
+            const keyword = document.getElementById('school-search-input').value;
+            searchSchools(keyword);
+        });
+
+        document.getElementById('school-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchSchools(e.target.value);
+            }
+        });
+
+        function searchSchools(keyword) {
+            const tbody = document.getElementById('school-search-tbody');
+            if (!keyword.trim()) {
+                tbody.innerHTML = '<tr><td colspan="2" style="padding: 40px; text-align: center; color: #999;">검색조건을 입력하세요.</td></tr>';
+                return;
+            }
+
+            const results = schoolDatabase.filter(school => school.name.includes(keyword) || school.address.includes(keyword));
+
+            if (results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="padding: 40px; text-align: center; color: #999;">검색 결과가 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            results.forEach(school => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${school.name}</td><td class="text-left">${school.address}</td>`;
+                tr.addEventListener('click', () => {
+                    document.querySelectorAll('#school-search-tbody tr').forEach(row => row.style.background = '');
+                    tr.style.background = '#f0f7ff';
+                    selectedSchool = school;
+                });
+                tr.addEventListener('dblclick', () => {
+                    document.getElementById('detail-school').value = school.name;
+                    updateGradeOptions(school.type);
+                    document.getElementById('school-search-modal').classList.remove('active');
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('school-select-btn').addEventListener('click', () => {
+            if (!selectedSchool) {
+                showModal('알림', '학교를 선택해주세요.', true);
+                return;
+            }
+            document.getElementById('detail-school').value = selectedSchool.name;
+            updateGradeOptions(selectedSchool.type);
+            document.getElementById('school-search-modal').classList.remove('active');
+        });
+
+        document.getElementById('school-cancel-btn').addEventListener('click', () => {
+            document.getElementById('school-search-modal').classList.remove('active');
+        });
+
+        document.getElementById('registered-school-delete-btn').addEventListener('click', () => {
+            showModal('확인', '등록된 학교 정보를 삭제하시겠습니까?', false, () => {
+                document.getElementById('detail-school').value = '';
+                document.getElementById('registered-school-area').style.display = 'none';
+                updateGradeOptions(null); // 전체 학년으로 변경, 기존 선택 학년 유지
+                showModal('완료', '학교 정보가 삭제되었습니다.', true);
+            });
+        });
+
+        document.getElementById('grade-delete-btn').addEventListener('click', () => {
+            const currentGrade = document.getElementById('detail-grade').value;
+            if (!currentGrade) {
+                showModal('알림', '삭제할 학년 정보가 없습니다.', true);
+                return;
+            }
+            showModal('확인', '학년 정보를 삭제하시겠습니까?', false, () => {
+                document.getElementById('detail-grade').value = '';
+                showModal('완료', '학년 정보가 삭제되었습니다.', true);
+            });
+        });
+
+        // 모달 함수
+        function showModal(title, body, alertOnly = false, confirmCallback = null) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal').classList.add('active');
+
+            if (alertOnly) {
+                document.getElementById('modal-cancel').style.display = 'none';
+            } else {
+                document.getElementById('modal-cancel').style.display = 'inline-flex';
+            }
+
+            const confirmBtn = document.getElementById('modal-confirm');
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            newConfirmBtn.addEventListener('click', () => {
+                document.getElementById('modal').classList.remove('active');
+                if (confirmCallback) confirmCallback();
+            });
+        }
+
+        document.getElementById('modal-cancel').addEventListener('click', () => {
+            document.getElementById('modal').classList.remove('active');
+        });
+
+        // 하단 프로토타입 바 네비게이션
+        function protoNavigate(page) {
+            // 서브메뉴 링크 클릭으로 페이지 전환 위임
+            const link = document.querySelector('.submenu-link[data-page="' + page + '"]');
+            if (link) {
+                link.click();
+            } else {
+                // detail 페이지 등 사이드바에 없는 화면 직접 전환
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page + '-page').classList.add('active');
+                updateProtoBar(page);
+            }
+        }
+
+        // 프로토타입 바 버튼 활성 상태 동기화
+        function updateProtoBar(page) {
+            document.querySelectorAll('.proto-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('proto-nav-' + page).classList.add('active');
+        }
+
+        // 기존 submenu-link 클릭 이벤트에 프로토타입 바 동기화 연결
+        document.querySelectorAll('.submenu-link').forEach(link => {
+            link.addEventListener('click', () => {
+                updateProtoBar(link.dataset.page);
+            });
+        });
+    </script>
+</body>
+</html>

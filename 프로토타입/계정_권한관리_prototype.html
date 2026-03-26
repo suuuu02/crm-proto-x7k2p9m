@@ -1,0 +1,4060 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>계정/권한관리 Prototype</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        /* App Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ========== Sidebar ========== */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #1a2a4a 0%, #243b67 100%);
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: #fff;
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .nav-menu { padding: 16px 0; }
+        .nav-menu ul { list-style: none; }
+        .nav-item { margin: 4px 12px; }
+
+        /* 메뉴 구분선 */
+        .menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 12px 20px;
+        }
+
+        /* 메뉴 섹션 헤더 */
+        .menu-section-header {
+            padding: 16px 20px 8px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-link:hover { background-color: rgba(255, 255, 255, 0.1); color: #fff; }
+        .nav-item.active > .nav-link { background-color: rgba(255, 255, 255, 0.15); color: #fff; }
+
+        .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+        .arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; }
+        .arrow.rotate { transform: rotate(180deg); }
+
+        .submenu { list-style: none; display: none; margin-top: 4px; padding-left: 20px; }
+        .submenu.show { display: block; }
+
+        .submenu-link {
+            display: block;
+            padding: 10px 16px 10px 36px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 13px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .submenu-link::before {
+            content: '';
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .submenu-link:hover,
+        .submenu-link.active { color: #fff; background-color: rgba(255, 255, 255, 0.1); }
+        .submenu-link.active::before { background-color: #4fc3f7; }
+
+        /* ========== Main Content ========== */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            background-color: #f5f7fa;
+        }
+
+        /* Header */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 32px;
+            background-color: #fff;
+            border-bottom: 1px solid #e8eaed;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .breadcrumb .separator { color: #999; }
+        .breadcrumb .current { color: #333; font-weight: 600; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-name { font-weight: 500; color: #333; }
+        .user-divider { color: #ccc; margin: 0 6px; }
+        .user-group { color: #666; font-size: 13px; }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            color: #666;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover { background-color: #f5f5f5; border-color: #ccc; }
+
+        /* Content Section */
+        .content-section { padding: 32px; }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .screen-header {
+            margin-bottom: 24px;
+        }
+
+        .screen-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .screen-description {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Content Card */
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Form Elements */
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #4a90d9;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            margin-left: 2px;
+        }
+
+        .form-control {
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+        }
+
+        .form-control:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .form-control.error {
+            border-color: #e74c3c;
+        }
+
+        .error-message {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 6px;
+        }
+
+        .success-message {
+            font-size: 12px;
+            color: #2e7d32;
+            margin-top: 6px;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Input Group (with button) */
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+        /* Radio Group */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            padding: 8px 0;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .radio-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        /* Checkbox Group (서비스 선택) */
+        .checkbox-group {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fafbfc;
+        }
+
+        .checkbox-group .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .checkbox-group .checkbox-item:hover {
+            background: #f0f4f8;
+        }
+
+        .checkbox-group .checkbox-item + .checkbox-item {
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .checkbox-group .checkbox-item:first-child {
+            background: #eef2f7;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .checkbox-group .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4a90d9;
+            flex-shrink: 0;
+        }
+
+        .checkbox-group .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            color: #333;
+            flex: 1;
+        }
+
+        .checkbox-group .checkbox-item:first-child label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .checkbox-group .checkbox-item input[type="checkbox"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .checkbox-group .checkbox-item input[type="checkbox"]:disabled + label {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4a90d9;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #3a7bc8;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #666;
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Button Groups */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* Search/Filter Section */
+        .filter-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* List Header */
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .list-count {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .list-count strong {
+            color: #4a90d9;
+            font-weight: 700;
+        }
+
+        /* Data Table */
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .data-table thead {
+            background: #f8f9fb;
+        }
+
+        .data-table th {
+            padding: 14px 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+        }
+
+        .data-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .data-table th.sortable:hover {
+            background: #f3f4f6;
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+        }
+
+        .data-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fb;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table a {
+            color: #4a90d9;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .data-table a:hover {
+            text-decoration: underline;
+        }
+
+        .data-table .text-left {
+            text-align: left;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-inactive {
+            background: #f5f5f5;
+            color: #9e9e9e;
+        }
+
+        .badge-locked {
+            background: #fef2f2;
+            color: #FF4D4F;
+        }
+
+        .badge-level-1 {
+            background: #f9f0ff;
+            color: #722ed1;
+        }
+
+        .badge-level-2 {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .badge-level-3 {
+            background: #e6fffb;
+            color: #13c2c2;
+        }
+
+        .badge-level-4 {
+            background: #f5f5f5;
+            color: #8c8c8c;
+        }
+
+        .badge-system {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .badge-custom {
+            background: #e6fffb;
+            color: #13c2c2;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            margin-top: 24px;
+        }
+
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .pagination-info select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .page-btn {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-btn.active {
+            background: #4a90d9;
+            color: white;
+            border-color: #4a90d9;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #f0f7ff;
+            border: 1px solid #d0e4ff;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .info-box-icon {
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        /* Detail View */
+        .detail-section {
+            margin-bottom: 32px;
+        }
+
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #4a90d9;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px 32px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .detail-value.empty {
+            color: #666;
+        }
+
+        /* Security Status */
+        .security-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .security-status .detail-value {
+            flex: 1;
+        }
+
+        /* Member Count Link */
+        .member-count {
+            color: #4a90d9;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .member-count:hover {
+            color: #3a7bc8;
+        }
+
+        /* Checkbox Tree */
+        .checkbox-tree {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fafafa;
+        }
+
+        .tree-group {
+            margin-bottom: 16px;
+        }
+
+        .tree-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .tree-group-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tree-menu {
+            margin-bottom: 12px;
+        }
+
+        .tree-menu:last-child {
+            margin-bottom: 0;
+        }
+
+        .tree-menu-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .tree-menu-header input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .tree-menu-header label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+        }
+
+        .tree-permissions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding-left: 32px;
+        }
+
+        .tree-permission-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .tree-permission-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .tree-permission-item label {
+            font-size: 13px;
+            color: #555;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .tree-permission-item input:disabled + label {
+            opacity: 0.5;
+        }
+
+        /* Readonly Checkbox Tree */
+        .checkbox-tree.readonly .tree-menu-header input,
+        .checkbox-tree.readonly .tree-permission-item input {
+            pointer-events: none;
+        }
+
+        /* Admin List Mini Table */
+        .admin-list-mini {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .admin-list-mini table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-list-mini th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .admin-list-mini td {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .admin-list-mini tr:last-child td {
+            border-bottom: none;
+        }
+
+        .view-all-link {
+            display: block;
+            text-align: center;
+            padding: 12px;
+            background: #f8f9fb;
+            color: #4a90d9;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .view-all-link:hover {
+            background: #f3f4f6;
+        }
+
+        /* Permission Matrix */
+        .permission-matrix-container {
+            overflow-x: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .permission-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .permission-matrix-table thead {
+            background: #f9fafb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .permission-matrix-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .permission-matrix-table th:last-child {
+            border-right: none;
+        }
+
+        .permission-matrix-table th.sticky-col {
+            position: sticky;
+            left: 0;
+            background: #f9fafb;
+            z-index: 11;
+        }
+
+        .permission-matrix-table td {
+            padding: 8px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .permission-matrix-table td:last-child {
+            border-right: none;
+        }
+
+        .permission-matrix-table td.sticky-col {
+            position: sticky;
+            left: 0;
+            background: white;
+            text-align: left;
+            font-weight: 600;
+            z-index: 9;
+        }
+
+        .permission-matrix-table td.menu-indent {
+            padding-left: 32px;
+            font-weight: 400;
+        }
+
+        .batch-btn {
+            margin-left: 8px;
+            padding: 2px 8px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .batch-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .permission-cell-select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .permission-cell-select:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+
+        .permission-cell-select.perm-full {
+            background: #f6ffed;
+            color: #52c41a;
+            border-color: #b7eb8f;
+        }
+
+        .permission-cell-select.perm-limited {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-color: #91d5ff;
+        }
+
+        .permission-cell-select.perm-read {
+            background: #fff7e6;
+            color: #fa8c16;
+            border-color: #ffd591;
+        }
+
+        .permission-cell-select.perm-none {
+            background: #fafafa;
+            color: #8c8c8c;
+            border-color: #d9d9d9;
+        }
+
+        /* Permission Legend */
+        .permission-legend {
+            background: #f9fafb;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .legend-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 12px;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .legend-item span:last-child {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .modal-header {
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 6px;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e0e0e0;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            min-width: 300px;
+            padding: 14px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-success {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #2e7d32;
+        }
+
+        .toast-error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #e74c3c;
+        }
+
+        .toast-info {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+
+        .toast-warning {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            flex: 1;
+        }
+
+        /* Prototype Bar */
+        .prototype-bar {
+            position: fixed;
+            bottom: 0;
+            left: 260px;
+            right: 0;
+            background: #1a1a2e;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            font-size: 13px;
+        }
+
+        .prototype-badge {
+            background: #4a90d9;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .prototype-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .prototype-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .prototype-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .prototype-nav-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .prototype-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .prototype-nav-btn.active {
+            background: #4a90d9;
+            border-color: #4a90d9;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Duplication Check Status */
+        .duplication-status {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .duplication-status.unchecked {
+            color: #666;
+        }
+
+        .duplication-status.checking {
+            color: #4a90d9;
+        }
+
+        .duplication-status.available {
+            color: #2e7d32;
+        }
+
+        .duplication-status.unavailable {
+            color: #e74c3c;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        /* Permission Level Badges (FULL/LIMITED/READ_ONLY/NONE) */
+        .perm-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .perm-badge-full { background: #E8F5E9; color: #2E7D32; }
+        .perm-badge-limited { background: #FFF3E0; color: #E65100; }
+        .perm-badge-read_only { background: #E3F2FD; color: #1565C0; }
+        .perm-badge-none { background: #F5F5F5; color: #999999; }
+
+        /* Menu Permission Table (for ADM-005/006) */
+        .menu-perm-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .menu-perm-table thead { background: #f8f9fb; }
+        .menu-perm-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .menu-perm-table td {
+            padding: 10px 16px;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .menu-perm-table tr:last-child td { border-bottom: none; }
+        .menu-perm-table tr.parent-row { background: #f9fafb; }
+        .menu-perm-table tr.parent-row td { font-weight: 600; }
+        .menu-perm-table tr.child-row td:first-child { padding-left: 40px; font-weight: 400; }
+        .menu-perm-table .perm-select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 140px;
+            transition: all 0.2s;
+        }
+        .menu-perm-table .perm-select:focus {
+            outline: none;
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 3px rgba(74,144,217,0.1);
+        }
+        .menu-perm-table .perm-select.sel-full { background: #E8F5E9; color: #2E7D32; border-color: #A5D6A7; }
+        .menu-perm-table .perm-select.sel-limited { background: #FFF3E0; color: #E65100; border-color: #FFCC80; }
+        .menu-perm-table .perm-select.sel-read_only { background: #E3F2FD; color: #1565C0; border-color: #90CAF9; }
+        .menu-perm-table .perm-select.sel-none { background: #F5F5F5; color: #999999; border-color: #E0E0E0; }
+
+        /* Permission Legend for ADM-005/006 */
+        .perm-legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .perm-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Change History Table in ADM-006 */
+        .change-history-section { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스 CRM</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="../01. 회원관리/프로토타입/회원관리_프로토타입.html">
+                            <span class="nav-icon">👥</span>
+                            <span>회원관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html">
+                            <span class="nav-icon">📨</span>
+                            <span>메시지 발송</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../03. 통계/프로토타입/통계_프로토타입.html">
+                            <span class="nav-icon">📊</span>
+                            <span>통계</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../04. 약관_처리방침 관리/약관관리_prototype.html">
+                            <span class="nav-icon">📋</span>
+                            <span>약관/처리방침 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" onclick="toggleSubmenu(this)">
+                            <span class="nav-icon">👤</span>
+                            <span>계정/권한 관리</span>
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a class="submenu-link active" onclick="goToScreen('screen-adm-001')">관리자 등록 관리</a></li>
+                            <li><a class="submenu-link" onclick="goToScreen('screen-adm-004')">권한 그룹 관리</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../06. 서비스 관리/02. 프로토타입/index.html">
+                            <span class="nav-icon">⚙️</span>
+                            <span>서비스 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html">
+                            <span class="nav-icon">📝</span>
+                            <span>이력 관리</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>계정/권한 관리</span>
+                    <span class="separator">›</span>
+                    <span class="current" id="breadcrumb-current">관리자 등록 관리</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+
+    <!-- Screen 1: ADM-001 Admin List -->
+    <div class="screen active" id="screen-adm-001">
+        <div class="screen-header">
+            <h1>관리자 등록 관리</h1>
+            <p class="screen-description">CRM 시스템 관리자를 조회하고 관리합니다</p>
+        </div>
+
+        <div class="content-card">
+            <!-- Search Filter -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>이름</label>
+                        <input type="text" id="search-name" class="form-control" placeholder="이름을 입력하세요">
+                    </div>
+                    <div class="filter-item">
+                        <label>아이디(이메일)</label>
+                        <input type="text" id="search-loginid" class="form-control" placeholder="이메일 주소를 입력하세요">
+                    </div>
+                    <div class="filter-item">
+                        <label>권한그룹</label>
+                        <select id="search-rolegroup" class="form-control">
+                            <option value="">전체</option>
+                            <option value="시스템관리자">시스템관리자</option>
+                            <option value="대교관리자">대교관리자</option>
+                            <option value="일반관리자">일반관리자</option>
+                            <option value="마케팅관리자">마케팅관리자</option>
+                            <option value="CS관리자">CS관리자</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>담당 서비스</label>
+                        <select id="search-service" class="form-control">
+                            <option value="">전체</option>
+                            <option value="트니트니">트니트니</option>
+                            <option value="눈높이앱">눈높이앱</option>
+                            <option value="에듀캠프">에듀캠프</option>
+                            <option value="대교뉴이프">대교뉴이프</option>
+                            <option value="대교리더스">대교리더스</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-secondary" onclick="resetSearch()">초기화</button>
+                    <button class="btn-primary" onclick="searchAdmins()">검색</button>
+                </div>
+            </div>
+
+            <!-- List Header -->
+            <div class="list-header">
+                <div class="list-count">총 <strong id="total-count">7</strong>건</div>
+                <button class="btn-primary btn-icon" onclick="goToScreen('screen-adm-002')">
+                    + 관리자 등록
+                </button>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">No</th>
+                            <th class="sortable" onclick="sortTable('name')">이름</th>
+                            <th class="sortable" onclick="sortTable('loginId')">아이디(이메일)</th>
+                            <th class="sortable" onclick="sortTable('roleGroup')">권한그룹</th>
+                            <th>담당 서비스</th>
+                            <th class="sortable" onclick="sortTable('status')">상태</th>
+                            <th class="sortable" onclick="sortTable('lastLogin')">최종 로그인</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <div class="pagination-info">
+                    <span>페이지당</span>
+                    <select id="page-size" onchange="changePageSize()">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span>개씩 보기</span>
+                </div>
+                <div class="pagination-controls" id="pagination-controls">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: ADM-002 Admin Registration -->
+    <div class="screen" id="screen-adm-002">
+        <div class="screen-header">
+            <h1>관리자 등록</h1>
+            <p class="screen-description">새로운 관리자 계정을 등록합니다</p>
+        </div>
+
+        <div class="content-card">
+            <form id="admin-register-form">
+                <!-- Basic Info Section -->
+                <div class="form-section">
+                    <div class="form-section-title">기본 정보</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>아이디(이메일) <span class="required">*</span></label>
+                            <div class="input-group">
+                                <input type="email" id="reg-loginid" class="form-control" placeholder="이메일 주소를 입력하세요 (예: name@daekyo.co.kr)">
+                                <button type="button" class="btn-secondary" id="check-duplicate-btn" onclick="checkDuplicate()">중복확인</button>
+                            </div>
+                            <div id="loginid-error" class="error-message" style="display: none;"></div>
+                            <div id="duplicate-status" class="duplication-status unchecked">중복 확인이 필요합니다</div>
+                        </div>
+                        <div class="form-group">
+                            <label>이름 <span class="required">*</span></label>
+                            <input type="text" id="reg-name" class="form-control" placeholder="이름을 입력하세요">
+                            <div id="name-error" class="error-message" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>연락처</label>
+                            <input type="text" id="reg-phone" class="form-control" placeholder="연락처를 입력하세요" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Assignment Section -->
+                <div class="form-section" id="service-selection-row">
+                    <div class="form-section-title">담당 서비스 설정</div>
+                    <div id="service-sysadmin-banner" style="display: none; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; color: #1565c0; font-size: 13px;">
+                        ℹ 시스템관리자는 모든 서비스에 자동 접근 가능합니다. 담당 서비스 설정은 저장 시 무시됩니다.
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>소속 그룹사 <span class="required">*</span></label>
+                            <select id="reg-group-company" class="form-control" onchange="onRegGroupCompanyChange(this.value)">
+                                <option value="">그룹사를 선택하세요</option>
+                                <option value="1">대교</option>
+                                <option value="2">대교 에듀캠프</option>
+                            </select>
+                            <div class="form-help">관리자가 소속된 그룹사를 선택하면 해당 그룹사의 서비스 목록이 표시됩니다</div>
+                            <div id="group-company-error" class="error-message" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>관리 가능한 서비스 <span class="required">*</span></label>
+                            <div id="service-checkbox-group" class="checkbox-group">
+                                <div style="color: #999; font-size: 13px; padding: 8px 0;">소속 그룹사를 먼저 선택하세요</div>
+                            </div>
+                            <div class="form-help">선택한 서비스에 대해서만 조회/관리 권한이 부여됩니다</div>
+                            <div id="service-error" class="error-message" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permission Section -->
+                <div class="form-section">
+                    <div class="form-section-title">권한 설정</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>권한그룹 <span class="required">*</span></label>
+                            <select id="reg-rolegroup" class="form-control">
+                                <option value="">선택하세요</option>
+                                <option value="시스템관리자">시스템관리자</option>
+                                <option value="대교관리자">대교관리자</option>
+                                <option value="일반관리자">일반관리자</option>
+                                <option value="마케팅관리자">마케팅관리자</option>
+                                <option value="CS관리자">CS관리자</option>
+                            </select>
+                            <div class="form-help" id="rolegroup-help" style="display: none;"></div>
+                            <div id="rolegroup-error" class="error-message" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>상태 <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="status-active" name="status" value="ACTIVE" checked>
+                                    <label for="status-active">사용중</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="status-inactive" name="status" value="INACTIVE">
+                                    <label for="status-inactive">비활성</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Section -->
+                <div class="form-section">
+                    <div class="form-section-title">비밀번호 발급</div>
+                    <div class="info-box">
+                        <div class="info-box-icon">ℹ</div>
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">임시 비밀번호가 아이디(이메일)로 발송됩니다</div>
+                            <div>관리자 등록 완료 시 입력한 아이디(이메일) 주소로 임시 비밀번호가 자동 발송되며, 최초 로그인 시 비밀번호 변경이 필요합니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="cancelRegister()">취소</button>
+                    <button type="submit" class="btn-primary" id="register-submit-btn">등록</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen 3: ADM-003 Admin Detail/Edit -->
+    <div class="screen" id="screen-adm-003">
+        <div class="screen-header">
+            <h1 id="adm003-title">관리자 상세</h1>
+            <p class="screen-description">관리자 정보를 조회하고 수정합니다</p>
+        </div>
+
+        <div class="content-card">
+            <!-- View Mode -->
+            <div id="adm003-view-mode">
+                <!-- Basic Info -->
+                <div class="detail-section">
+                    <div class="detail-section-title">기본 정보</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">아이디(이메일)</div>
+                            <div class="detail-value" id="detail-loginid"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">이름</div>
+                            <div class="detail-value" id="detail-name"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">연락처</div>
+                            <div class="detail-value" id="detail-phone"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">권한그룹</div>
+                            <div class="detail-value" id="detail-rolegroup"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">상태</div>
+                            <div class="detail-value" id="detail-status"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 담당 서비스 정보 -->
+                <div class="detail-section">
+                    <div class="detail-section-title">담당 서비스 정보</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">소속 그룹사</div>
+                            <div class="detail-value" id="detail-groupcompany">대교</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">담당 서비스</div>
+                            <div class="detail-value" id="detail-services">
+                                <!-- badges for each service -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity History -->
+                <div class="detail-section">
+                    <div class="detail-section-title">활동 이력</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">등록일시</div>
+                            <div class="detail-value" id="detail-createdat"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">수정일시</div>
+                            <div class="detail-value" id="detail-updatedat"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">최종 로그인</div>
+                            <div class="detail-value" id="detail-lastlogin"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Management -->
+                <div class="detail-section">
+                    <div class="detail-section-title">비밀번호 관리</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">비밀번호 변경일</div>
+                            <div class="detail-value" id="detail-pwdchangedat"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">비밀번호 만료일</div>
+                            <div class="detail-value" id="detail-pwdexpiresat"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">임시 비밀번호 재발급</div>
+                            <div class="detail-value">
+                                <button class="btn-secondary btn-sm" onclick="showPasswordResetModal()">비밀번호 재발급</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Security -->
+                <div class="detail-section">
+                    <div class="detail-section-title">계정 보안</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">로그인 실패 횟수</div>
+                            <div class="detail-value" id="detail-failcount"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">계정 잠금 상태</div>
+                            <div class="security-status">
+                                <div class="detail-value" id="detail-lockstatus"></div>
+                                <button class="btn-secondary btn-sm" id="unlock-btn" style="display: none;" onclick="showUnlockModal()">잠금 해제</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Send History -->
+                <div class="detail-section">
+                    <div class="detail-section-title">이메일 발송 이력</div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>발송일시</th>
+                                    <th>유형</th>
+                                    <th>제목</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2026-02-10 09:30:15</td>
+                                    <td>비밀번호 재발급</td>
+                                    <td>[CRM] 임시 비밀번호 발급 안내</td>
+                                    <td><span class="badge badge-active">발송완료</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2026-01-20 10:15:00</td>
+                                    <td>계정 등록</td>
+                                    <td>[CRM] 관리자 계정 등록 안내</td>
+                                    <td><span class="badge badge-active">발송완료</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View Mode Buttons -->
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="goToScreen('screen-adm-001')">목록으로</button>
+                    <button class="btn-primary" onclick="enterEditMode()">수정</button>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="adm003-edit-mode" style="display: none;">
+                <form id="admin-edit-form">
+                    <div class="form-section">
+                        <div class="form-section-title">기본 정보</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>아이디(이메일)</label>
+                                <input type="text" id="edit-loginid" class="form-control" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>이름 <span class="required">*</span></label>
+                                <input type="text" id="edit-name" class="form-control">
+                                <div id="edit-name-error" class="error-message" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>연락처</label>
+                                <input type="text" id="edit-phone" class="form-control" maxlength="13">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service Assignment Section (Edit) -->
+                    <div class="form-section" id="edit-service-selection-row">
+                        <div class="form-section-title">담당 서비스 설정</div>
+                        <div id="edit-service-sysadmin-banner" style="display: none; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; color: #1565c0; font-size: 13px;">
+                            ℹ 시스템관리자는 모든 서비스에 자동 접근 가능합니다. 담당 서비스 설정은 저장 시 무시됩니다.
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>소속 그룹사 <span class="required">*</span></label>
+                                <select id="edit-group-company" class="form-control" onchange="onEditGroupCompanyChange(this.value)">
+                                    <option value="">그룹사를 선택하세요</option>
+                                    <option value="1">대교</option>
+                                    <option value="2">대교 에듀캠프</option>
+                                </select>
+                                <div class="form-help">관리자가 소속된 그룹사를 선택하면 해당 그룹사의 서비스 목록이 표시됩니다</div>
+                                <div id="edit-group-company-error" class="error-message" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>관리 가능한 서비스 <span class="required">*</span></label>
+                                <div id="edit-service-checkbox-group" class="checkbox-group">
+                                    <div style="color: #999; font-size: 13px; padding: 8px 0;">소속 그룹사를 먼저 선택하세요</div>
+                                </div>
+                                <div class="form-help">선택한 서비스에 대해서만 조회/관리 권한이 부여됩니다</div>
+                                <div id="edit-service-error" class="error-message" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permission Section (Edit) -->
+                    <div class="form-section">
+                        <div class="form-section-title">권한 설정</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>권한그룹 <span class="required">*</span></label>
+                                <select id="edit-rolegroup" class="form-control">
+                                    <option value="시스템관리자">시스템관리자</option>
+                                    <option value="대교관리자">대교관리자</option>
+                                    <option value="일반관리자">일반관리자</option>
+                                    <option value="마케팅관리자">마케팅관리자</option>
+                                    <option value="CS관리자">CS관리자</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>상태 <span class="required">*</span></label>
+                                <div class="radio-group">
+                                    <div class="radio-item">
+                                        <input type="radio" id="edit-status-active" name="edit-status" value="ACTIVE">
+                                        <label for="edit-status-active">사용중</label>
+                                    </div>
+                                    <div class="radio-item">
+                                        <input type="radio" id="edit-status-inactive" name="edit-status" value="INACTIVE">
+                                        <label for="edit-status-inactive">비활성</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode Buttons -->
+                    <div class="button-group">
+                        <button type="button" class="btn-secondary" onclick="cancelEdit()">취소</button>
+                        <button type="submit" class="btn-primary" id="edit-submit-btn" disabled>저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 4: ADM-004 Permission Group List -->
+    <div class="screen" id="screen-adm-004">
+        <div class="screen-header">
+            <h1>권한 그룹 관리</h1>
+            <p class="screen-description">관리자의 권한 그룹을 조회하고 관리합니다</p>
+        </div>
+
+        <div class="content-card">
+            <!-- Search Filter -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>그룹명</label>
+                        <input type="text" id="group-search-name" class="form-control" placeholder="그룹명을 입력하세요">
+                    </div>
+                    <div class="filter-item">
+                        <label>상태</label>
+                        <select id="group-search-status" class="form-control">
+                            <option value="">전체</option>
+                            <option value="ACTIVE">사용중</option>
+                            <option value="INACTIVE">비활성</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-secondary" onclick="resetGroupSearch()">초기화</button>
+                    <button class="btn-primary" onclick="searchGroups()">검색</button>
+                </div>
+            </div>
+
+            <!-- List Header -->
+            <div class="list-header">
+                <div class="list-count">총 <strong id="group-total-count">5</strong>건</div>
+                <button class="btn-primary btn-icon" onclick="goToScreen('screen-adm-005')">
+                    + 권한 그룹 등록
+                </button>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">No</th>
+                            <th>그룹명</th>
+                            <th>설명</th>
+                            <th>상태</th>
+                            <th>관리자 수</th>
+                            <th>등록일시</th>
+                        </tr>
+                    </thead>
+                    <tbody id="group-table-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 5: ADM-005 Permission Group Registration -->
+    <div class="screen" id="screen-adm-005">
+        <div class="screen-header">
+            <h1>권한 그룹 등록</h1>
+            <p class="screen-description">새로운 권한 그룹을 등록합니다</p>
+        </div>
+
+        <div class="content-card">
+            <form id="group-register-form">
+                <!-- Basic Info -->
+                <div class="form-section">
+                    <div class="form-section-title">기본 정보</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>그룹명 <span class="required">*</span></label>
+                            <input type="text" id="group-reg-name" class="form-control" placeholder="권한 그룹명을 입력하세요 (2~50자)" maxlength="50">
+                            <div id="group-name-error" class="error-message" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label>설명</label>
+                            <textarea id="group-reg-description" class="form-control" placeholder="권한 그룹에 대한 설명을 입력하세요 (최대 200자)" maxlength="200" rows="3"></textarea>
+                            <div class="char-counter"><span id="desc-counter">0</span>/200</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>상태 <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="group-status-active" name="group-status" value="ACTIVE" checked>
+                                    <label for="group-status-active">사용중</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="group-status-inactive" name="group-status" value="INACTIVE">
+                                    <label for="group-status-inactive">비활성</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Menu Permissions -->
+                <div class="form-section">
+                    <div class="form-section-title">메뉴별 권한 설정</div>
+                    <div class="perm-legend">
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-full">전체권한</span> 조회/등록/수정/삭제</div>
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-limited">제한된권한</span> 조회/등록/수정</div>
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-read_only">조회권한</span> 조회만</div>
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-none">권한없음</span> 접근 불가</div>
+                    </div>
+                    <div id="permission-tree">
+                        <table class="menu-perm-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60%;">메뉴</th>
+                                    <th style="width: 40%;">권한 수준</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reg-perm-tbody">
+                                <!-- Dynamically generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="cancelGroupRegister()">취소</button>
+                    <button type="submit" class="btn-primary">등록</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen 6: ADM-006 Permission Group Detail/Edit -->
+    <div class="screen" id="screen-adm-006">
+        <div class="screen-header">
+            <h1 id="adm006-title">권한 그룹 상세</h1>
+            <p class="screen-description">권한 그룹 정보를 조회하고 수정합니다</p>
+        </div>
+
+        <div class="content-card">
+            <!-- View Mode -->
+            <div id="adm006-view-mode">
+                <!-- Basic Info -->
+                <div class="detail-section">
+                    <div class="detail-section-title">기본 정보</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">그룹명</div>
+                            <div class="detail-value" id="group-detail-name"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">설명</div>
+                            <div class="detail-value" id="group-detail-description"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">상태</div>
+                            <div class="detail-value" id="group-detail-status"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">등록일시</div>
+                            <div class="detail-value" id="group-detail-createdat"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">수정일시</div>
+                            <div class="detail-value" id="group-detail-updatedat"></div>
+                        </div>
+                    </div>
+                    <div id="system-group-notice" style="display: none; margin-top: 16px; padding: 12px; background: #F5F5F5; border-radius: 8px; color: #666; font-size: 13px;">
+                        ℹ️ 시스템 기본 제공 그룹입니다. (삭제 불가)
+                    </div>
+                </div>
+
+                <!-- Menu Permissions (Readonly) -->
+                <div class="detail-section">
+                    <div class="detail-section-title">메뉴별 권한</div>
+                    <div class="perm-legend">
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-full">전체권한</span></div>
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-limited">제한된권한</span></div>
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-read_only">조회권한</span></div>
+                        <div class="perm-legend-item"><span class="perm-badge perm-badge-none">권한없음</span></div>
+                    </div>
+                    <div id="group-permission-tree-view">
+                        <table class="menu-perm-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60%;">메뉴</th>
+                                    <th style="width: 40%;">권한 수준</th>
+                                </tr>
+                            </thead>
+                            <tbody id="view-perm-tbody">
+                                <!-- Dynamically generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Member List -->
+                <div class="detail-section">
+                    <div class="detail-section-title">소속 관리자 (<span id="member-count">0</span>명)</div>
+                    <div class="admin-list-mini">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>이름</th>
+                                    <th>아이디(이메일)</th>
+                                    <th>상태</th>
+                                    <th>최종 로그인</th>
+                                </tr>
+                            </thead>
+                            <tbody id="member-list-tbody">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                        <a href="#" class="view-all-link" onclick="showAllMembers(event)">전체 목록 보기 (총 <span id="total-member-count">0</span>명)</a>
+                    </div>
+                </div>
+
+                <!-- Change History -->
+                <div class="detail-section change-history-section">
+                    <div class="detail-section-title">권한 변경 이력</div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>변경일시</th>
+                                    <th>변경자</th>
+                                    <th>메뉴</th>
+                                    <th>변경 전</th>
+                                    <th>변경 후</th>
+                                </tr>
+                            </thead>
+                            <tbody id="change-history-tbody">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View Mode Buttons -->
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="goToScreen('screen-adm-004')">목록으로</button>
+                    <button class="btn-primary" onclick="enterGroupEditMode()">수정</button>
+                    <button class="btn-danger" id="group-delete-btn" style="display: none;" onclick="showDeleteGroupModal()">삭제</button>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="adm006-edit-mode" style="display: none;">
+                <form id="group-edit-form">
+                    <div class="form-section">
+                        <div class="form-section-title">기본 정보</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>그룹명 <span class="required">*</span></label>
+                                <input type="text" id="group-edit-name" class="form-control" maxlength="50">
+                                <div id="group-edit-name-error" class="error-message" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label>설명</label>
+                                <textarea id="group-edit-description" class="form-control" maxlength="200" rows="3"></textarea>
+                                <div class="char-counter"><span id="edit-desc-counter">0</span>/200</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>상태 <span class="required">*</span></label>
+                                <div class="radio-group">
+                                    <div class="radio-item">
+                                        <input type="radio" id="group-edit-status-active" name="group-edit-status" value="ACTIVE">
+                                        <label for="group-edit-status-active">사용중</label>
+                                    </div>
+                                    <div class="radio-item">
+                                        <input type="radio" id="group-edit-status-inactive" name="group-edit-status" value="INACTIVE">
+                                        <label for="group-edit-status-inactive">비활성</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu Permissions -->
+                    <div class="form-section">
+                        <div class="form-section-title">메뉴별 권한 설정</div>
+                        <div class="perm-legend">
+                            <div class="perm-legend-item"><span class="perm-badge perm-badge-full">전체권한</span> 조회/등록/수정/삭제</div>
+                            <div class="perm-legend-item"><span class="perm-badge perm-badge-limited">제한된권한</span> 조회/등록/수정</div>
+                            <div class="perm-legend-item"><span class="perm-badge perm-badge-read_only">조회권한</span> 조회만</div>
+                            <div class="perm-legend-item"><span class="perm-badge perm-badge-none">권한없음</span> 접근 불가</div>
+                        </div>
+                        <div id="group-permission-tree-edit">
+                            <table class="menu-perm-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60%;">메뉴</th>
+                                        <th style="width: 40%;">권한 수준</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="edit-perm-tbody">
+                                    <!-- Dynamically generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode Buttons -->
+                    <div class="button-group">
+                        <button type="button" class="btn-secondary" onclick="cancelGroupEdit()">취소</button>
+                        <button type="submit" class="btn-primary" id="group-edit-submit-btn" disabled>저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+            </section><!-- /content-section -->
+        </main><!-- /main-content -->
+    </div><!-- /app-container -->
+
+    <!-- Modal: Cancel Confirmation -->
+    <div class="modal" id="cancel-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>등록 취소</h3>
+                <button class="modal-close" onclick="closeCancelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #555;">입력한 내용이 저장되지 않습니다. 취소하시겠습니까?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCancelModal()">돌아가기</button>
+                <button class="btn-danger" onclick="confirmCancel()">취소하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Password Reset -->
+    <div class="modal" id="password-reset-modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>비밀번호 재발급</h3>
+                <button class="modal-close" onclick="closePasswordResetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #555; margin-bottom: 16px;">임시 비밀번호를 재발급하시겠습니까?<br>새로운 임시 비밀번호가 등록된 아이디(이메일)로 발송됩니다.</p>
+                <div class="info-box">
+                    <div class="info-box-icon">ℹ</div>
+                    <div style="font-size: 13px;">
+                        등록된 아이디(이메일)(<strong id="reset-email"></strong>)로 발송됩니다.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closePasswordResetModal()">취소</button>
+                <button class="btn-primary" onclick="confirmPasswordReset()">재발급</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Account Unlock -->
+    <div class="modal" id="unlock-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>계정 잠금 해제</h3>
+                <button class="modal-close" onclick="closeUnlockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #555;">계정 잠금을 해제하시겠습니까?</p>
+                <p style="color: #666; font-size: 13px; margin-top: 8px;">로그인 실패 횟수가 초기화되고 즉시 로그인이 가능해집니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeUnlockModal()">취소</button>
+                <button class="btn-primary" onclick="confirmUnlock()">잠금 해제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Cancel Confirmation -->
+    <div class="modal" id="edit-cancel-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>수정 취소</h3>
+                <button class="modal-close" onclick="closeEditCancelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #555;">수정한 내용이 저장되지 않습니다. 취소하시겠습니까?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeEditCancelModal()">돌아가기</button>
+                <button class="btn-danger" onclick="confirmEditCancel()">취소하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Group Delete -->
+    <div class="modal" id="group-delete-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>권한 그룹 삭제</h3>
+                <button class="modal-close" onclick="closeDeleteGroupModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #555; margin-bottom: 12px;">권한 그룹을 삭제하시겠습니까?</p>
+                <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px; font-size: 13px; color: #e74c3c;">
+                    <strong>⚠ 경고:</strong> 삭제된 권한 그룹은 복구할 수 없습니다.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteGroupModal()">취소</button>
+                <button class="btn-danger" onclick="confirmDeleteGroup()">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Status Change Warning -->
+    <div class="modal" id="status-change-warning-modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>권한 그룹 비활성화 확인</h3>
+                <button class="modal-close" onclick="closeStatusChangeWarningModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="status-warning-message" style="color: #555; margin-bottom: 16px; line-height: 1.6;">
+                    <!-- Dynamic content -->
+                </div>
+                <div style="background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 12px; font-size: 13px; color: #e65100;">
+                    <strong>⚠ 주의:</strong> 비활성화 시 소속 관리자의 시스템 접근이 제한됩니다.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="cancelStatusChange()">취소</button>
+                <button class="btn-danger" onclick="confirmStatusChange()">비활성화</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: All Members List -->
+    <div class="modal" id="all-members-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>소속 관리자 전체 목록</h3>
+                <button class="modal-close" onclick="closeAllMembersModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>이름</th>
+                                <th>아이디(이메일)</th>
+                                <th>상태</th>
+                                <th>최종 로그인</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-members-tbody">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closeAllMembersModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Parent Permission Cascade Confirmation -->
+    <div class="modal" id="cascade-permission-modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>하위 메뉴 권한 적용</h3>
+                <button class="modal-close" onclick="closeCascadeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #333; margin-bottom: 16px; line-height: 1.6;">하위 메뉴에도 동일한 권한을 적용하시겠습니까?</p>
+                <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 12px; font-size: 13px; color: #1565c0;">
+                    <strong>ⓘ 안내:</strong> 확인 시 모든 하위 메뉴가 상위 메뉴와 동일한 권한으로 변경됩니다. 취소 시 상위 메뉴만 변경되며 하위 메뉴는 현재 값이 유지됩니다.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="cancelCascadePermission()">취소</button>
+                <button class="btn-primary" onclick="confirmCascadePermission()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Prototype Navigation Bar -->
+    <div class="prototype-bar">
+        <div class="prototype-badge">PROTOTYPE</div>
+        <div class="prototype-info">
+            <span>계정/권한관리 프로토타입</span>
+            <div class="prototype-divider"></div>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.7);">테스트: hong.gildong@daekyo.co.kr / kim.chulsoo@daekyo.co.kr</span>
+        </div>
+        <div class="prototype-nav">
+            <button class="prototype-nav-btn active" onclick="goToScreen('screen-adm-001')">ADM-001 목록</button>
+            <button class="prototype-nav-btn" onclick="goToScreen('screen-adm-002')">ADM-002 등록</button>
+            <button class="prototype-nav-btn" onclick="goToScreen('screen-adm-003')">ADM-003 상세</button>
+            <button class="prototype-nav-btn" onclick="goToScreen('screen-adm-004')">ADM-004 그룹목록</button>
+            <button class="prototype-nav-btn" onclick="goToScreen('screen-adm-005')">ADM-005 그룹등록</button>
+            <button class="prototype-nav-btn" onclick="goToScreen('screen-adm-006')">ADM-006 그룹상세</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let admins = [
+            { id: 1, name: '홍길동', loginId: 'hong.gildong@daekyo.co.kr', phone: '010-1234-5678', roleGroup: '시스템관리자', status: 'ACTIVE', lastLogin: '2026-01-20 10:30', createdAt: '2026-01-01 09:00', updatedAt: '2026-01-20 10:30', passwordChangedAt: '2026-01-15 14:20', passwordExpiresAt: '2026-04-15 14:20', failCount: 0, isLocked: false, groupCompany: '대교', services: [] },
+            { id: 2, name: '김철수', loginId: 'kim.chulsoo@daekyo.co.kr', phone: '010-2345-6789', roleGroup: '대교관리자', status: 'ACTIVE', lastLogin: '2026-01-19 15:22', createdAt: '2026-01-05 10:00', updatedAt: '2026-01-19 15:22', passwordChangedAt: '2026-01-10 09:30', passwordExpiresAt: '2026-04-10 09:30', failCount: 0, isLocked: false, groupCompany: '대교', services: ['트니트니', '눈높이앱'] },
+            { id: 3, name: '이영희', loginId: 'lee.younghee@daekyo.co.kr', phone: '010-3456-7890', roleGroup: '일반관리자', status: 'LOCKED', lastLogin: '2026-01-18 09:15', createdAt: '2026-01-10 11:00', updatedAt: '2026-01-18 14:00', passwordChangedAt: '2026-01-12 16:00', passwordExpiresAt: '2026-04-12 16:00', failCount: 5, isLocked: true, groupCompany: '대교', services: ['트니트니'] },
+            { id: 4, name: '박지민', loginId: 'park.jimin@daekyo.co.kr', phone: '010-4567-8901', roleGroup: '일반관리자', status: 'ACTIVE', lastLogin: '2026-01-17 14:00', createdAt: '2026-01-08 13:00', updatedAt: '2026-01-17 14:00', passwordChangedAt: '2026-01-08 13:00', passwordExpiresAt: '2026-04-08 13:00', failCount: 0, isLocked: false, groupCompany: '대교', services: ['눈높이앱', '에듀캠프', '대교뉴이프', '대교리더스'] },
+            { id: 5, name: '최수진', loginId: 'choi.soojin@daekyo.co.kr', phone: '', roleGroup: '대교관리자', status: 'INACTIVE', lastLogin: '2026-01-10 08:45', createdAt: '2026-01-03 08:00', updatedAt: '2026-01-15 16:00', passwordChangedAt: '2026-01-03 08:00', passwordExpiresAt: '2026-04-03 08:00', failCount: 0, isLocked: false, groupCompany: '대교', services: ['눈높이앱'] },
+            { id: 6, name: '정민호', loginId: 'jung.minho@daekyo.co.kr', phone: '010-6789-0123', roleGroup: '일반관리자', status: 'ACTIVE', lastLogin: '2026-01-15 11:20', createdAt: '2026-01-12 15:00', updatedAt: '2026-01-15 11:20', passwordChangedAt: '2026-01-12 15:00', passwordExpiresAt: '2026-04-12 15:00', failCount: 2, isLocked: false, groupCompany: '대교', services: ['트니트니', '에듀캠프'] },
+            { id: 7, name: '한소영', loginId: 'han.soyoung@daekyo.co.kr', phone: '010-7890-1234', roleGroup: '일반관리자', status: 'ACTIVE', lastLogin: '2026-01-14 16:30', createdAt: '2026-01-11 10:00', updatedAt: '2026-01-14 16:30', passwordChangedAt: '2026-01-11 10:00', passwordExpiresAt: '2026-04-11 10:00', failCount: 0, isLocked: false, groupCompany: '대교', services: ['대교뉴이프'] }
+        ];
+
+        let permissionGroups = [
+            { id: 1, name: '시스템관리자', description: '시스템 전체를 관리하는 최고 권한 그룹', status: 'ACTIVE', isSystemGroup: true, memberCount: 3, createdAt: '2026-01-01 09:00', updatedAt: '2026-01-01 09:00',
+              menuPermissions: { '회원관리': 'FULL', '회원 조회': 'FULL', '회원 상세/수정': 'FULL', '메시지 발송': 'FULL', '메시지 발송 관리': 'FULL', '메시지 발송_sub': 'FULL', '발송 상세/결과': 'FULL', '템플릿 관리': 'FULL', '템플릿 등록': 'FULL', '템플릿 상세/수정': 'FULL', '통계': 'FULL', '회원 통계': 'FULL', '인증 통계': 'FULL', '약관/처리방침 관리': 'FULL', '약관/동의서 관리': 'FULL', '대교 약관': 'FULL', '그룹사 약관': 'FULL', '회원가입 약관 구성': 'FULL', '개인정보 처리방침 관리': 'FULL', '계정/권한 관리': 'FULL', '관리자 등록 관리': 'FULL', '권한 그룹 관리': 'FULL', '서비스 관리': 'FULL', '그룹사 관리': 'FULL', '서비스 관리_sub': 'FULL', 'OAuth 클라이언트': 'FULL', '이력 관리': 'FULL', '로그인 이력': 'FULL', '관리자 활동 이력': 'FULL', '데이터 변경 이력': 'FULL' } },
+            { id: 2, name: '대교관리자', description: '대교 서비스 전반을 관리하는 권한 그룹', status: 'ACTIVE', isSystemGroup: true, memberCount: 2, createdAt: '2026-01-01 09:00', updatedAt: '2026-01-05 14:00',
+              menuPermissions: { '회원관리': 'FULL', '회원 조회': 'FULL', '회원 상세/수정': 'FULL', '메시지 발송': 'FULL', '메시지 발송 관리': 'FULL', '메시지 발송_sub': 'FULL', '발송 상세/결과': 'FULL', '템플릿 관리': 'LIMITED', '템플릿 등록': 'LIMITED', '템플릿 상세/수정': 'LIMITED', '통계': 'FULL', '회원 통계': 'FULL', '인증 통계': 'FULL', '약관/처리방침 관리': 'FULL', '약관/동의서 관리': 'FULL', '대교 약관': 'FULL', '그룹사 약관': 'FULL', '회원가입 약관 구성': 'FULL', '개인정보 처리방침 관리': 'FULL', '계정/권한 관리': 'LIMITED', '관리자 등록 관리': 'FULL', '권한 그룹 관리': 'NONE', '서비스 관리': 'FULL', '그룹사 관리': 'FULL', '서비스 관리_sub': 'FULL', 'OAuth 클라이언트': 'FULL', '이력 관리': 'FULL', '로그인 이력': 'FULL', '관리자 활동 이력': 'FULL', '데이터 변경 이력': 'FULL' } },
+            { id: 3, name: '일반관리자', description: '일반적인 CRM 기능을 사용하는 권한 그룹', status: 'ACTIVE', isSystemGroup: true, memberCount: 4, createdAt: '2026-01-01 09:00', updatedAt: '2026-01-10 10:00',
+              menuPermissions: { '회원관리': 'READ_ONLY', '회원 조회': 'READ_ONLY', '회원 상세/수정': 'NONE', '메시지 발송': 'READ_ONLY', '메시지 발송 관리': 'READ_ONLY', '메시지 발송_sub': 'NONE', '발송 상세/결과': 'READ_ONLY', '템플릿 관리': 'READ_ONLY', '템플릿 등록': 'NONE', '템플릿 상세/수정': 'READ_ONLY', '통계': 'READ_ONLY', '회원 통계': 'READ_ONLY', '인증 통계': 'READ_ONLY', '약관/처리방침 관리': 'NONE', '약관/동의서 관리': 'NONE', '대교 약관': 'NONE', '그룹사 약관': 'NONE', '회원가입 약관 구성': 'NONE', '개인정보 처리방침 관리': 'NONE', '계정/권한 관리': 'NONE', '관리자 등록 관리': 'NONE', '권한 그룹 관리': 'NONE', '서비스 관리': 'NONE', '그룹사 관리': 'NONE', '서비스 관리_sub': 'NONE', 'OAuth 클라이언트': 'NONE', '이력 관리': 'NONE', '로그인 이력': 'NONE', '관리자 활동 이력': 'NONE', '데이터 변경 이력': 'NONE' } },
+            { id: 4, name: '마케팅관리자', description: '마케팅 및 프로모션 관리 권한', status: 'ACTIVE', isSystemGroup: false, memberCount: 2, createdAt: '2026-01-15 11:00', updatedAt: '2026-01-20 15:00',
+              menuPermissions: { '회원관리': 'READ_ONLY', '회원 조회': 'READ_ONLY', '회원 상세/수정': 'NONE', '메시지 발송': 'LIMITED', '메시지 발송 관리': 'LIMITED', '메시지 발송_sub': 'LIMITED', '발송 상세/결과': 'LIMITED', '템플릿 관리': 'LIMITED', '템플릿 등록': 'LIMITED', '템플릿 상세/수정': 'LIMITED', '통계': 'READ_ONLY', '회원 통계': 'READ_ONLY', '인증 통계': 'READ_ONLY', '약관/처리방침 관리': 'NONE', '약관/동의서 관리': 'NONE', '대교 약관': 'NONE', '그룹사 약관': 'NONE', '회원가입 약관 구성': 'NONE', '개인정보 처리방침 관리': 'NONE', '계정/권한 관리': 'NONE', '관리자 등록 관리': 'NONE', '권한 그룹 관리': 'NONE', '서비스 관리': 'NONE', '그룹사 관리': 'NONE', '서비스 관리_sub': 'NONE', 'OAuth 클라이언트': 'NONE', '이력 관리': 'NONE', '로그인 이력': 'NONE', '관리자 활동 이력': 'NONE', '데이터 변경 이력': 'NONE' } },
+            { id: 5, name: 'CS관리자', description: '고객 문의 및 CS 업무 전담', status: 'ACTIVE', isSystemGroup: false, memberCount: 0, createdAt: '2026-01-18 14:00', updatedAt: '2026-01-18 14:00',
+              menuPermissions: { '회원관리': 'READ_ONLY', '회원 조회': 'READ_ONLY', '회원 상세/수정': 'READ_ONLY', '메시지 발송': 'NONE', '메시지 발송 관리': 'NONE', '메시지 발송_sub': 'NONE', '발송 상세/결과': 'NONE', '템플릿 관리': 'NONE', '템플릿 등록': 'NONE', '템플릿 상세/수정': 'NONE', '통계': 'READ_ONLY', '회원 통계': 'READ_ONLY', '인증 통계': 'NONE', '약관/처리방침 관리': 'NONE', '약관/동의서 관리': 'NONE', '대교 약관': 'NONE', '그룹사 약관': 'NONE', '회원가입 약관 구성': 'NONE', '개인정보 처리방침 관리': 'NONE', '계정/권한 관리': 'NONE', '관리자 등록 관리': 'NONE', '권한 그룹 관리': 'NONE', '서비스 관리': 'NONE', '그룹사 관리': 'NONE', '서비스 관리_sub': 'NONE', 'OAuth 클라이언트': 'NONE', '이력 관리': 'NONE', '로그인 이력': 'NONE', '관리자 활동 이력': 'NONE', '데이터 변경 이력': 'NONE' } }
+        ];
+
+        let currentPage = 1;
+        let pageSize = 20;
+        let filteredAdmins = [...admins];
+        let filteredGroups = [...permissionGroups];
+        let currentAdminDetail = null;
+        let currentGroupDetail = null;
+        let originalFormData = null;
+        let duplicateCheckStatus = 'unchecked'; // unchecked, checking, available, unavailable, confirmed
+        let lastCheckedLoginId = '';
+
+        // Menu structure for permission settings (from IA)
+        const menuTreeData = [
+            {
+                parent: '회원관리',
+                parentKey: '회원관리',
+                children: [
+                    { name: '회원 조회', key: '회원 조회' },
+                    { name: '회원 상세/수정', key: '회원 상세/수정' }
+                ]
+            },
+            {
+                parent: '메시지 발송',
+                parentKey: '메시지 발송',
+                children: [
+                    { name: '메시지 발송 관리', key: '메시지 발송 관리' },
+                    { name: '메시지 발송', key: '메시지 발송_sub' },
+                    { name: '발송 상세/결과', key: '발송 상세/결과' },
+                    { name: '템플릿 관리', key: '템플릿 관리' },
+                    { name: '템플릿 등록', key: '템플릿 등록' },
+                    { name: '템플릿 상세/수정', key: '템플릿 상세/수정' }
+                ]
+            },
+            {
+                parent: '통계',
+                parentKey: '통계',
+                children: [
+                    { name: '회원 통계', key: '회원 통계' },
+                    { name: '인증 통계', key: '인증 통계' }
+                ]
+            },
+            {
+                parent: '약관/처리방침 관리',
+                parentKey: '약관/처리방침 관리',
+                children: [
+                    { name: '약관/동의서 관리', key: '약관/동의서 관리' },
+                    { name: '대교 약관', key: '대교 약관' },
+                    { name: '그룹사 약관', key: '그룹사 약관' },
+                    { name: '회원가입 약관 구성', key: '회원가입 약관 구성' },
+                    { name: '개인정보 처리방침 관리', key: '개인정보 처리방침 관리' }
+                ]
+            },
+            {
+                parent: '계정/권한 관리',
+                parentKey: '계정/권한 관리',
+                children: [
+                    { name: '관리자 등록 관리', key: '관리자 등록 관리' },
+                    { name: '권한 그룹 관리', key: '권한 그룹 관리' }
+                ]
+            },
+            {
+                parent: '서비스 관리',
+                parentKey: '서비스 관리',
+                children: [
+                    { name: '그룹사 관리', key: '그룹사 관리' },
+                    { name: '서비스 관리', key: '서비스 관리_sub' },
+                    { name: 'OAuth 클라이언트', key: 'OAuth 클라이언트' }
+                ]
+            },
+            {
+                parent: '이력 관리',
+                parentKey: '이력 관리',
+                children: [
+                    { name: '로그인 이력', key: '로그인 이력' },
+                    { name: '관리자 활동 이력', key: '관리자 활동 이력' },
+                    { name: '데이터 변경 이력', key: '데이터 변경 이력' }
+                ]
+            }
+        ];
+
+        // Permission levels with order for comparison
+        const permLevels = ['FULL', 'LIMITED', 'READ_ONLY', 'NONE'];
+        const permLabels = { FULL: '전체권한', LIMITED: '제한된권한', READ_ONLY: '조회권한', NONE: '권한없음' };
+
+        // Change history sample data for ADM-006
+        const changeHistoryData = [
+            { date: '2026-03-10 14:30:15', user: '홍길동', menu: '회원관리 > 회원 상세/수정', before: 'NONE', after: 'READ_ONLY' },
+            { date: '2026-03-08 11:20:45', user: '김철수', menu: '메시지 발송 > 메시지 발송 관리', before: 'READ_ONLY', after: 'LIMITED' },
+            { date: '2026-02-25 16:45:30', user: '홍길동', menu: '통계 > 회원 통계', before: 'FULL', after: 'LIMITED' }
+        ];
+
+        // ===== UTILITY FUNCTIONS =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+
+        // Breadcrumb mapping
+        const breadcrumbMap = {
+            'screen-adm-001': '관리자 등록 관리',
+            'screen-adm-002': '관리자 등록',
+            'screen-adm-003': '관리자 상세/수정',
+            'screen-adm-004': '권한 그룹 관리',
+            'screen-adm-005': '권한 그룹 등록',
+            'screen-adm-006': '권한 그룹 상세/수정'
+        };
+
+        function goToScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            // Update breadcrumb
+            const bcCurrent = document.getElementById('breadcrumb-current');
+            if (bcCurrent && breadcrumbMap[screenId]) {
+                bcCurrent.textContent = breadcrumbMap[screenId];
+            }
+
+            // Update sidebar submenu active
+            document.querySelectorAll('.submenu-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('onclick')?.includes(screenId)) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Update prototype nav buttons
+            document.querySelectorAll('.prototype-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onclick')?.includes(screenId)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Initialize screens
+            if (screenId === 'screen-adm-001') {
+                renderAdminTable();
+            } else if (screenId === 'screen-adm-003') {
+                loadAdminDetail(admins[0].id);
+            } else if (screenId === 'screen-adm-004') {
+                renderGroupTable();
+            } else if (screenId === 'screen-adm-005') {
+                renderMenuPermTable('reg-perm-tbody', {});
+                document.getElementById('desc-counter').textContent = '0';
+            } else if (screenId === 'screen-adm-006') {
+                loadGroupDetail(permissionGroups[0].id);
+            }
+        }
+
+        // Sidebar submenu toggle
+        function toggleSubmenu(el) {
+            const navItem = el.closest('.nav-item');
+            const submenu = navItem.querySelector('.submenu');
+            const arrow = navItem.querySelector('.arrow');
+            if (submenu) {
+                submenu.classList.toggle('show');
+                if (arrow) arrow.classList.toggle('rotate');
+            }
+        }
+
+        function formatPhone(value) {
+            const numbers = value.replace(/[^\d]/g, '');
+            if (numbers.length <= 3) return numbers;
+            if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+            return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'ACTIVE': '<span class="badge badge-active">사용중</span>',
+                'INACTIVE': '<span class="badge badge-inactive">비활성</span>',
+                'LOCKED': '<span class="badge badge-locked">잠금</span>'
+            };
+            return badges[status] || status;
+        }
+
+        function formatServiceColumn(admin) {
+            if (admin.roleGroup === '시스템관리자') {
+                return '<span style="color: #1565c0; font-weight: 500;">전체</span>';
+            }
+            const svcs = admin.services || [];
+            if (svcs.length === 0) return '<span style="color: #999;">-</span>';
+            if (svcs.length <= 3) {
+                return svcs.join(', ');
+            }
+            const displayed = svcs.slice(0, 3).join(', ');
+            const remaining = svcs.length - 3;
+            return `${displayed} <span style="background: #e8f0ff; color: #2c5aa0; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin-left: 4px;">+${remaining}</span>`;
+        }
+
+        function getPermBadge(level) {
+            const badges = {
+                'FULL': '<span class="perm-badge perm-badge-full">전체권한</span>',
+                'LIMITED': '<span class="perm-badge perm-badge-limited">제한된권한</span>',
+                'READ_ONLY': '<span class="perm-badge perm-badge-read_only">조회권한</span>',
+                'NONE': '<span class="perm-badge perm-badge-none">권한없음</span>'
+            };
+            return badges[level] || level;
+        }
+
+        // ===== SCREEN 1: ADMIN LIST =====
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table-body');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageAdmins = filteredAdmins.slice(start, end);
+
+            if (filteredAdmins.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666; padding: 40px;">검색 결과가 없습니다.</td></tr>';
+            } else {
+                tbody.innerHTML = pageAdmins.map((admin, index) => `
+                    <tr>
+                        <td>${filteredAdmins.length - ((currentPage - 1) * pageSize) - index}</td>
+                        <td><a href="#" onclick="loadAdminDetail(${admin.id}); return false;">${admin.name}</a></td>
+                        <td>${admin.loginId}</td>
+                        <td>${admin.roleGroup}</td>
+                        <td>${formatServiceColumn(admin)}</td>
+                        <td>${getStatusBadge(admin.status)}</td>
+                        <td>${admin.lastLogin}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('total-count').textContent = filteredAdmins.length;
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredAdmins.length / pageSize);
+            const controls = document.getElementById('pagination-controls');
+
+            let html = `
+                <button class="page-btn" onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>처음</button>
+                <button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>이전</button>
+            `;
+
+            const maxButtons = 10;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage + 1 < maxButtons) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            html += `
+                <button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>다음</button>
+                <button class="page-btn" onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>마지막</button>
+            `;
+
+            controls.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderAdminTable();
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('page-size').value);
+            currentPage = 1;
+            renderAdminTable();
+        }
+
+        function searchAdmins() {
+            const name = document.getElementById('search-name').value.trim().toLowerCase();
+            const loginId = document.getElementById('search-loginid').value.trim().toLowerCase();
+            const roleGroup = document.getElementById('search-rolegroup').value;
+            const service = document.getElementById('search-service').value;
+
+            filteredAdmins = admins.filter(admin => {
+                const matchService = service === '' || admin.roleGroup === '시스템관리자' || (admin.services && admin.services.includes(service));
+                return (name === '' || admin.name.toLowerCase().includes(name)) &&
+                       (loginId === '' || admin.loginId.toLowerCase().includes(loginId)) &&
+                       (roleGroup === '' || admin.roleGroup === roleGroup) &&
+                       matchService;
+            });
+
+            currentPage = 1;
+            renderAdminTable();
+            showToast('검색이 완료되었습니다', 'success');
+        }
+
+        function resetSearch() {
+            document.getElementById('search-name').value = '';
+            document.getElementById('search-loginid').value = '';
+            document.getElementById('search-rolegroup').value = '';
+            document.getElementById('search-service').value = '';
+            filteredAdmins = [...admins];
+            currentPage = 1;
+            renderAdminTable();
+            showToast('검색 조건이 초기화되었습니다', 'info');
+        }
+
+        function sortTable(field) {
+            const isAsc = filteredAdmins[0] && filteredAdmins[0][field] <= filteredAdmins[filteredAdmins.length - 1][field];
+            filteredAdmins.sort((a, b) => {
+                if (isAsc) {
+                    return a[field] > b[field] ? -1 : 1;
+                } else {
+                    return a[field] < b[field] ? -1 : 1;
+                }
+            });
+            renderAdminTable();
+        }
+
+        // Enter key support for search
+        document.addEventListener('DOMContentLoaded', () => {
+            ['search-name', 'search-loginid'].forEach(id => {
+                document.getElementById(id)?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') searchAdmins();
+                });
+            });
+        });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            renderAdminTable();
+        });
+
+        // ===== SCREEN 2: ADMIN REGISTRATION =====
+        function validateLoginId(loginId) {
+            if (!loginId) {
+                return '아이디(이메일)를 입력해 주세요.';
+            }
+            if (loginId.length > 100) {
+                return '아이디(이메일)는 100자 이하로 입력해 주세요.';
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginId)) {
+                return '올바른 이메일 형식으로 입력해 주세요. (예: name@daekyo.co.kr)';
+            }
+            return null;
+        }
+
+        function checkDuplicate() {
+            const loginId = document.getElementById('reg-loginid').value.trim();
+            const errorDiv = document.getElementById('loginid-error');
+            const statusDiv = document.getElementById('duplicate-status');
+            const button = document.getElementById('check-duplicate-btn');
+
+            // Validation
+            const validationError = validateLoginId(loginId);
+            if (validationError) {
+                errorDiv.textContent = validationError;
+                errorDiv.style.display = 'block';
+                statusDiv.className = 'duplication-status unchecked';
+                statusDiv.textContent = '중복 확인이 필요합니다';
+                duplicateCheckStatus = 'unchecked';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+
+            // Checking state
+            duplicateCheckStatus = 'checking';
+            statusDiv.className = 'duplication-status checking';
+            statusDiv.innerHTML = '<span class="spinner" style="display: inline-block; margin-right: 6px;"></span>확인 중...';
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>';
+
+            // Simulate API call
+            setTimeout(() => {
+                const isDuplicate = admins.some(a => a.loginId === loginId);
+                button.disabled = false;
+                button.textContent = '중복확인';
+
+                if (isDuplicate) {
+                    duplicateCheckStatus = 'unavailable';
+                    statusDiv.className = 'duplication-status unavailable';
+                    statusDiv.textContent = '이미 사용 중인 이메일입니다';
+                } else {
+                    duplicateCheckStatus = 'confirmed';
+                    lastCheckedLoginId = loginId;
+                    statusDiv.className = 'duplication-status available';
+                    statusDiv.textContent = '✓ 사용 가능한 이메일입니다';
+                }
+            }, 800);
+        }
+
+        // Login ID input change handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginIdInput = document.getElementById('reg-loginid');
+            loginIdInput?.addEventListener('input', () => {
+                if (duplicateCheckStatus === 'confirmed' && loginIdInput.value !== lastCheckedLoginId) {
+                    duplicateCheckStatus = 'unchecked';
+                    const statusDiv = document.getElementById('duplicate-status');
+                    statusDiv.className = 'duplication-status unchecked';
+                    statusDiv.textContent = '중복 확인이 필요합니다';
+                }
+            });
+
+            // Phone auto-formatting
+            document.getElementById('reg-phone')?.addEventListener('input', (e) => {
+                e.target.value = formatPhone(e.target.value);
+            });
+        });
+
+        document.getElementById('admin-register-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const loginId = document.getElementById('reg-loginid').value.trim();
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const roleGroup = document.getElementById('reg-rolegroup').value;
+            const status = document.querySelector('input[name="status"]:checked').value;
+
+            let hasError = false;
+
+            // Validate login ID
+            const loginIdError = validateLoginId(loginId);
+            if (loginIdError) {
+                document.getElementById('loginid-error').textContent = loginIdError;
+                document.getElementById('loginid-error').style.display = 'block';
+                hasError = true;
+            } else {
+                document.getElementById('loginid-error').style.display = 'none';
+            }
+
+            // Check duplicate confirmation
+            if (!loginIdError && duplicateCheckStatus !== 'confirmed') {
+                document.getElementById('loginid-error').textContent = '아이디(이메일) 중복확인을 해주세요.';
+                document.getElementById('loginid-error').style.display = 'block';
+                hasError = true;
+            }
+
+            // Validate name
+            if (!name) {
+                document.getElementById('name-error').textContent = '이름을 입력해 주세요.';
+                document.getElementById('name-error').style.display = 'block';
+                hasError = true;
+            } else if (name.length < 2 || name.length > 50) {
+                document.getElementById('name-error').textContent = '이름은 2자 이상 50자 이하로 입력해 주세요.';
+                document.getElementById('name-error').style.display = 'block';
+                hasError = true;
+            } else if (!/^[가-힣a-zA-Z\s]+$/.test(name)) {
+                document.getElementById('name-error').textContent = '이름은 한글, 영문만 입력 가능합니다.';
+                document.getElementById('name-error').style.display = 'block';
+                hasError = true;
+            } else {
+                document.getElementById('name-error').style.display = 'none';
+            }
+
+            // Validate phone (optional)
+            if (phone && !/^0\d{1,2}-\d{3,4}-\d{4}$/.test(phone)) {
+                showToast('올바른 연락처 형식으로 입력해 주세요.', 'error');
+                hasError = true;
+            }
+
+            // Validate role group
+            if (!roleGroup) {
+                document.getElementById('rolegroup-error').textContent = '권한그룹을 선택해 주세요.';
+                document.getElementById('rolegroup-error').style.display = 'block';
+                hasError = true;
+            } else {
+                document.getElementById('rolegroup-error').style.display = 'none';
+            }
+
+            // Validate group company and services (시스템관리자가 아닌 경우 필수)
+            if (roleGroup !== '시스템관리자') {
+                const groupCompany = document.getElementById('reg-group-company').value;
+                if (!groupCompany) {
+                    document.getElementById('group-company-error').textContent = '소속 그룹사를 선택해 주세요.';
+                    document.getElementById('group-company-error').style.display = 'block';
+                    hasError = true;
+                } else {
+                    document.getElementById('group-company-error').style.display = 'none';
+                    const selectedServices = document.querySelectorAll('.reg-service-checkbox:checked');
+                    if (selectedServices.length === 0) {
+                        document.getElementById('service-error').textContent = '관리 가능한 서비스를 1개 이상 선택해 주세요.';
+                        document.getElementById('service-error').style.display = 'block';
+                        hasError = true;
+                    } else {
+                        document.getElementById('service-error').style.display = 'none';
+                    }
+                }
+            }
+
+            if (hasError) return;
+
+            // Submit (simulate)
+            const submitBtn = document.getElementById('register-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> 등록 중...';
+
+            setTimeout(() => {
+                const newAdmin = {
+                    id: admins.length + 1,
+                    loginId, name, phone, roleGroup, status,
+                    lastLogin: '-',
+                    createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                    updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                    passwordChangedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                    passwordExpiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' '),
+                    failCount: 0,
+                    isLocked: false
+                };
+
+                admins.unshift(newAdmin);
+                filteredAdmins = [...admins];
+
+                showToast('관리자가 등록되었습니다. 임시 비밀번호가 아이디(이메일)로 발송되었습니다.', 'success');
+                goToScreen('screen-adm-001');
+
+                // Reset form
+                document.getElementById('admin-register-form').reset();
+                duplicateCheckStatus = 'unchecked';
+                lastCheckedLoginId = '';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '등록';
+            }, 1000);
+        });
+
+        function cancelRegister() {
+            const loginId = document.getElementById('reg-loginid').value;
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+
+            if (loginId || name || phone) {
+                document.getElementById('cancel-modal').classList.add('active');
+            } else {
+                goToScreen('screen-adm-001');
+            }
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancel-modal').classList.remove('active');
+        }
+
+        function confirmCancel() {
+            document.getElementById('cancel-modal').classList.remove('active');
+            document.getElementById('admin-register-form').reset();
+            duplicateCheckStatus = 'unchecked';
+            lastCheckedLoginId = '';
+            goToScreen('screen-adm-001');
+        }
+
+        // === 그룹사-서비스 2단계 연동 ===
+
+        // 그룹사별 서비스 데이터 (프로토타입용 테스트 데이터)
+        const groupCompanyServices = {
+            '1': [ // 대교
+                { serviceId: 1, serviceName: '마카다미아 멤버스' },
+                { serviceId: 2, serviceName: '트니트니' },
+                { serviceId: 3, serviceName: '대교 뉴이프' }
+            ],
+            '2': [ // 대교 에듀캠프
+                { serviceId: 4, serviceName: '에듀캠프 멤버스' },
+                { serviceId: 5, serviceName: '에듀캠프 키즈' }
+            ]
+        };
+
+        // 서비스 관리 권한 여부를 권한그룹의 menuPermissions 데이터로 동적 판단
+        function hasServicePermission(roleGroupName) {
+            if (!roleGroupName) return false;
+            const group = permissionGroups.find(g => g.name === roleGroupName);
+            if (!group) return false;
+            // 시스템관리자는 모든 서비스 자동 접근이므로 담당 서비스 설정 불필요
+            if (group.isSystemGroup && roleGroupName === '시스템관리자') return false;
+            const perm = group.menuPermissions?.['서비스 관리'];
+            return perm && perm !== 'NONE';
+        }
+
+        // 서비스 체크박스 렌더링 함수
+        function renderServiceCheckboxes(containerId, groupCompanyId, prefix) {
+            const container = document.getElementById(containerId);
+            if (!groupCompanyId) {
+                container.innerHTML = '<div style="color: #999; font-size: 13px; padding: 8px 0;">소속 그룹사를 먼저 선택하세요</div>';
+                return;
+            }
+            const services = groupCompanyServices[groupCompanyId] || [];
+            if (services.length === 0) {
+                container.innerHTML = '<div style="color: #e65100; font-size: 13px; padding: 8px 0;">해당 그룹사에 등록된 서비스가 없습니다. 서비스 관리에서 서비스를 먼저 등록해 주세요.</div>';
+                return;
+            }
+            let html = '<div class="checkbox-item"><input type="checkbox" id="' + prefix + '-service-all" onchange="toggleServiceAll(\'' + prefix + '\', this)"><label for="' + prefix + '-service-all">전체 선택</label></div>';
+            services.forEach(s => {
+                html += '<div class="checkbox-item"><input type="checkbox" name="' + prefix + '-services" value="' + s.serviceId + '" class="' + prefix + '-service-checkbox" onchange="syncServiceAll(\'' + prefix + '\')"><label>' + s.serviceName + '</label></div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // 전체 선택 토글
+        function toggleServiceAll(prefix, checkbox) {
+            document.querySelectorAll('.' + prefix + '-service-checkbox').forEach(cb => { cb.checked = checkbox.checked; });
+        }
+
+        // 개별 체크박스 → 전체선택 동기화
+        function syncServiceAll(prefix) {
+            const all = document.querySelectorAll('.' + prefix + '-service-checkbox');
+            const checked = document.querySelectorAll('.' + prefix + '-service-checkbox:checked');
+            const allCb = document.getElementById(prefix + '-service-all');
+            if (allCb) allCb.checked = all.length > 0 && all.length === checked.length;
+        }
+
+        // [등록] 그룹사 변경 핸들러
+        function onRegGroupCompanyChange(value) {
+            renderServiceCheckboxes('service-checkbox-group', value, 'reg');
+        }
+
+        // [수정] 그룹사 변경 핸들러
+        function onEditGroupCompanyChange(value) {
+            renderServiceCheckboxes('edit-service-checkbox-group', value, 'edit');
+        }
+
+        // 시스템관리자 선택 시 담당 서비스 비활성화 + 배너 표시 (등록)
+        function updateServiceDisabledState(prefix, roleGroupName) {
+            const isSysAdmin = roleGroupName === '시스템관리자';
+            const banner = document.getElementById(prefix === 'reg' ? 'service-sysadmin-banner' : 'edit-service-sysadmin-banner');
+            const groupSelect = document.getElementById(prefix === 'reg' ? 'reg-group-company' : 'edit-group-company');
+
+            if (banner) banner.style.display = isSysAdmin ? 'block' : 'none';
+            if (groupSelect) groupSelect.disabled = isSysAdmin;
+            document.querySelectorAll('.' + prefix + '-service-checkbox').forEach(cb => { cb.disabled = isSysAdmin; });
+            const allCb = document.getElementById(prefix + '-service-all');
+            if (allCb) allCb.disabled = isSysAdmin;
+        }
+
+        document.getElementById('reg-rolegroup')?.addEventListener('change', function() {
+            updateServiceDisabledState('reg', this.value);
+        });
+
+        document.getElementById('edit-rolegroup')?.addEventListener('change', function() {
+            updateServiceDisabledState('edit', this.value);
+        });
+
+        // ESC key support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+
+        // Modal background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // ===== SCREEN 3: ADMIN DETAIL/EDIT =====
+        function loadAdminDetail(adminId) {
+            currentAdminDetail = admins.find(a => a.id === adminId);
+            if (!currentAdminDetail) return;
+
+            // Populate view mode
+            document.getElementById('detail-loginid').textContent = currentAdminDetail.loginId;
+            document.getElementById('detail-name').textContent = currentAdminDetail.name;
+            document.getElementById('detail-phone').textContent = currentAdminDetail.phone || '-';
+            document.getElementById('detail-rolegroup').textContent = currentAdminDetail.roleGroup;
+            document.getElementById('detail-status').innerHTML = getStatusBadge(currentAdminDetail.status);
+            document.getElementById('detail-createdat').textContent = currentAdminDetail.createdAt;
+            document.getElementById('detail-updatedat').textContent = currentAdminDetail.updatedAt;
+            document.getElementById('detail-lastlogin').textContent = currentAdminDetail.lastLogin;
+            document.getElementById('detail-pwdchangedat').textContent = currentAdminDetail.passwordChangedAt;
+            document.getElementById('detail-pwdexpiresat').textContent = currentAdminDetail.passwordExpiresAt;
+            document.getElementById('detail-failcount').textContent = `${currentAdminDetail.failCount}회`;
+            document.getElementById('detail-lockstatus').textContent = currentAdminDetail.isLocked ? '잠김' : '정상';
+
+            // 담당 서비스 정보
+            document.getElementById('detail-groupcompany').textContent = currentAdminDetail.groupCompany || '대교';
+            const servicesEl = document.getElementById('detail-services');
+            if (currentAdminDetail.roleGroup === '시스템관리자') {
+                servicesEl.innerHTML = '<span style="color: #1565c0; font-weight: 500;">모든 서비스</span><div style="margin-top: 6px; font-size: 12px; color: #888;">(시스템관리자는 모든 서비스에 접근 가능합니다)</div>';
+            } else {
+                const svcs = currentAdminDetail.services || [];
+                if (svcs.length === 0) {
+                    servicesEl.innerHTML = '<span style="color: #999;">-</span>';
+                } else {
+                    servicesEl.innerHTML = svcs.map(s => `<span style="background: #e8f0ff; color: #2c5aa0; border-radius: 6px; padding: 4px 10px; font-size: 13px; display: inline-block; margin: 2px 4px;">${s}</span>`).join('');
+                }
+            }
+
+            const unlockBtn = document.getElementById('unlock-btn');
+            if (currentAdminDetail.isLocked) {
+                unlockBtn.style.display = 'inline-block';
+            } else {
+                unlockBtn.style.display = 'none';
+            }
+
+            document.getElementById('reset-email').textContent = currentAdminDetail.loginId;
+
+            // Show view mode
+            document.getElementById('adm003-view-mode').style.display = 'block';
+            document.getElementById('adm003-edit-mode').style.display = 'none';
+            document.getElementById('adm003-title').textContent = '관리자 상세';
+
+            goToScreen('screen-adm-003');
+        }
+
+        function enterEditMode() {
+            // Populate edit form
+            document.getElementById('edit-loginid').value = currentAdminDetail.loginId;
+            document.getElementById('edit-name').value = currentAdminDetail.name;
+            document.getElementById('edit-phone').value = currentAdminDetail.phone;
+            document.getElementById('edit-rolegroup').value = currentAdminDetail.roleGroup;
+            document.querySelector(`input[name="edit-status"][value="${currentAdminDetail.status}"]`).checked = true;
+
+            // 담당 서비스 설정 초기화 (항상 표시)
+            // 테스트 데이터: 대교관리자는 대교(1) 소속, 마카다미아+트니트니 담당
+            const testGroupCompany = currentAdminDetail.roleGroup === '대교관리자' ? '1' : '';
+            document.getElementById('edit-group-company').value = testGroupCompany;
+            if (testGroupCompany) {
+                renderServiceCheckboxes('edit-service-checkbox-group', testGroupCompany, 'edit');
+                setTimeout(() => {
+                    document.querySelectorAll('.edit-service-checkbox').forEach(cb => {
+                        if (['1', '2'].includes(cb.value)) cb.checked = true;
+                    });
+                    syncServiceAll('edit');
+                }, 50);
+            }
+            // 시스템관리자인 경우 비활성화 처리
+            updateServiceDisabledState('edit', currentAdminDetail.roleGroup);
+
+            // Store original data
+            originalFormData = {
+                name: currentAdminDetail.name,
+                phone: currentAdminDetail.phone,
+                roleGroup: currentAdminDetail.roleGroup,
+                status: currentAdminDetail.status
+            };
+
+            // Show edit mode
+            document.getElementById('adm003-view-mode').style.display = 'none';
+            document.getElementById('adm003-edit-mode').style.display = 'block';
+            document.getElementById('adm003-title').textContent = '관리자 수정';
+            document.getElementById('edit-submit-btn').disabled = true;
+        }
+
+        // Track changes in edit mode
+        document.addEventListener('DOMContentLoaded', () => {
+            const editFields = ['edit-name', 'edit-phone', 'edit-rolegroup'];
+            editFields.forEach(id => {
+                document.getElementById(id)?.addEventListener('input', checkEditChanges);
+            });
+            document.querySelectorAll('input[name="edit-status"]').forEach(radio => {
+                radio.addEventListener('change', checkEditChanges);
+            });
+
+            // Phone formatting in edit mode
+            document.getElementById('edit-phone')?.addEventListener('input', (e) => {
+                e.target.value = formatPhone(e.target.value);
+            });
+        });
+
+        function checkEditChanges() {
+            if (!originalFormData) return;
+
+            const currentData = {
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                roleGroup: document.getElementById('edit-rolegroup').value,
+                status: document.querySelector('input[name="edit-status"]:checked').value
+            };
+
+            const hasChanges = JSON.stringify(originalFormData) !== JSON.stringify(currentData);
+            document.getElementById('edit-submit-btn').disabled = !hasChanges;
+        }
+
+        document.getElementById('admin-edit-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('edit-name').value.trim();
+            const phone = document.getElementById('edit-phone').value.trim();
+            const roleGroup = document.getElementById('edit-rolegroup').value;
+            const status = document.querySelector('input[name="edit-status"]:checked').value;
+
+            let hasError = false;
+
+            if (!name) {
+                document.getElementById('edit-name-error').textContent = '이름을 입력해 주세요.';
+                document.getElementById('edit-name-error').style.display = 'block';
+                hasError = true;
+            } else if (name.length < 2 || name.length > 50) {
+                document.getElementById('edit-name-error').textContent = '이름은 2자 이상 50자 이하로 입력해 주세요.';
+                document.getElementById('edit-name-error').style.display = 'block';
+                hasError = true;
+            } else if (!/^[가-힣a-zA-Z\s]+$/.test(name)) {
+                document.getElementById('edit-name-error').textContent = '이름은 한글, 영문만 입력 가능합니다.';
+                document.getElementById('edit-name-error').style.display = 'block';
+                hasError = true;
+            } else {
+                document.getElementById('edit-name-error').style.display = 'none';
+            }
+
+            // Validate group company and services (시스템관리자가 아닌 경우 필수)
+            if (roleGroup !== '시스템관리자') {
+                const groupCompany = document.getElementById('edit-group-company').value;
+                if (!groupCompany) {
+                    document.getElementById('edit-group-company-error').textContent = '소속 그룹사를 선택해 주세요.';
+                    document.getElementById('edit-group-company-error').style.display = 'block';
+                    hasError = true;
+                } else {
+                    document.getElementById('edit-group-company-error').style.display = 'none';
+                    const selectedServices = document.querySelectorAll('.edit-service-checkbox:checked');
+                    if (selectedServices.length === 0) {
+                        document.getElementById('edit-service-error').textContent = '관리 가능한 서비스를 1개 이상 선택해 주세요.';
+                        document.getElementById('edit-service-error').style.display = 'block';
+                        hasError = true;
+                    } else {
+                        document.getElementById('edit-service-error').style.display = 'none';
+                    }
+                }
+            }
+
+            if (hasError) return;
+
+            const submitBtn = document.getElementById('edit-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> 저장 중...';
+
+            setTimeout(() => {
+                currentAdminDetail.name = name;
+                currentAdminDetail.phone = phone;
+                currentAdminDetail.roleGroup = roleGroup;
+                currentAdminDetail.status = status;
+                currentAdminDetail.updatedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+                showToast('저장되었습니다.', 'success');
+                loadAdminDetail(currentAdminDetail.id);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '저장';
+            }, 800);
+        });
+
+        function cancelEdit() {
+            const currentData = {
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                roleGroup: document.getElementById('edit-rolegroup').value,
+                status: document.querySelector('input[name="edit-status"]:checked').value
+            };
+
+            if (JSON.stringify(originalFormData) !== JSON.stringify(currentData)) {
+                document.getElementById('edit-cancel-modal').classList.add('active');
+            } else {
+                loadAdminDetail(currentAdminDetail.id);
+            }
+        }
+
+        function closeEditCancelModal() {
+            document.getElementById('edit-cancel-modal').classList.remove('active');
+        }
+
+        function confirmEditCancel() {
+            document.getElementById('edit-cancel-modal').classList.remove('active');
+            // Check which edit mode is active
+            if (document.getElementById('adm006-edit-mode').style.display !== 'none' && currentGroupDetail) {
+                loadGroupDetail(currentGroupDetail.id);
+            } else if (currentAdminDetail) {
+                loadAdminDetail(currentAdminDetail.id);
+            }
+        }
+
+        function showPasswordResetModal() {
+            document.getElementById('password-reset-modal').classList.add('active');
+        }
+
+        function closePasswordResetModal() {
+            document.getElementById('password-reset-modal').classList.remove('active');
+        }
+
+        function confirmPasswordReset() {
+            closePasswordResetModal();
+            showToast('임시 비밀번호가 발송되었습니다.', 'success');
+        }
+
+        function showUnlockModal() {
+            document.getElementById('unlock-modal').classList.add('active');
+        }
+
+        function closeUnlockModal() {
+            document.getElementById('unlock-modal').classList.remove('active');
+        }
+
+        function confirmUnlock() {
+            closeUnlockModal();
+            currentAdminDetail.isLocked = false;
+            currentAdminDetail.failCount = 0;
+            showToast('잠금이 해제되었습니다.', 'success');
+            loadAdminDetail(currentAdminDetail.id);
+        }
+
+        // ===== SCREEN 4: PERMISSION GROUP LIST =====
+        function renderGroupTable() {
+            const tbody = document.getElementById('group-table-body');
+            if (filteredGroups.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666; padding: 40px;">검색 결과가 없습니다.</td></tr>';
+            } else {
+                tbody.innerHTML = filteredGroups.map((group, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><a href="#" onclick="loadGroupDetail(${group.id}); return false;">${group.name}</a></td>
+                        <td title="${group.description}">${group.description.length > 50 ? group.description.substring(0, 50) + '...' : group.description}</td>
+                        <td>${getStatusBadge(group.status)}</td>
+                        <td><span class="member-count" onclick="showGroupMembers(${group.id})">${group.memberCount}명</span></td>
+                        <td>${group.createdAt}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('group-total-count').textContent = filteredGroups.length;
+        }
+
+        function searchGroups() {
+            const name = document.getElementById('group-search-name').value.toLowerCase();
+            const status = document.getElementById('group-search-status').value;
+
+            filteredGroups = permissionGroups.filter(group => {
+                return (name === '' || group.name.toLowerCase().includes(name)) &&
+                       (status === '' || group.status === status);
+            });
+
+            renderGroupTable();
+            showToast('검색이 완료되었습니다', 'success');
+        }
+
+        function resetGroupSearch() {
+            document.getElementById('group-search-name').value = '';
+            document.getElementById('group-search-status').value = '';
+            filteredGroups = [...permissionGroups];
+            renderGroupTable();
+            showToast('검색 조건이 초기화되었습니다', 'info');
+        }
+
+        function showGroupMembers(groupId) {
+            const group = permissionGroups.find(g => g.id === groupId);
+            if (!group) return;
+
+            const members = admins.filter(a => a.roleGroup === group.name);
+            if (members.length === 0) {
+                showToast('소속 관리자가 없습니다', 'info');
+                return;
+            }
+
+            // Show in modal or navigate to filtered admin list
+            showToast(`${group.name}: ${members.length}명의 관리자`, 'info');
+        }
+
+        // ===== SCREEN 5: PERMISSION GROUP REGISTRATION =====
+        // Render the menu permission table (for both registration and edit)
+        function renderMenuPermTable(tbodyId, menuPermissions, editable = true) {
+            const tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+
+            let html = '';
+            menuTreeData.forEach((group, gIdx) => {
+                const parentPerm = menuPermissions[group.parentKey] || 'NONE';
+                // Parent row
+                html += `<tr class="parent-row">`;
+                html += `<td>${group.parent}</td>`;
+                if (editable) {
+                    html += `<td><select class="perm-select sel-${parentPerm.toLowerCase()}"
+                        data-tbody="${tbodyId}" data-key="${group.parentKey}" data-parent-idx="${gIdx}"
+                        onchange="onParentPermChange(this, ${gIdx})">
+                        <option value="FULL" ${parentPerm === 'FULL' ? 'selected' : ''}>전체권한 (FULL)</option>
+                        <option value="LIMITED" ${parentPerm === 'LIMITED' ? 'selected' : ''}>제한된권한 (LIMITED)</option>
+                        <option value="READ_ONLY" ${parentPerm === 'READ_ONLY' ? 'selected' : ''}>조회권한 (READ_ONLY)</option>
+                        <option value="NONE" ${parentPerm === 'NONE' ? 'selected' : ''}>권한없음 (NONE)</option>
+                    </select></td>`;
+                } else {
+                    html += `<td>${getPermBadge(parentPerm)}</td>`;
+                }
+                html += `</tr>`;
+
+                // Child rows
+                group.children.forEach((child, cIdx) => {
+                    const childPerm = menuPermissions[child.key] || 'NONE';
+                    html += `<tr class="child-row">`;
+                    html += `<td>${child.name}</td>`;
+                    if (editable) {
+                        html += `<td><select class="perm-select sel-${childPerm.toLowerCase()}"
+                            data-tbody="${tbodyId}" data-key="${child.key}" data-parent-idx="${gIdx}" data-child-idx="${cIdx}"
+                            onchange="onChildPermChange(this, ${gIdx})">
+                            <option value="FULL" ${childPerm === 'FULL' ? 'selected' : ''}>전체권한 (FULL)</option>
+                            <option value="LIMITED" ${childPerm === 'LIMITED' ? 'selected' : ''}>제한된권한 (LIMITED)</option>
+                            <option value="READ_ONLY" ${childPerm === 'READ_ONLY' ? 'selected' : ''}>조회권한 (READ_ONLY)</option>
+                            <option value="NONE" ${childPerm === 'NONE' ? 'selected' : ''}>권한없음 (NONE)</option>
+                        </select></td>`;
+                    } else {
+                        html += `<td>${getPermBadge(childPerm)}</td>`;
+                    }
+                    html += `</tr>`;
+                });
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // Store pending permission change for modal confirmation
+        let pendingCascadeChange = null;
+
+        // When parent permission changes, show confirmation modal (except for NONE)
+        function onParentPermChange(select, parentIdx) {
+            const value = select.value;
+            const previousValue = select.dataset.previousValue || 'NONE';
+            const tbodyId = select.dataset.tbody;
+
+            // Store previous value for reverting if cancelled
+            select.dataset.previousValue = previousValue;
+
+            // If changing to NONE, automatically cascade without confirmation
+            if (value === 'NONE') {
+                applyCascadePermission(select, parentIdx, value, tbodyId, true);
+                select.dataset.previousValue = value;
+                return;
+            }
+
+            // Store pending change and show modal
+            pendingCascadeChange = { select, parentIdx, value, tbodyId, previousValue };
+            document.getElementById('cascade-permission-modal').style.display = 'flex';
+        }
+
+        // Apply cascade permission to children
+        function applyCascadePermission(select, parentIdx, value, tbodyId, applyToAll = false) {
+            select.className = `perm-select sel-${value.toLowerCase()}`;
+
+            const tbody = document.getElementById(tbodyId);
+            const childSelects = tbody.querySelectorAll(`select[data-parent-idx="${parentIdx}"][data-child-idx]`);
+            const parentLevel = permLevels.indexOf(value);
+
+            childSelects.forEach(childSelect => {
+                if (applyToAll) {
+                    // Apply same permission to all children
+                    childSelect.value = value;
+                    childSelect.className = `perm-select sel-${value.toLowerCase()}`;
+                } else {
+                    // Only downgrade children if they exceed parent level
+                    const childLevel = permLevels.indexOf(childSelect.value);
+                    if (childLevel < parentLevel) {
+                        childSelect.value = value;
+                        childSelect.className = `perm-select sel-${value.toLowerCase()}`;
+                    }
+                }
+            });
+
+            if (tbodyId === 'edit-perm-tbody') {
+                checkGroupEditChanges();
+            }
+        }
+
+        // Confirm cascade permission to children
+        function confirmCascadePermission() {
+            if (!pendingCascadeChange) return;
+
+            const { select, parentIdx, value, tbodyId } = pendingCascadeChange;
+            applyCascadePermission(select, parentIdx, value, tbodyId, true);
+            select.dataset.previousValue = value;
+
+            closeCascadeModal();
+            showToast('하위 메뉴에 동일한 권한이 적용되었습니다', 'success');
+        }
+
+        // Cancel cascade permission (only apply to parent)
+        function cancelCascadePermission() {
+            if (!pendingCascadeChange) return;
+
+            const { select, parentIdx, value, tbodyId } = pendingCascadeChange;
+            applyCascadePermission(select, parentIdx, value, tbodyId, false);
+            select.dataset.previousValue = value;
+
+            closeCascadeModal();
+            showToast('상위 메뉴만 변경되었습니다', 'info');
+        }
+
+        // Close cascade permission modal
+        function closeCascadeModal() {
+            document.getElementById('cascade-permission-modal').style.display = 'none';
+            pendingCascadeChange = null;
+        }
+
+        // When child permission changes, ensure it doesn't exceed parent
+        function onChildPermChange(select, parentIdx) {
+            const value = select.value;
+            const tbodyId = select.dataset.tbody;
+            select.className = `perm-select sel-${value.toLowerCase()}`;
+
+            // Find parent select
+            const tbody = document.getElementById(tbodyId);
+            const parentSelect = tbody.querySelector(`select[data-parent-idx="${parentIdx}"]:not([data-child-idx])`);
+            if (parentSelect) {
+                const parentLevel = permLevels.indexOf(parentSelect.value);
+                const childLevel = permLevels.indexOf(value);
+                // If child tries to be higher than parent, upgrade parent
+                if (childLevel < parentLevel) {
+                    parentSelect.value = value;
+                    parentSelect.className = `perm-select sel-${value.toLowerCase()}`;
+                }
+            }
+
+            if (tbodyId === 'edit-perm-tbody') {
+                checkGroupEditChanges();
+            }
+        }
+
+        // Get all current permission values from a table
+        function getMenuPermissions(tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            const perms = {};
+            const selects = tbody.querySelectorAll('select.perm-select');
+            selects.forEach(sel => {
+                perms[sel.dataset.key] = sel.value;
+            });
+            return perms;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const descTextarea = document.getElementById('group-reg-description');
+            descTextarea?.addEventListener('input', () => {
+                document.getElementById('desc-counter').textContent = descTextarea.value.length;
+            });
+        });
+
+        document.getElementById('group-register-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('group-reg-name').value.trim();
+            const description = document.getElementById('group-reg-description').value.trim();
+            const status = document.querySelector('input[name="group-status"]:checked').value;
+
+            let hasError = false;
+
+            if (!name) {
+                document.getElementById('group-name-error').textContent = '그룹명을 입력해 주세요.';
+                document.getElementById('group-name-error').style.display = 'block';
+                hasError = true;
+            } else if (name.length < 2 || name.length > 50) {
+                document.getElementById('group-name-error').textContent = '그룹명은 2자 이상 50자 이하로 입력해 주세요.';
+                document.getElementById('group-name-error').style.display = 'block';
+                hasError = true;
+            } else {
+                document.getElementById('group-name-error').style.display = 'none';
+            }
+
+            if (hasError) return;
+
+            const menuPermissions = getMenuPermissions('reg-perm-tbody');
+
+            setTimeout(() => {
+                const newGroup = {
+                    id: permissionGroups.length + 1,
+                    name, description, status,
+                    isSystemGroup: false,
+                    memberCount: 0,
+                    createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                    updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                    menuPermissions
+                };
+
+                permissionGroups.unshift(newGroup);
+                filteredGroups = [...permissionGroups];
+
+                showToast('권한 그룹이 등록되었습니다.', 'success');
+                goToScreen('screen-adm-004');
+
+                document.getElementById('group-register-form').reset();
+            }, 800);
+        });
+
+        function cancelGroupRegister() {
+            const name = document.getElementById('group-reg-name').value;
+            const description = document.getElementById('group-reg-description').value;
+
+            if (name || description) {
+                document.getElementById('cancel-modal').classList.add('active');
+            } else {
+                goToScreen('screen-adm-004');
+            }
+        }
+
+        // ===== SCREEN 6: PERMISSION GROUP DETAIL/EDIT =====
+        function loadGroupDetail(groupId) {
+            currentGroupDetail = permissionGroups.find(g => g.id === groupId);
+            if (!currentGroupDetail) return;
+
+            // Populate view mode
+            document.getElementById('group-detail-name').textContent = currentGroupDetail.name;
+            document.getElementById('group-detail-description').textContent = currentGroupDetail.description || '설명이 없습니다';
+            document.getElementById('group-detail-status').innerHTML = getStatusBadge(currentGroupDetail.status);
+            document.getElementById('group-detail-createdat').textContent = currentGroupDetail.createdAt;
+            document.getElementById('group-detail-updatedat').textContent = currentGroupDetail.updatedAt;
+
+            // Show system group notice if applicable
+            const systemNotice = document.getElementById('system-group-notice');
+            if (currentGroupDetail.isSystemGroup) {
+                systemNotice.style.display = 'block';
+            } else {
+                systemNotice.style.display = 'none';
+            }
+
+            // Render readonly permission table
+            renderMenuPermTable('view-perm-tbody', currentGroupDetail.menuPermissions || {}, false);
+
+            // Load member list
+            const members = admins.filter(a => a.roleGroup === currentGroupDetail.name);
+            const memberListTbody = document.getElementById('member-list-tbody');
+            const displayMembers = members.slice(0, 5);
+
+            if (displayMembers.length === 0) {
+                memberListTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">소속 관리자가 없습니다</td></tr>';
+            } else {
+                memberListTbody.innerHTML = displayMembers.map(m => `
+                    <tr>
+                        <td>${m.name}</td>
+                        <td>${m.loginId}</td>
+                        <td>${getStatusBadge(m.status)}</td>
+                        <td>${m.lastLogin}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('member-count').textContent = members.length;
+            document.getElementById('total-member-count').textContent = members.length;
+
+            // Render change history
+            const historyTbody = document.getElementById('change-history-tbody');
+            if (changeHistoryData.length === 0) {
+                historyTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">변경 이력이 없습니다</td></tr>';
+            } else {
+                historyTbody.innerHTML = changeHistoryData.map(h => `
+                    <tr>
+                        <td>${h.date}</td>
+                        <td>${h.user}</td>
+                        <td>${h.menu}</td>
+                        <td>${getPermBadge(h.before)}</td>
+                        <td>${getPermBadge(h.after)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Show/hide delete button
+            const deleteBtn = document.getElementById('group-delete-btn');
+            if (!currentGroupDetail.isSystemGroup && currentGroupDetail.memberCount === 0) {
+                deleteBtn.style.display = 'inline-block';
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+
+            // Show view mode
+            document.getElementById('adm006-view-mode').style.display = 'block';
+            document.getElementById('adm006-edit-mode').style.display = 'none';
+            document.getElementById('adm006-title').textContent = '권한 그룹 상세';
+
+            goToScreen('screen-adm-006');
+        }
+
+        function showAllMembers(event) {
+            event.preventDefault();
+            const members = admins.filter(a => a.roleGroup === currentGroupDetail.name);
+            const tbody = document.getElementById('all-members-tbody');
+
+            tbody.innerHTML = members.map(m => `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.loginId}</td>
+                    <td>${getStatusBadge(m.status)}</td>
+                    <td>${m.lastLogin}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('all-members-modal').classList.add('active');
+        }
+
+        function closeAllMembersModal() {
+            document.getElementById('all-members-modal').classList.remove('active');
+        }
+
+        function enterGroupEditMode() {
+            // Populate edit form
+            document.getElementById('group-edit-name').value = currentGroupDetail.name;
+            document.getElementById('group-edit-description').value = currentGroupDetail.description;
+            document.querySelector(`input[name="group-edit-status"][value="${currentGroupDetail.status}"]`).checked = true;
+
+            // All fields are editable for both system and custom groups
+            // Note: Deletion is the only restricted action for system groups
+
+            // Update char counter
+            document.getElementById('edit-desc-counter').textContent = (currentGroupDetail.description || '').length;
+
+            // Render editable permission table
+            renderMenuPermTable('edit-perm-tbody', currentGroupDetail.menuPermissions || {}, true);
+
+            // Store original data
+            originalFormData = {
+                name: currentGroupDetail.name,
+                description: currentGroupDetail.description,
+                status: currentGroupDetail.status,
+                menuPermissions: JSON.stringify(currentGroupDetail.menuPermissions || {})
+            };
+
+            // Show edit mode
+            document.getElementById('adm006-view-mode').style.display = 'none';
+            document.getElementById('adm006-edit-mode').style.display = 'block';
+            document.getElementById('adm006-title').textContent = '권한 그룹 수정';
+            document.getElementById('group-edit-submit-btn').disabled = true;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const editDescTextarea = document.getElementById('group-edit-description');
+            editDescTextarea?.addEventListener('input', () => {
+                document.getElementById('edit-desc-counter').textContent = editDescTextarea.value.length;
+                checkGroupEditChanges();
+            });
+
+            const groupEditFields = ['group-edit-name'];
+            groupEditFields.forEach(id => {
+                document.getElementById(id)?.addEventListener('input', checkGroupEditChanges);
+            });
+
+            document.querySelectorAll('input[name="group-edit-status"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    handleStatusChange(e);
+                });
+            });
+        });
+
+        function checkGroupEditChanges() {
+            if (!originalFormData) return;
+
+            const currentData = {
+                name: document.getElementById('group-edit-name').value,
+                description: document.getElementById('group-edit-description').value,
+                status: document.querySelector('input[name="group-edit-status"]:checked').value,
+                menuPermissions: JSON.stringify(getMenuPermissions('edit-perm-tbody'))
+            };
+
+            const hasChanges = JSON.stringify(originalFormData) !== JSON.stringify(currentData);
+            document.getElementById('group-edit-submit-btn').disabled = !hasChanges;
+        }
+
+        document.getElementById('group-edit-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('group-edit-name').value.trim();
+            const description = document.getElementById('group-edit-description').value.trim();
+            const status = document.querySelector('input[name="group-edit-status"]:checked').value;
+            const menuPermissions = getMenuPermissions('edit-perm-tbody');
+
+            let hasError = false;
+
+            if (!name) {
+                document.getElementById('group-edit-name-error').textContent = '그룹명을 입력해 주세요.';
+                document.getElementById('group-edit-name-error').style.display = 'block';
+                hasError = true;
+            } else if (name.length < 2 || name.length > 50) {
+                document.getElementById('group-edit-name-error').textContent = '그룹명은 2자 이상 50자 이하로 입력해 주세요.';
+                document.getElementById('group-edit-name-error').style.display = 'block';
+                hasError = true;
+            } else {
+                document.getElementById('group-edit-name-error').style.display = 'none';
+            }
+
+            if (hasError) return;
+
+            const submitBtn = document.getElementById('group-edit-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> 저장 중...';
+
+            setTimeout(() => {
+                currentGroupDetail.name = name;
+                currentGroupDetail.description = description;
+                currentGroupDetail.status = status;
+                currentGroupDetail.menuPermissions = menuPermissions;
+                currentGroupDetail.updatedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+                showToast('권한 그룹 정보가 수정되었습니다', 'success');
+                loadGroupDetail(currentGroupDetail.id);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '저장';
+            }, 800);
+        });
+
+        function cancelGroupEdit() {
+            const currentData = {
+                name: document.getElementById('group-edit-name').value,
+                description: document.getElementById('group-edit-description').value,
+                status: document.querySelector('input[name="group-edit-status"]:checked').value,
+                menuPermissions: JSON.stringify(getMenuPermissions('edit-perm-tbody'))
+            };
+
+            if (JSON.stringify(originalFormData) !== JSON.stringify(currentData)) {
+                document.getElementById('edit-cancel-modal').classList.add('active');
+            } else {
+                loadGroupDetail(currentGroupDetail.id);
+            }
+        }
+
+        function showDeleteGroupModal() {
+            document.getElementById('group-delete-modal').classList.add('active');
+        }
+
+        function closeDeleteGroupModal() {
+            document.getElementById('group-delete-modal').classList.remove('active');
+        }
+
+        function confirmDeleteGroup() {
+            closeDeleteGroupModal();
+            permissionGroups = permissionGroups.filter(g => g.id !== currentGroupDetail.id);
+            filteredGroups = [...permissionGroups];
+            showToast('권한 그룹이 삭제되었습니다', 'success');
+            goToScreen('screen-adm-004');
+        }
+
+        // Status change warning modal handlers
+        let pendingStatusChange = null;
+
+        function handleStatusChange(e) {
+            const newStatus = e.target.value;
+            const oldStatus = originalFormData.status;
+
+            // If changing to INACTIVE, show warning modal
+            if (newStatus === 'INACTIVE' && oldStatus === 'ACTIVE') {
+                const memberCount = currentGroupDetail.memberCount || 0;
+                const isSystemGroup = currentGroupDetail.isSystemGroup;
+                const groupName = currentGroupDetail.name;
+
+                // Store pending change
+                pendingStatusChange = { newStatus, oldStatus };
+
+                // Build warning message
+                let message = '';
+                if (isSystemGroup) {
+                    if (memberCount > 0) {
+                        message = `⚠️ 시스템 기본 그룹을 비활성화하려고 합니다.\n\n'${groupName}'은(는) 시스템 기본 제공 그룹입니다.\n비활성화 시 소속된 ${memberCount}명의 관리자 접근이 제한됩니다.\n\n정말 비활성화하시겠습니까?`;
+                    } else {
+                        message = `⚠️ 시스템 기본 그룹을 비활성화하려고 합니다.\n\n'${groupName}'은(는) 시스템 기본 제공 그룹입니다.\n\n정말 비활성화하시겠습니까?`;
+                    }
+                } else {
+                    if (memberCount > 0) {
+                        message = `해당 그룹에 소속된 관리자가 ${memberCount}명 있습니다.\n비활성화 시 소속 관리자의 권한이 제한될 수 있습니다.\n\n계속하시겠습니까?`;
+                    }
+                    // If no members in custom group, no warning needed - allow change
+                }
+
+                if (message) {
+                    // Show warning modal
+                    document.getElementById('status-warning-message').innerHTML = message.replace(/\n/g, '<br>');
+                    document.getElementById('status-change-warning-modal').classList.add('active');
+                } else {
+                    // No warning needed, proceed with change
+                    checkGroupEditChanges();
+                }
+            } else {
+                // ACTIVE or no change - proceed normally
+                checkGroupEditChanges();
+            }
+        }
+
+        function closeStatusChangeWarningModal() {
+            document.getElementById('status-change-warning-modal').classList.remove('active');
+        }
+
+        function cancelStatusChange() {
+            // Revert to original status
+            if (pendingStatusChange) {
+                document.querySelector(`input[name="group-edit-status"][value="${pendingStatusChange.oldStatus}"]`).checked = true;
+                pendingStatusChange = null;
+            }
+            closeStatusChangeWarningModal();
+        }
+
+        function confirmStatusChange() {
+            // Accept the status change
+            pendingStatusChange = null;
+            closeStatusChangeWarningModal();
+            checkGroupEditChanges();
+        }
+
+        // (ADM-007 has been removed - menu permissions are now managed per group in ADM-005/006)
+    </script>
+</body>
+</html>
