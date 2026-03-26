@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>마카다미아 멤버스 CRM - 인증/계정 프로토타입</title>
+<style>
+  /* ===== 리셋 & 기본 ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; color: #333; font-size: 14px; line-height: 1.5; }
+  button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
+  input { font-family: inherit; font-size: 14px; outline: none; }
+
+  /* ===== 화면 전환 ===== */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* =========================================
+     AUTH-001: 로그인 화면
+     ========================================= */
+  #loginScreen {
+    justify-content: center; align-items: center;
+    background: linear-gradient(135deg, #1a2a4a 0%, #243b67 100%);
+    flex-direction: column;
+  }
+  .login-card {
+    background: #fff; border-radius: 16px; padding: 48px 40px 40px;
+    width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo .logo-icon {
+    width: 56px; height: 56px; background: #4a90d9;
+    border-radius: 12px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 24px; font-weight: 700;
+  }
+  .login-logo h1 { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  .login-logo p { font-size: 13px; color: #666; margin-top: 4px; }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+  .input-wrap {
+    position: relative; border: 1px solid #ddd; border-radius: 8px;
+    transition: border-color 0.2s;
+  }
+  .input-wrap:focus-within { border-color: #4a90d9; }
+  .input-wrap.error { border-color: #e74c3c; }
+  .input-wrap input {
+    width: 100%; padding: 12px 14px; border: none; border-radius: 8px;
+    background: transparent; font-size: 14px;
+  }
+  .input-wrap input::placeholder { color: #bbb; }
+  .toggle-pw {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; color: #aaa; font-size: 18px; padding: 0;
+  }
+  .toggle-pw:hover { color: #4a90d9; }
+
+  .error-msg {
+    display: none; font-size: 12px; color: #e74c3c; margin-top: 6px; padding-left: 2px;
+  }
+  .error-msg.show { display: block; }
+
+  /* 로그인 폼 상단 서버 에러 */
+  .server-error {
+    display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+    padding: 12px 14px; margin-bottom: 20px; font-size: 13px; color: #e74c3c;
+  }
+  .server-error.show { display: flex; align-items: center; gap: 8px; }
+
+  .checkbox-group {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
+  }
+  .checkbox-group input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: #4a90d9;
+  }
+  .checkbox-group label { font-size: 13px; color: #666; cursor: pointer; }
+
+  .btn-login {
+    width: 100%; padding: 14px; background: #4a90d9;
+    color: #fff; font-size: 15px; font-weight: 600; border-radius: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-login:hover { opacity: 0.92; }
+  .btn-login:active { transform: scale(0.98); }
+  .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-login .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .login-footer {
+    text-align: center; margin-top: 32px; font-size: 12px; color: rgba(255,255,255,0.6);
+  }
+
+  /* =========================================
+     AUTH-004: 2단계 인증 (이메일)
+     ========================================= */
+  #emailVerifyScreen {
+    justify-content: center; align-items: center;
+    background: linear-gradient(135deg, #1a2a4a 0%, #243b67 100%);
+    flex-direction: column;
+  }
+  .verify-card {
+    background: #fff; border-radius: 16px; padding: 48px 40px 40px;
+    width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .verify-card .card-logo { text-align: center; margin-bottom: 24px; }
+  .verify-card .card-logo .logo-icon {
+    width: 56px; height: 56px; background: #4a90d9;
+    border-radius: 12px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 24px; font-weight: 700;
+  }
+  .verify-card h2 { text-align: center; font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+  .verify-card .verify-desc {
+    text-align: center; font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.6;
+  }
+  .verify-email-info {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 24px; font-size: 14px; color: #1565c0; font-weight: 500;
+  }
+  .verify-timer {
+    text-align: center; font-size: 14px; color: #333; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .verify-timer .time { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .verify-timer.expired .time { color: #e74c3c; }
+  .verify-timer.warning .time { color: #e74c3c; }
+  .btn-verify {
+    width: 100%; padding: 14px; background: #4a90d9;
+    color: #fff; font-size: 15px; font-weight: 600; border-radius: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-verify:hover { opacity: 0.92; }
+  .btn-verify:active { transform: scale(0.98); }
+  .btn-verify:disabled { opacity: 0.6; cursor: not-allowed; }
+  .verify-actions {
+    text-align: center; margin-top: 20px;
+  }
+  .verify-actions .resend-link {
+    background: none; color: #4a90d9; font-size: 13px; font-weight: 500;
+    text-decoration: underline; padding: 4px 0; transition: color 0.2s;
+  }
+  .verify-actions .resend-link:hover { color: #3a7bc8; }
+  .verify-actions .resend-link:disabled { color: #999; text-decoration: none; cursor: not-allowed; }
+  .verify-actions .back-link {
+    display: block; margin-top: 12px; background: none;
+    color: #999; font-size: 13px; padding: 4px 0; transition: color 0.2s;
+  }
+  .verify-actions .back-link:hover { color: #666; }
+  .verify-expired-msg {
+    display: none; text-align: center; background: #fff3e0; border: 1px solid #ffcc80;
+    border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 13px; color: #e65100;
+  }
+  .verify-expired-msg.show { display: block; }
+  .verify-attempts {
+    text-align: center; font-size: 12px; color: #999; margin-top: 8px;
+  }
+
+  /* =========================================
+     메인 화면 (로그인 후)
+     ========================================= */
+  #mainScreen { flex-direction: row; }
+
+  /* 사이드바 */
+  .sidebar {
+    width: 260px; min-height: 100vh; background: linear-gradient(180deg, #1a2a4a 0%, #243b67 100%);
+    color: #fff; position: fixed; top: 0; left: 0; z-index: 200; overflow-y: auto;
+    display: none;
+  }
+  #mainScreen.active .sidebar { display: block; }
+  .sidebar .logo {
+    padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar .logo h1 { font-size: 18px; font-weight: 700; color: #fff; }
+  .sidebar .logo .admin-badge {
+    display: inline-block; background: rgba(74,144,217,0.3); color: #8bb8e8;
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-top: 4px;
+  }
+  .nav-menu { padding: 16px 0; }
+  .nav-menu ul { list-style: none; }
+  .nav-item { margin: 2px 12px; }
+
+  /* 메뉴 구분선 */
+  .menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 12px 20px;
+  }
+
+  /* 메뉴 섹션 헤더 */
+  .menu-section-header {
+    padding: 16px 20px 8px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px;
+    font-size: 14px; font-weight: 500; transition: all 0.2s; cursor: pointer;
+  }
+  .nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .nav-item.active > .nav-link { background: rgba(74,144,217,0.25); color: #fff; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .arrow { font-size: 10px; margin-left: auto; transition: transform 0.2s; }
+  .arrow.rotate { transform: rotate(180deg); }
+  .submenu { display: none; padding-left: 20px; margin-top: 4px; }
+  .submenu.show { display: block; }
+  .submenu-link {
+    display: block; padding: 8px 16px 8px 30px; color: rgba(255,255,255,0.6);
+    text-decoration: none; font-size: 13px; border-radius: 6px; transition: all 0.2s;
+  }
+  .submenu-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .submenu-link.active { color: #8bb8e8; font-weight: 600; }
+
+  /* 메인 래퍼 (사이드바 옆) */
+  .main-wrapper {
+    margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh;
+  }
+
+  /* 헤더 */
+  .header {
+    background: #fff; height: 56px; display: flex; align-items: center;
+    padding: 0 24px; border-bottom: 1px solid #e8eaed;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo { font-size: 16px; font-weight: 700; color: #1a1a1a; display: flex; align-items: center; gap: 8px; }
+  .header-logo .h-icon {
+    width: 28px; height: 28px; background: #4a90d9;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 700;
+  }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+
+  /* 사용자 프로필 표시 */
+  .user-name { font-weight: 500; color: #333; font-size: 13px; }
+  .user-divider { color: #ccc; margin: 0 6px; }
+  .user-group { color: #666; font-size: 13px; }
+
+  .btn-header-logout {
+    padding: 6px 14px; background: none; color: #666; font-size: 13px;
+    border: 1px solid #e0e0e0; border-radius: 6px; transition: all 0.2s;
+  }
+  .btn-header-logout:hover { background: #fef2f2; color: #e74c3c; border-color: #fecaca; }
+
+  /* 비밀번호 만료 예고 배너 */
+  .expire-banner {
+    display: none; background: #fffbeb; border-bottom: 1px solid #fde68a;
+    padding: 10px 24px; font-size: 13px; color: #92400e;
+    align-items: center; gap: 8px;
+  }
+  .expire-banner.show { display: flex; }
+  .expire-banner a { color: #d97706; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+  /* 메인 콘텐츠 */
+  .main-content { flex: 1; padding: 32px; background: #f5f7fa; }
+  .main-welcome {
+    background: #fff; border-radius: 12px; padding: 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .main-welcome h2 { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+  .main-welcome p { color: #666; font-size: 14px; }
+
+  /* 시나리오 안내 패널 */
+  .scenario-panel {
+    background: #fff; border-radius: 12px; padding: 24px; margin-top: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .scenario-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #1a1a1a; }
+  .scenario-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .scenario-btn {
+    padding: 10px 18px; background: #f9fafb; border: 1px solid #e0e0e0;
+    border-radius: 8px; font-size: 13px; color: #555; transition: all 0.2s;
+  }
+  .scenario-btn:hover { background: #eef2ff; border-color: #c7d2fe; color: #4a90d9; }
+
+  /* =========================================
+     AUTH-002: 로그아웃 확인 팝업
+     ========================================= */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 1000; justify-content: center; align-items: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px; width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden;
+  }
+  .modal-header {
+    padding: 18px 24px; border-bottom: 1px solid #f3f4f6;
+    font-size: 16px; font-weight: 700; color: #1a1a1a;
+  }
+  .modal-body { padding: 28px 24px; text-align: center; font-size: 15px; color: #555; }
+  .modal-footer {
+    padding: 16px 24px; display: flex; justify-content: flex-end; gap: 10px;
+    border-top: 1px solid #f3f4f6;
+  }
+  .btn-cancel {
+    padding: 10px 24px; background: #f3f4f6; color: #555;
+    border-radius: 8px; font-weight: 500; transition: background 0.2s;
+  }
+  .btn-cancel:hover { background: #e0e0e0; }
+  .btn-confirm {
+    padding: 10px 24px; background: #4a90d9; color: #fff;
+    border-radius: 8px; font-weight: 600; transition: opacity 0.2s;
+  }
+  .btn-confirm:hover { opacity: 0.9; }
+  .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-confirm.danger { background: #e74c3c; }
+
+  /* =========================================
+     세션 만료 경고 팝업
+     ========================================= */
+  .session-timer { font-size: 28px; font-weight: 700; color: #e74c3c; margin: 16px 0 8px; font-variant-numeric: tabular-nums; }
+
+  /* =========================================
+     AUTH-003: 비밀번호 변경 (강제 모드) - 전체화면
+     ========================================= */
+  #pwChangeForceScreen {
+    justify-content: center; align-items: center;
+    background: linear-gradient(135deg, #1a2a4a 0%, #243b67 100%);
+    flex-direction: column;
+  }
+  .pw-change-card {
+    background: #fff; border-radius: 16px; padding: 40px;
+    width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .pw-change-card .card-logo { text-align: center; margin-bottom: 24px; }
+  .pw-change-card .card-logo .logo-icon {
+    width: 48px; height: 48px; background: #4a90d9;
+    border-radius: 10px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 20px; font-weight: 700;
+  }
+  .pw-change-card h2 { text-align: center; font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+  .pw-notice {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+    padding: 14px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; color: #92400e; line-height: 1.6;
+  }
+  .pw-notice .icon { font-size: 18px; flex-shrink: 0; }
+
+  /* 비밀번호 규칙 체크리스트 */
+  .pw-rules { margin: 10px 0 20px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px 20px; background: #f9fafb; border-radius: 8px; }
+  .pw-rules .rule {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+    color: #999; transition: color 0.2s; white-space: nowrap;
+  }
+  .pw-rules .rule.pass { color: #2e7d32; }
+  .pw-rules .rule .check { font-size: 13px; }
+
+  .btn-pw-change {
+    width: 100%; padding: 14px; background: #4a90d9;
+    color: #fff; font-size: 15px; font-weight: 600; border-radius: 8px;
+    transition: opacity 0.2s;
+  }
+  .btn-pw-change:hover { opacity: 0.92; }
+  .btn-pw-change:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* =========================================
+     Toast 알림
+     ========================================= */
+  .toast-container {
+    position: fixed; top: 20px; right: 20px; z-index: 2000;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    padding: 14px 20px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: slideIn 0.3s ease;
+    display: flex; align-items: center; gap: 10px; min-width: 300px;
+  }
+  .toast.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .toast.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* =========================================
+     프로토타입 탐색 안내 바
+     ========================================= */
+  .proto-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a2e; color: #fff;
+    padding: 10px 24px; font-size: 12px; display: flex; align-items: center; gap: 16px;
+    z-index: 3000;
+  }
+  .proto-bar .badge {
+    background: #4a90d9; padding: 3px 10px; border-radius: 4px; font-weight: 600; font-size: 11px;
+  }
+  .proto-bar span { color: rgba(255,255,255,0.7); }
+  .proto-bar .nav-btns { margin-left: auto; display: flex; gap: 6px; }
+  .proto-bar .nav-btns button {
+    padding: 5px 14px; background: rgba(255,255,255,0.1); color: #fff;
+    border-radius: 4px; font-size: 11px; transition: background 0.2s;
+  }
+  .proto-bar .nav-btns button:hover { background: rgba(255,255,255,0.2); }
+  .proto-bar .nav-btns button.current { background: #4a90d9; }
+
+  /* AUTH-003: 자발적 변경 화면 스타일 */
+  .content-card {
+    max-width: 600px;
+    margin: 80px auto 40px;
+    padding: 40px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 32px;
+  }
+  .email-info-box {
+    background: #f5f7fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .email-icon {
+    font-size: 32px;
+  }
+  .email-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .email-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+  .verification-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .verification-input-wrap input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  .verification-input-wrap input:focus {
+    outline: none;
+    border-color: #4a90d9;
+  }
+  .verification-input-wrap input::placeholder {
+    color: #bbb;
+  }
+  .verification-input-wrap .btn-secondary {
+    white-space: nowrap;
+    min-width: 80px;
+  }
+  .timer {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a90d9;
+    min-width: 50px;
+    text-align: center;
+  }
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    justify-content: flex-end;
+  }
+  .btn-primary, .btn-secondary {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: #4a90d9;
+    color: #fff;
+    border: none;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #3a7bc8;
+  }
+  .btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: #fff;
+    color: #666;
+    border: 1px solid #ddd;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: #f5f7fa;
+  }
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .field-help {
+    font-size: 13px;
+    color: #666;
+    margin-top: 8px;
+  }
+  .required {
+    color: #e53935;
+    margin-left: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     AUTH-001: 로그인 화면
+     ============================================================ -->
+<div id="loginScreen" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">M</div>
+      <h1>마카다미아 멤버스</h1>
+      <p>관리자 시스템</p>
+    </div>
+
+    <!-- 서버 에러 메시지 (로그인 폼 상단) -->
+    <div id="loginServerError" class="server-error">
+      <span>⚠</span>
+      <span id="loginServerErrorMsg"></span>
+    </div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="loginId">아이디(이메일)</label>
+        <div class="input-wrap" id="loginIdWrap">
+          <input type="email" id="loginId" placeholder="이메일 주소를 입력하세요" maxlength="30" autocomplete="username">
+        </div>
+        <div class="error-msg" id="loginIdError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="loginPw">비밀번호</label>
+        <div class="input-wrap" id="loginPwWrap">
+          <input type="password" id="loginPw" placeholder="비밀번호를 입력하세요" maxlength="40" autocomplete="current-password">
+          <button type="button" class="toggle-pw" onclick="togglePassword('loginPw', this)" title="비밀번호 표시"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="error-msg" id="loginPwError"></div>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="saveId">
+        <label for="saveId">아이디(이메일) 저장</label>
+      </div>
+
+      <button type="submit" class="btn-login" id="btnLogin">로그인</button>
+    </form>
+  </div>
+  <div class="login-footer">© Daekyo Co., Ltd. All Rights Reserved.</div>
+</div>
+
+
+<!-- ============================================================
+     AUTH-004: 2단계 인증 (이메일)
+     ============================================================ -->
+<div id="emailVerifyScreen" class="screen">
+  <div class="verify-card">
+    <div class="card-logo">
+      <div class="logo-icon">M</div>
+    </div>
+    <h2>📧 2단계 인증</h2>
+    <p class="verify-desc">
+      회사 이메일로 인증코드를 발송했습니다.<br>
+      수신된 6자리 인증코드를 입력해 주세요.
+    </p>
+
+    <div class="verify-email-info">
+      <span>📬</span>
+      <span id="verifyMaskedEmail">a***n@daekyo.co.kr</span>
+    </div>
+
+    <!-- 만료 메시지 -->
+    <div class="verify-expired-msg" id="verifyExpiredMsg">
+      인증 시간이 만료되었습니다. 인증코드를 재발송해 주세요.
+    </div>
+
+    <!-- 서버 에러 -->
+    <div id="verifyServerError" class="server-error">
+      <span>⚠</span>
+      <span id="verifyServerErrorMsg"></span>
+    </div>
+
+    <form id="verifyForm" novalidate>
+      <div class="form-group">
+        <label for="verifyCode">인증코드 (6자리)</label>
+        <div class="input-wrap" id="verifyCodeWrap">
+          <input type="text" id="verifyCode" placeholder="인증코드 6자리를 입력하세요" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+        </div>
+        <div class="error-msg" id="verifyCodeError"></div>
+      </div>
+
+      <div class="verify-timer" id="verifyTimerArea">
+        <span>⏱</span>
+        <span>남은 시간:</span>
+        <span class="time" id="verifyTimerDisplay">05:00</span>
+      </div>
+
+      <button type="submit" class="btn-verify" id="btnVerify">인증 확인</button>
+    </form>
+
+    <div class="verify-attempts" id="verifyAttemptsInfo"></div>
+
+    <div class="verify-actions">
+      <span style="font-size:13px; color:#666;">인증코드를 받지 못하셨나요?</span><br>
+      <button class="resend-link" id="btnResend" onclick="resend2FACode()">인증코드 재발송</button>
+      <button class="back-link" onclick="backToLogin()">로그인 화면으로 돌아가기</button>
+    </div>
+  </div>
+  <div class="login-footer">© Daekyo Co., Ltd. All Rights Reserved.</div>
+</div>
+
+
+<!-- ============================================================
+     메인 화면 (헤더 + 콘텐츠)
+     ============================================================ -->
+<div id="mainScreen" class="screen">
+  <!-- 좌측 사이드바 -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>마카다미아 멤버스</h1>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <nav class="nav-menu">
+      <ul>
+        <!-- 사용자 권한 메뉴 -->
+        <li class="nav-item">
+          <a href="../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+            <span class="nav-icon">👥</span>
+            <span>회원관리</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+            <span class="nav-icon">📨</span>
+            <span>메시지 발송</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+            <span class="nav-icon">📊</span>
+            <span>통계</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- 메뉴 구분선 -->
+      <div class="menu-divider"></div>
+
+      <!-- 관리자 전용 메뉴 섹션 -->
+      <div class="menu-section-header">관리자 전용</div>
+      <ul>
+        <li class="nav-item">
+          <a href="../04. 약관_처리방침 관리/약관관리_prototype.html" class="nav-link">
+            <span class="nav-icon">📋</span>
+            <span>약관/처리방침 관리</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+            <span class="nav-icon">👤</span>
+            <span>계정/권한 관리</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link">
+            <span class="nav-icon">⚙️</span>
+            <span>서비스 관리</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+            <span class="nav-icon">📝</span>
+            <span>이력 관리</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- 메인 래퍼 (사이드바 우측) -->
+  <div class="main-wrapper">
+    <!-- 비밀번호 만료 예고 배너 -->
+    <div id="expireBanner" class="expire-banner">
+      <span>⚠️</span>
+      <span>비밀번호 만료 예정: <strong id="expireDday">D-7</strong>일 후 비밀번호가 만료됩니다.</span>
+    </div>
+
+    <!-- 헤더 -->
+    <div class="header">
+      <div class="header-logo">
+        <div class="h-icon">M</div>
+        마카다미아 CRM
+      </div>
+      <div class="header-right">
+        <!-- 관리자명 | 그룹사명 표시 -->
+        <div style="display:flex; align-items:center;">
+          <span class="user-name">유수영</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+        </div>
+        <!-- 독립 로그아웃 버튼 -->
+        <button class="btn-header-logout" onclick="openLogoutModal()">로그아웃</button>
+      </div>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="main-content">
+      <div class="main-welcome">
+        <h2 id="welcomeMsg">안녕하세요, 유수영님 👋</h2>
+        <p>마카다미아 멤버스 CRM 관리자 시스템에 오신 것을 환영합니다.</p>
+      </div>
+
+      <!-- 시나리오 테스트 안내 -->
+      <div class="scenario-panel">
+        <h3>프로토타입 시나리오 테스트</h3>
+        <div class="scenario-list">
+          <button class="scenario-btn" onclick="showExpireBanner(7)">비밀번호 만료 예고 (D-7)</button>
+          <button class="scenario-btn" onclick="showExpireBanner(1)">비밀번호 만료 예고 (D-1)</button>
+          <button class="scenario-btn" onclick="hideExpireBanner()">배너 숨기기</button>
+          <button class="scenario-btn" onclick="simulateSessionWarning()">세션 만료 경고 (5분전)</button>
+          <button class="scenario-btn" onclick="simulateDuplicateLogin()">다른 기기 로그인 알림</button>
+          <button class="scenario-btn" onclick="simulateSessionTimeout()">세션 타임아웃</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     AUTH-003: 비밀번호 변경 - 강제 모드 (전체화면)
+     ============================================================ -->
+<div id="pwChangeForceScreen" class="screen">
+  <div class="pw-change-card">
+    <div class="card-logo">
+      <div class="logo-icon">M</div>
+    </div>
+    <h2>비밀번호 변경</h2>
+    <div class="pw-notice" id="forceChangeNotice">
+      <span class="icon">⚠️</span>
+      <span id="forceChangeReason">안전한 서비스 이용을 위해 비밀번호를 변경해 주세요.</span>
+    </div>
+
+    <!-- 서버 에러 -->
+    <div id="forceServerError" class="server-error">
+      <span>⚠</span>
+      <span id="forceServerErrorMsg"></span>
+    </div>
+
+    <form id="forcePwForm" novalidate>
+      <div class="form-group">
+        <label for="forceNewPw">새 비밀번호</label>
+        <div class="input-wrap">
+          <input type="password" id="forceNewPw" placeholder="새 비밀번호를 입력하세요" maxlength="40" oninput="checkPwRules('force')">
+          <button type="button" class="toggle-pw" onclick="togglePassword('forceNewPw', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="pw-rules" id="forcePwRules">
+          <span class="rule" data-rule="length"><span class="check">○</span> 8자 이상</span>
+          <span class="rule" data-rule="alpha"><span class="check">○</span> 영문</span>
+          <span class="rule" data-rule="digit"><span class="check">○</span> 숫자</span>
+          <span class="rule" data-rule="special"><span class="check">○</span> 특수문자</span>
+          <span class="rule" data-rule="combo"><span class="check">○</span> 3가지 조합</span>
+        </div>
+        <div class="error-msg" id="forceNewPwError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="forceConfirmPw">새 비밀번호 확인</label>
+        <div class="input-wrap">
+          <input type="password" id="forceConfirmPw" placeholder="새 비밀번호를 다시 입력하세요" maxlength="40">
+          <button type="button" class="toggle-pw" onclick="togglePassword('forceConfirmPw', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="error-msg" id="forceConfirmPwError"></div>
+      </div>
+
+      <button type="submit" class="btn-pw-change" id="btnForceChange">비밀번호 변경</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     AUTH-003: 비밀번호 변경 - 자발적 모드 (단일 페이지)
+     ============================================================ -->
+<div id="pwChangeVoluntaryScreen" class="screen">
+  <div class="content-card">
+    <h2 class="page-title">비밀번호 변경</h2>
+
+    <div class="server-error" id="volServerError">
+      <span>⚠</span>
+      <span id="volServerErrorMsg"></span>
+    </div>
+
+    <form id="volPwChangeForm" novalidate>
+      <div class="form-group">
+        <label for="currentPw">현재 비밀번호 <span class="required">*</span></label>
+        <div class="input-wrap">
+          <input type="password" id="currentPw" placeholder="현재 비밀번호를 입력하세요" maxlength="40" required>
+          <button type="button" class="toggle-pw" onclick="togglePassword('currentPw', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="error-msg" id="currentPwError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="volNewPw">새 비밀번호 <span class="required">*</span></label>
+        <div class="input-wrap">
+          <input type="password" id="volNewPw" placeholder="새 비밀번호를 입력하세요" maxlength="40"
+                 oninput="checkPwRules('vol')" required>
+          <button type="button" class="toggle-pw" onclick="togglePassword('volNewPw', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="pw-rules" id="volPwRules">
+          <span class="rule" data-rule="length"><span class="check">○</span> 8자 이상</span>
+          <span class="rule" data-rule="alpha"><span class="check">○</span> 영문</span>
+          <span class="rule" data-rule="digit"><span class="check">○</span> 숫자</span>
+          <span class="rule" data-rule="special"><span class="check">○</span> 특수문자</span>
+          <span class="rule" data-rule="combo"><span class="check">○</span> 3가지 조합</span>
+        </div>
+        <div class="error-msg" id="volNewPwError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="volConfirmPw">새 비밀번호 확인 <span class="required">*</span></label>
+        <div class="input-wrap">
+          <input type="password" id="volConfirmPw" placeholder="새 비밀번호를 다시 입력하세요" maxlength="40" required>
+          <button type="button" class="toggle-pw" onclick="togglePassword('volConfirmPw', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="error-msg" id="volConfirmPwError"></div>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn-secondary" onclick="confirmCancelVoluntaryChange()">취소</button>
+        <button type="submit" class="btn-primary" id="btnVolChange">비밀번호 변경</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     AUTH-002: 로그아웃 확인 팝업
+     ============================================================ -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <div class="modal-header">로그아웃</div>
+    <div class="modal-body">로그아웃 하시겠습니까?</div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeLogoutModal()">취소</button>
+      <button class="btn-confirm danger" id="btnLogoutConfirm" onclick="doLogout()">확인</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     세션 만료 경고 팝업
+     ============================================================ -->
+<div class="modal-overlay" id="sessionWarningModal">
+  <div class="modal">
+    <div class="modal-header">세션 만료 경고</div>
+    <div class="modal-body">
+      <p>자동 로그아웃까지 남은 시간</p>
+      <div class="session-timer" id="sessionTimerDisplay">04:59</div>
+      <p style="font-size:13px; color:#666; margin-top:4px;">계속 사용하시겠습니까?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="sessionLogout()">로그아웃</button>
+      <button class="btn-confirm" onclick="extendSession()">계속 사용</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Toast 컨테이너 -->
+<div class="toast-container" id="toastContainer"></div>
+
+
+<!-- ============================================================
+     프로토타입 하단 네비게이션 바
+     ============================================================ -->
+<div class="proto-bar">
+  <span class="badge">PROTOTYPE</span>
+  <span>인증/계정 (AUTH-001 ~ AUTH-004)</span>
+  <span style="color:rgba(255,255,255,0.4)">|</span>
+  <span>테스트: admin@daekyo.co.kr / password1! / 2FA: 123456 | 권한없음: noperm@daekyo.co.kr / password1!</span>
+  <div class="nav-btns">
+    <button class="current" onclick="goToScreen('login')">AUTH-001 로그인</button>
+    <button onclick="goToScreen('2fa')">AUTH-004 2단계인증</button>
+    <button onclick="goToScreen('main')">메인(로그아웃)</button>
+    <button onclick="goToScreen('pwForce')">AUTH-003 강제변경</button>
+    <button onclick="goToScreen('pwVol')">AUTH-003 자발변경</button>
+  </div>
+</div>
+
+
+<script>
+// ===== 상태 관리 =====
+const state = {
+  loggedIn: false,
+  adminInfo: { name: '유수영', loginId: 'admin@daekyo.co.kr', roleGroupName: '시스템관리자' },
+  loginAttempts: 0,
+  sessionTimer: null,
+  sessionSeconds: 299, // 4:59 for demo
+  // 2FA 상태
+  twoFA: {
+    timer: null,
+    seconds: 300, // 5분
+    attempts: 0,
+    maxAttempts: 5,
+    resendCooldownTimer: null,
+    resendCooldown: 0,
+    pendingPassword: null, // 로그인 시 사용한 비밀번호 기억
+    expired: false,
+  }
+};
+
+// ===== 화면 전환 =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // 프로토 바 버튼 상태
+  document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+}
+
+function goToScreen(screen) {
+  const btns = document.querySelectorAll('.proto-bar .nav-btns button');
+  btns.forEach(b => b.classList.remove('current'));
+
+  if (screen === 'login') {
+    showScreen('loginScreen');
+    btns[0].classList.add('current');
+    resetLoginForm();
+    stop2FATimer();
+  } else if (screen === '2fa') {
+    showScreen('emailVerifyScreen');
+    btns[1].classList.add('current');
+    start2FA();
+  } else if (screen === 'main') {
+    showScreen('mainScreen');
+    btns[2].classList.add('current');
+    state.loggedIn = true;
+    stop2FATimer();
+  } else if (screen === 'pwForce') {
+    showScreen('pwChangeForceScreen');
+    btns[3].classList.add('current');
+    document.getElementById('forceChangeReason').textContent = '최초 로그인입니다. 안전한 서비스 이용을 위해 비밀번호를 변경해 주세요.';
+    document.getElementById('forceNewPw').focus();
+    stop2FATimer();
+  } else if (screen === 'pwVol') {
+    showScreen('pwChangeVoluntaryScreen');
+    btns[4].classList.add('current');
+    resetVoluntaryForm();
+    stop2FATimer();
+  }
+}
+
+// ===== AUTH-001: 로그인 =====
+function resetLoginForm() {
+  document.getElementById('loginForm').reset();
+  hideAllErrors('loginScreen');
+  hideServerError('login');
+  document.getElementById('btnLogin').disabled = false;
+  document.getElementById('btnLogin').innerHTML = '로그인';
+  // 아이디(이메일) 저장 복원
+  const savedId = localStorage.getItem('crm_saved_login_id');
+  if (savedId) {
+    document.getElementById('loginId').value = savedId;
+    document.getElementById('saveId').checked = true;
+    document.getElementById('loginPw').focus();
+  } else {
+    document.getElementById('loginId').focus();
+  }
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const id = document.getElementById('loginId').value.trim();
+  const pw = document.getElementById('loginPw').value.trim();
+
+  // 클라이언트 유효성 검사
+  let valid = true;
+  hideAllErrors('loginScreen');
+  hideServerError('login');
+
+  if (!id) { showFieldError('loginId', '아이디(이메일)를 입력해 주세요.'); valid = false; }
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)) { showFieldError('loginId', '올바른 이메일 형식으로 입력해 주세요.'); valid = false; }
+
+  if (!pw) { showFieldError('loginPw', '비밀번호를 입력해 주세요.'); valid = false; }
+  else if (pw.length < 8) { showFieldError('loginPw', '비밀번호는 8자 이상 입력해 주세요.'); valid = false; }
+
+  if (!valid) return;
+
+  // 로딩 상태
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>로그인 중...';
+  document.getElementById('loginId').disabled = true;
+  document.getElementById('loginPw').disabled = true;
+
+  // 시뮬레이션 (1초 지연)
+  setTimeout(() => {
+    document.getElementById('loginId').disabled = false;
+    document.getElementById('loginPw').disabled = false;
+    btn.disabled = false;
+    btn.innerHTML = '로그인';
+
+    // 권한 없음 테스트 계정: noperm@daekyo.co.kr
+    if (id.toLowerCase() === 'noperm@daekyo.co.kr' && pw === 'password1!') {
+      showServerError('login', '접근 권한이 없습니다. 관리자에게 메뉴 권한 부여를 요청하세요.');
+      return;
+    }
+
+    // 테스트 계정: admin@daekyo.co.kr (모든 비밀번호 케이스 → 2FA로 이동)
+    if (id.toLowerCase() === 'admin@daekyo.co.kr' &&
+        (pw === 'password1!' || pw === 'temppass1!' || pw === 'expire1!!')) {
+      // 아이디(이메일) 저장 처리
+      if (document.getElementById('saveId').checked) {
+        localStorage.setItem('crm_saved_login_id', id.toLowerCase());
+      } else {
+        localStorage.removeItem('crm_saved_login_id');
+      }
+      state.loginAttempts = 0;
+      state.twoFA.pendingPassword = pw; // 2FA 성공 후 분기용
+      // 2FA 화면으로 이동
+      showScreen('emailVerifyScreen');
+      document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+      document.querySelectorAll('.proto-bar .nav-btns button')[1].classList.add('current');
+      start2FA();
+    }
+    else {
+      // 로그인 실패
+      state.loginAttempts++;
+      if (state.loginAttempts >= 5) {
+        showServerError('login', '로그인 시도 횟수를 초과하였습니다. 30분 후 다시 시도해 주세요.');
+        state.loginAttempts = 0;
+      } else {
+        showServerError('login', '아이디(이메일) 또는 비밀번호가 일치하지 않습니다.');
+      }
+    }
+  }, 1000);
+});
+
+// Enter 키 로그인
+['loginId', 'loginPw'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+  });
+});
+
+// ===== 비밀번호 표시 토글 =====
+const SVG_EYE_OPEN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const SVG_EYE_CLOSED = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.innerHTML = SVG_EYE_CLOSED;
+  } else {
+    input.type = 'password';
+    btn.innerHTML = SVG_EYE_OPEN;
+  }
+}
+
+// ===== 에러 표시 헬퍼 =====
+function showFieldError(fieldId, msg) {
+  const wrap = document.getElementById(fieldId).closest('.input-wrap');
+  const errEl = document.getElementById(fieldId + 'Error');
+  if (wrap) wrap.classList.add('error');
+  if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+}
+function hideAllErrors(screenId) {
+  const screen = document.getElementById(screenId);
+  if (!screen) return;
+  screen.querySelectorAll('.input-wrap').forEach(w => w.classList.remove('error'));
+  screen.querySelectorAll('.error-msg').forEach(e => { e.textContent = ''; e.classList.remove('show'); });
+}
+function showServerError(context, msg) {
+  const map = { login: 'loginServerError', force: 'forceServerError', verify: 'verifyServerError', vol: 'volServerError' };
+  const msgMap = { login: 'loginServerErrorMsg', force: 'forceServerErrorMsg', verify: 'verifyServerErrorMsg', vol: 'volServerErrorMsg' };
+  const el = document.getElementById(map[context]);
+  const msgEl = document.getElementById(msgMap[context]);
+  if (el && msgEl) { msgEl.textContent = msg; el.classList.add('show'); }
+}
+function hideServerError(context) {
+  const map = { login: 'loginServerError', force: 'forceServerError', verify: 'verifyServerError', vol: 'volServerError' };
+  const el = document.getElementById(map[context]);
+  if (el) el.classList.remove('show');
+}
+
+// ===== AUTH-002: 로그아웃 =====
+function openLogoutModal() {
+  document.getElementById('logoutModal').classList.add('open');
+  document.getElementById('btnLogoutConfirm').focus();
+}
+function closeLogoutModal() {
+  document.getElementById('logoutModal').classList.remove('open');
+}
+function doLogout() {
+  const btn = document.getElementById('btnLogoutConfirm');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.3);border-top-color:#fff;width:14px;height:14px;margin-right:6px;display:inline-block;border-radius:50%;border-width:2px;border-style:solid;animation:spin 0.6s linear infinite"></span>로그아웃 중...';
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '확인';
+    closeLogoutModal();
+
+    // 클라이언트 정리 (프로토타입 시뮬레이션)
+    state.loggedIn = false;
+    clearSessionTimer();
+    hideExpireBanner();
+
+    // 로그인 화면 이동
+    showScreen('loginScreen');
+    document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+    document.querySelectorAll('.proto-bar .nav-btns button')[0].classList.add('current');
+    resetLoginForm();
+  }, 800);
+}
+
+// ESC, 배경 클릭으로 팝업 닫기
+document.getElementById('logoutModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLogoutModal();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('logoutModal').classList.contains('open')) closeLogoutModal();
+  }
+});
+
+// ===== 비밀번호 만료 예고 배너 =====
+function showExpireBanner(days) {
+  document.getElementById('expireDday').textContent = 'D-' + days;
+  document.getElementById('expireBanner').classList.add('show');
+}
+function hideExpireBanner() {
+  document.getElementById('expireBanner').classList.remove('show');
+}
+
+// ===== 세션 만료 경고 =====
+function simulateSessionWarning() {
+  state.sessionSeconds = 299; // 4:59
+  document.getElementById('sessionWarningModal').classList.add('open');
+  updateSessionTimer();
+  clearSessionTimer();
+  state.sessionTimer = setInterval(() => {
+    state.sessionSeconds--;
+    if (state.sessionSeconds <= 0) {
+      clearSessionTimer();
+      document.getElementById('sessionWarningModal').classList.remove('open');
+      sessionTimeout();
+    }
+    updateSessionTimer();
+  }, 1000);
+}
+function updateSessionTimer() {
+  const m = Math.floor(state.sessionSeconds / 60);
+  const s = state.sessionSeconds % 60;
+  document.getElementById('sessionTimerDisplay').textContent =
+    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+function clearSessionTimer() {
+  if (state.sessionTimer) { clearInterval(state.sessionTimer); state.sessionTimer = null; }
+}
+function extendSession() {
+  clearSessionTimer();
+  document.getElementById('sessionWarningModal').classList.remove('open');
+  showToast('success', '세션이 연장되었습니다.');
+}
+function sessionLogout() {
+  clearSessionTimer();
+  document.getElementById('sessionWarningModal').classList.remove('open');
+  state.loggedIn = false;
+  showScreen('loginScreen');
+  document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+  document.querySelectorAll('.proto-bar .nav-btns button')[0].classList.add('current');
+  resetLoginForm();
+  setTimeout(() => showToast('info', '세션이 만료되어 자동 로그아웃되었습니다.'), 300);
+}
+function simulateSessionTimeout() {
+  state.loggedIn = false;
+  showScreen('loginScreen');
+  document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+  document.querySelectorAll('.proto-bar .nav-btns button')[0].classList.add('current');
+  resetLoginForm();
+  setTimeout(() => showToast('warn', '세션이 만료되어 자동 로그아웃되었습니다.'), 300);
+}
+function simulateDuplicateLogin() {
+  state.loggedIn = false;
+  showScreen('loginScreen');
+  document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+  document.querySelectorAll('.proto-bar .nav-btns button')[0].classList.add('current');
+  resetLoginForm();
+  setTimeout(() => showToast('warn', '다른 기기에서 로그인하여 로그아웃되었습니다.'), 300);
+}
+
+// ===== AUTH-003: 비밀번호 규칙 체크 =====
+function checkPwRules(prefix) {
+  const pw = document.getElementById(prefix + 'NewPw').value;
+  const rulesEl = document.getElementById(prefix + 'PwRules');
+  const rules = rulesEl.querySelectorAll('.rule');
+
+  const hasLength = pw.length >= 8 && pw.length <= 40;
+  const hasAlpha = /[a-zA-Z]/.test(pw);
+  const hasDigit = /[0-9]/.test(pw);
+  const hasSpecial = /[!@#$%^&*()_+\-=]/.test(pw);
+  const comboCount = [hasAlpha, hasDigit, hasSpecial].filter(Boolean).length;
+  const hasCombo = comboCount >= 3;
+
+  rules.forEach(r => {
+    const rule = r.dataset.rule;
+    let pass = false;
+    if (rule === 'length') pass = hasLength;
+    else if (rule === 'alpha') pass = hasAlpha;
+    else if (rule === 'digit') pass = hasDigit;
+    else if (rule === 'special') pass = hasSpecial;
+    else if (rule === 'combo') pass = hasCombo;
+
+    r.classList.toggle('pass', pass);
+    r.querySelector('.check').textContent = pass ? '✓' : '○';
+  });
+}
+
+// ===== AUTH-003: 비밀번호 변경 유효성 검사 =====
+function validatePwChange(prefix) {
+  const newPw = document.getElementById(prefix + 'NewPw').value;
+  const confirmPw = document.getElementById(prefix + 'ConfirmPw').value;
+  const loginId = state.adminInfo.loginId || 'admin@daekyo.co.kr';
+  let valid = true;
+  const screenId = 'pwChangeForceScreen';
+
+  // 필수 입력
+  if (!newPw) { showFieldError(prefix + 'NewPw', '새 비밀번호를 입력해 주세요.'); valid = false; }
+  else {
+    if (newPw.length < 8 || newPw.length > 40) {
+      showFieldError(prefix + 'NewPw', '비밀번호는 8자 이상 40자 이하로 입력해 주세요.'); valid = false;
+    }
+    const hasA = /[a-zA-Z]/.test(newPw), hasD = /[0-9]/.test(newPw), hasS = /[!@#$%^&*()_+\-=]/.test(newPw);
+    if ([hasA, hasD, hasS].filter(Boolean).length < 3) {
+      showFieldError(prefix + 'NewPw', '비밀번호는 영문, 숫자, 특수문자 중 3가지 이상 조합해 주세요.'); valid = false;
+    }
+    // 연속 문자
+    if (/(.)\1{2,}/i.test(newPw)) {
+      showFieldError(prefix + 'NewPw', '동일한 문자를 3회 이상 연속 사용할 수 없습니다.'); valid = false;
+    }
+    // 순차 문자
+    if (hasSequential(newPw)) {
+      showFieldError(prefix + 'NewPw', '연속된 문자/숫자(abc, 123 등)를 3자 이상 사용할 수 없습니다.'); valid = false;
+    }
+    // 아이디 포함
+    const localPart = loginId.split('@')[0].toLowerCase();
+    if (newPw.toLowerCase().includes(localPart)) {
+      showFieldError(prefix + 'NewPw', '아이디가 포함된 비밀번호는 사용할 수 없습니다.'); valid = false;
+    }
+  }
+  if (!confirmPw) { showFieldError(prefix + 'ConfirmPw', '새 비밀번호 확인을 입력해 주세요.'); valid = false; }
+  else if (newPw && confirmPw !== newPw) {
+    showFieldError(prefix + 'ConfirmPw', '새 비밀번호가 일치하지 않습니다.'); valid = false;
+  }
+
+  return valid;
+}
+
+function hasSequential(str) {
+  const lower = str.toLowerCase();
+  for (let i = 0; i < lower.length - 2; i++) {
+    const c1 = lower.charCodeAt(i), c2 = lower.charCodeAt(i+1), c3 = lower.charCodeAt(i+2);
+    if ((c2 - c1 === 1 && c3 - c2 === 1) || (c1 - c2 === 1 && c2 - c3 === 1)) return true;
+  }
+  return false;
+}
+
+// ===== AUTH-003: 강제 비밀번호 변경 제출 =====
+document.getElementById('forcePwForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  hideAllErrors('pwChangeForceScreen');
+  hideServerError('force');
+
+  if (!validatePwChange('force')) return;
+
+  const btn = document.getElementById('btnForceChange');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>변경 중...';
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = '비밀번호 변경';
+
+    // 성공
+    showScreen('mainScreen');
+    document.querySelectorAll('.proto-bar .nav-btns button').forEach(b => b.classList.remove('current'));
+    document.querySelectorAll('.proto-bar .nav-btns button')[2].classList.add('current');
+    showToast('success', '비밀번호가 변경되었습니다.');
+    document.getElementById('forcePwForm').reset();
+    resetPwRules('force');
+  }, 1000);
+});
+
+function resetPwRules(prefix) {
+  const rulesEl = document.getElementById(prefix + 'PwRules');
+  if (!rulesEl) return;
+  rulesEl.querySelectorAll('.rule').forEach(r => {
+    r.classList.remove('pass');
+    r.querySelector('.check').textContent = '○';
+  });
+}
+
+// ===== Toast =====
+function showToast(type, msg) {
+  const icons = { success: '✓', error: '✕', info: 'ℹ', warn: '⚠' };
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.innerHTML = '<span style="font-size:16px">' + (icons[type]||'') + '</span><span>' + msg + '</span>';
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 4000);
+}
+
+// ===== AUTH-004: 2단계 인증 (이메일) =====
+function start2FA() {
+  // 상태 초기화
+  state.twoFA.seconds = 300;
+  state.twoFA.attempts = 0;
+  state.twoFA.expired = false;
+  document.getElementById('verifyCode').value = '';
+  document.getElementById('verifyCode').disabled = false;
+  document.getElementById('btnVerify').disabled = false;
+  document.getElementById('btnVerify').innerHTML = '인증 확인';
+  hideAllErrors('emailVerifyScreen');
+  hideServerError('verify');
+  document.getElementById('verifyExpiredMsg').classList.remove('show');
+  document.getElementById('verifyAttemptsInfo').textContent = '';
+  document.getElementById('verifyTimerArea').classList.remove('expired', 'warning');
+
+  // 타이머 시작
+  update2FATimer();
+  stop2FATimer();
+  state.twoFA.timer = setInterval(() => {
+    state.twoFA.seconds--;
+    update2FATimer();
+    if (state.twoFA.seconds <= 0) {
+      stop2FATimer();
+      state.twoFA.expired = true;
+      document.getElementById('verifyExpiredMsg').classList.add('show');
+      document.getElementById('btnVerify').disabled = true;
+      document.getElementById('verifyTimerArea').classList.add('expired');
+    } else if (state.twoFA.seconds <= 60) {
+      document.getElementById('verifyTimerArea').classList.add('warning');
+    }
+  }, 1000);
+
+  // 재발송 쿨다운 리셋
+  clearResendCooldown();
+  document.getElementById('btnResend').disabled = false;
+  document.getElementById('btnResend').textContent = '인증코드 재발송';
+
+  // 포커스
+  setTimeout(() => document.getElementById('verifyCode').focus(), 100);
+
+  showToast('info', '인증코드가 회사 이메일로 발송되었습니다.');
+}
+
+function stop2FATimer() {
+  if (state.twoFA.timer) { clearInterval(state.twoFA.timer); state.twoFA.timer = null; }
+}
+
+function update2FATimer() {
+  const m = Math.floor(state.twoFA.seconds / 60);
+  const s = state.twoFA.seconds % 60;
+  document.getElementById('verifyTimerDisplay').textContent =
+    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+// 인증코드 입력 - 숫자만 허용
+document.getElementById('verifyCode').addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9]/g, '');
+});
+document.getElementById('verifyCode').addEventListener('paste', function(e) {
+  setTimeout(() => { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6); }, 0);
+});
+
+// 인증 폼 제출
+document.getElementById('verifyForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const code = document.getElementById('verifyCode').value.trim();
+
+  // 클라이언트 유효성 검사
+  hideAllErrors('emailVerifyScreen');
+  hideServerError('verify');
+
+  if (!code) { showFieldError('verifyCode', '인증코드를 입력해 주세요.'); return; }
+  if (code.length < 6) { showFieldError('verifyCode', '인증코드 6자리를 정확히 입력해 주세요.'); return; }
+  if (!/^\d{6}$/.test(code)) { showFieldError('verifyCode', '인증코드는 숫자만 입력 가능합니다.'); return; }
+
+  // 만료 체크
+  if (state.twoFA.expired) {
+    document.getElementById('verifyExpiredMsg').classList.add('show');
+    return;
+  }
+
+  // 로딩 상태
+  const btn = document.getElementById('btnVerify');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>인증 확인 중...';
+  document.getElementById('verifyCode').disabled = true;
+
+  setTimeout(() => {
+    document.getElementById('verifyCode').disabled = false;
+    btn.disabled = false;
+    btn.innerHTML = '인증 확인';
+
+    // 테스트: 123456 = 성공, 기타 = 실패
+    if (code === '123456') {
+      // 2FA 성공
+      stop2FATimer();
+      state.loggedIn = true;
+
+      // 비밀번호에 따른 분기
+      const pw = state.twoFA.pendingPassword;
+      const btns = document.querySelectorAll('.proto-bar .nav-btns button');
+
+      if (pw === 'password1!') {
+        // 정상 → 메인 화면
+        showScreen('mainScreen');
+        btns.forEach(b => b.classList.remove('current'));
+        btns[2].classList.add('current');
+      } else if (pw === 'temppass1!') {
+        // 임시비밀번호 → 강제 비밀번호 변경
+        showScreen('pwChangeForceScreen');
+        document.getElementById('forceChangeReason').textContent = '임시비밀번호로 로그인하였습니다. 안전한 서비스 이용을 위해 비밀번호를 변경해 주세요.';
+        btns.forEach(b => b.classList.remove('current'));
+        btns[3].classList.add('current');
+        document.getElementById('forceNewPw').focus();
+      } else if (pw === 'expire1!!') {
+        // 만료 예고 → 메인 화면 + 배너
+        showScreen('mainScreen');
+        showExpireBanner(5);
+        btns.forEach(b => b.classList.remove('current'));
+        btns[2].classList.add('current');
+      }
+    } else {
+      // 인증 실패
+      state.twoFA.attempts++;
+      const remaining = state.twoFA.maxAttempts - state.twoFA.attempts;
+
+      if (state.twoFA.attempts >= state.twoFA.maxAttempts) {
+        // 5회 초과
+        stop2FATimer();
+        showServerError('verify', '인증 시도 횟수를 초과하였습니다. 로그인부터 다시 진행해 주세요.');
+        document.getElementById('btnVerify').disabled = true;
+        document.getElementById('verifyCode').disabled = true;
+        document.getElementById('btnResend').disabled = true;
+
+        // 5초 후 로그인 화면 강제 이동
+        setTimeout(() => {
+          showScreen('loginScreen');
+          const btns = document.querySelectorAll('.proto-bar .nav-btns button');
+          btns.forEach(b => b.classList.remove('current'));
+          btns[0].classList.add('current');
+          resetLoginForm();
+          showToast('error', '인증 시도 횟수 초과로 로그인 화면으로 이동합니다.');
+        }, 5000);
+      } else {
+        showServerError('verify', '인증코드가 일치하지 않습니다. 다시 확인해 주세요.');
+        document.getElementById('verifyAttemptsInfo').textContent = '남은 시도 횟수: ' + remaining + '회';
+      }
+    }
+  }, 1000);
+});
+
+// Enter 키 인증
+document.getElementById('verifyCode').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+});
+
+// 인증코드 재발송
+function resend2FACode() {
+  if (state.twoFA.resendCooldown > 0) return;
+
+  // 타이머 재시작
+  stop2FATimer();
+  state.twoFA.seconds = 300;
+  state.twoFA.expired = false;
+  document.getElementById('verifyExpiredMsg').classList.remove('show');
+  document.getElementById('btnVerify').disabled = false;
+  document.getElementById('verifyCode').disabled = false;
+  document.getElementById('verifyTimerArea').classList.remove('expired', 'warning');
+  hideServerError('verify');
+
+  update2FATimer();
+  state.twoFA.timer = setInterval(() => {
+    state.twoFA.seconds--;
+    update2FATimer();
+    if (state.twoFA.seconds <= 0) {
+      stop2FATimer();
+      state.twoFA.expired = true;
+      document.getElementById('verifyExpiredMsg').classList.add('show');
+      document.getElementById('btnVerify').disabled = true;
+      document.getElementById('verifyTimerArea').classList.add('expired');
+    } else if (state.twoFA.seconds <= 60) {
+      document.getElementById('verifyTimerArea').classList.add('warning');
+    }
+  }, 1000);
+
+  // 30초 쿨다운 시작
+  state.twoFA.resendCooldown = 30;
+  const resendBtn = document.getElementById('btnResend');
+  resendBtn.disabled = true;
+  resendBtn.textContent = '인증코드 재발송 (' + state.twoFA.resendCooldown + '초)';
+
+  state.twoFA.resendCooldownTimer = setInterval(() => {
+    state.twoFA.resendCooldown--;
+    if (state.twoFA.resendCooldown <= 0) {
+      clearResendCooldown();
+      resendBtn.disabled = false;
+      resendBtn.textContent = '인증코드 재발송';
+    } else {
+      resendBtn.textContent = '인증코드 재발송 (' + state.twoFA.resendCooldown + '초)';
+    }
+  }, 1000);
+
+  showToast('success', '인증코드를 재발송했습니다.');
+  document.getElementById('verifyCode').value = '';
+  document.getElementById('verifyCode').focus();
+}
+
+function clearResendCooldown() {
+  if (state.twoFA.resendCooldownTimer) {
+    clearInterval(state.twoFA.resendCooldownTimer);
+    state.twoFA.resendCooldownTimer = null;
+  }
+  state.twoFA.resendCooldown = 0;
+}
+
+// 로그인 화면으로 돌아가기
+function backToLogin() {
+  stop2FATimer();
+  clearResendCooldown();
+  showScreen('loginScreen');
+  const btns = document.querySelectorAll('.proto-bar .nav-btns button');
+  btns.forEach(b => b.classList.remove('current'));
+  btns[0].classList.add('current');
+  resetLoginForm();
+}
+
+
+// ===== AUTH-003: 자발적 비밀번호 변경 (단일 페이지) =====
+
+// 자발적 변경 폼 리셋
+function resetVoluntaryForm() {
+  document.getElementById('volPwChangeForm').reset();
+  hideServerError('vol');
+  document.getElementById('currentPwError').textContent = '';
+  document.getElementById('volNewPwError').textContent = '';
+  document.getElementById('volConfirmPwError').textContent = '';
+  document.getElementById('btnVolChange').disabled = false;
+  document.getElementById('btnVolChange').innerHTML = '비밀번호 변경';
+  document.getElementById('currentPw').focus();
+
+  // 규칙 체크리스트 초기화
+  const rules = document.querySelectorAll('#volPwRules .rule');
+  rules.forEach(r => r.classList.remove('met'));
+}
+
+// 자발적 변경 폼 제출 (한 번에 처리)
+document.getElementById('volPwChangeForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const currentPw = document.getElementById('currentPw').value.trim();
+  const newPw = document.getElementById('volNewPw').value.trim();
+  const confirmPw = document.getElementById('volConfirmPw').value.trim();
+
+  // 에러 초기화
+  document.getElementById('currentPwError').textContent = '';
+  document.getElementById('volNewPwError').textContent = '';
+  document.getElementById('volConfirmPwError').textContent = '';
+  hideServerError('vol');
+
+  let valid = true;
+
+  // 클라이언트 유효성 검사
+  if (!currentPw) {
+    document.getElementById('currentPwError').textContent = '현재 비밀번호를 입력해 주세요.';
+    valid = false;
+  }
+
+  if (!newPw) {
+    document.getElementById('volNewPwError').textContent = '새 비밀번호를 입력해 주세요.';
+    valid = false;
+  }
+
+  if (!confirmPw) {
+    document.getElementById('volConfirmPwError').textContent = '새 비밀번호 확인을 입력해 주세요.';
+    valid = false;
+  }
+
+  if (newPw && confirmPw && newPw !== confirmPw) {
+    document.getElementById('volConfirmPwError').textContent = '새 비밀번호가 일치하지 않습니다.';
+    valid = false;
+  }
+
+  // 비밀번호 규칙 검증
+  if (newPw) {
+    const pwValidation = validatePassword(newPw, 'admin@daekyo.co.kr');
+    if (!pwValidation.valid) {
+      document.getElementById('volNewPwError').textContent = pwValidation.message;
+      valid = false;
+    }
+  }
+
+  if (!valid) return;
+
+  // 로딩 상태
+  const btn = document.getElementById('btnVolChange');
+  btn.disabled = true;
+  btn.innerHTML = '변경 중...';
+
+  // 시뮬레이션: 현재 비밀번호 확인 + 비밀번호 변경 (1.5초 후)
+  setTimeout(() => {
+    // 테스트: password1!이면 현재 비밀번호 일치
+    if (currentPw !== 'password1!') {
+      showServerError('vol', '현재 비밀번호가 일치하지 않습니다.');
+      btn.disabled = false;
+      btn.innerHTML = '비밀번호 변경';
+      document.getElementById('currentPw').focus();
+      return;
+    }
+
+    // 성공
+    showToast('비밀번호가 변경되었습니다.', 'success');
+    setTimeout(() => {
+      showScreen('loginScreen');
+      resetLoginForm();
+    }, 1500);
+  }, 1500);
+});
+
+// 자발적 변경 취소 확인
+function confirmCancelVoluntaryChange() {
+  const currentPw = document.getElementById('currentPw').value;
+  const newPw = document.getElementById('volNewPw').value;
+  const confirmPw = document.getElementById('volConfirmPw').value;
+
+  // 입력값이 있으면 확인 모달
+  if (currentPw || newPw || confirmPw) {
+    if (confirm('비밀번호 변경을 취소하시겠습니까?')) {
+      showScreen('loginScreen');
+      resetLoginForm();
+    }
+  } else {
+    // 입력값 없으면 바로 이동
+    showScreen('loginScreen');
+    resetLoginForm();
+  }
+}
+
+
+// ===== 초기화 =====
+window.addEventListener('DOMContentLoaded', function() {
+  resetLoginForm();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마카다미아 멤버스 - OAuth 클라이언트 상세</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            회원관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📨</span>
+                            메시지 발송
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            통계
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item">
+                        <a href="../../04. 약관_처리방침 관리/약관관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            약관/처리방침 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">👤</span>
+                            계정/권한 관리
+                        </a>
+                    </li>
+                    <li class="nav-item active expanded">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🔗</span>
+                            서비스 관리
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="group-company.html" class="submenu-link">그룹사 관리</a></li>
+                            <li><a href="index.html" class="submenu-link">서비스 관리</a></li>
+                            <li><a href="oauth-client.html" class="submenu-link active">OAuth 클라이언트</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            이력 관리
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>서비스 관리</span>
+                    <span class="separator">›</span>
+                    <span>OAuth 클라이언트</span>
+                    <span class="separator">›</span>
+                    <span class="current">클라이언트 상세</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+                <div class="page-title-area">
+                    <div class="title-with-status">
+                        <h2 class="page-title">트니트니 웹</h2>
+                        <span class="status-badge active">활성</span>
+                    </div>
+                    <p class="page-desc">OAuth 클라이언트 상세 정보를 확인하고 수정합니다.</p>
+                </div>
+
+                <div class="form-card">
+                    <form id="clientForm">
+                        <!-- 클라이언트 인증 정보 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">클라이언트 인증 정보</h3>
+
+                            <div class="form-group">
+                                <label class="form-label">Client ID</label>
+                                <div class="secret-display">
+                                    <span class="secret-value" id="clientId">tnitni-y5z6a7b8c9d0</span>
+                                    <button type="button" class="btn-copy" onclick="copyToClipboard('clientId')">복사</button>
+                                </div>
+                                <p class="form-help">공개 식별자입니다. 클라이언트 애플리케이션에서 사용합니다.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Client Secret</label>
+                                <div class="secret-display">
+                                    <span class="secret-value masked" id="clientSecret">••••••••••••••••••••••••••••••••</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('regenerateModal')">Secret 재발급</button>
+                                </div>
+                                <p class="form-help">보안상 Secret은 표시되지 않습니다. 분실 시 재발급 받으세요.</p>
+                            </div>
+
+                            <div class="warning-box">
+                                <h4>Secret 재발급 주의사항</h4>
+                                <p>Secret을 재발급하면 기존 Secret은 즉시 무효화됩니다. 모든 연동 서비스에서 새 Secret으로 교체해야 합니다.</p>
+                            </div>
+                        </div>
+
+                        <!-- 기본 정보 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">기본 정보</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">서비스</label>
+                                    <input type="text" class="form-input" value="트니트니" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">클라이언트명<span class="required">*</span></label>
+                                    <input type="text" class="form-input" id="clientName" value="트니트니 웹" maxlength="50" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">클라이언트 타입</label>
+                                    <input type="text" class="form-input" value="기밀 클라이언트" disabled>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">설명</label>
+                                <textarea class="form-textarea" id="description" rows="2">트니트니 메인 웹사이트용 OAuth 클라이언트</textarea>
+                            </div>
+                        </div>
+
+                        <!-- OAuth 설정 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">OAuth 설정</h3>
+
+                            <div class="form-group">
+                                <label class="form-label">리다이렉트 URI<span class="required">*</span></label>
+                                <input type="url" class="form-input" id="redirectUri"
+                                       value="https://tnitni.daekyo.com/callback" required>
+                                <p class="form-help">인증 완료 후 리다이렉트될 URI (Authorization Code Flow 사용 시 필수)</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">로그아웃 후 리다이렉트 URI<span class="required">*</span></label>
+                                <input type="url" class="form-input" id="logoutRedirectUri"
+                                       value="https://tnitni.daekyo.com/logout-callback" required>
+                                <p class="form-help">로그아웃 완료 후 리다이렉트될 URI (Authorization Code Flow 사용 시 필수)</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Authorization Code Flow 재시작 엔드포인트 URI<span class="required">*</span></label>
+                                <input type="url" class="form-input" id="authRestartUri"
+                                       value="https://tnitni.daekyo.com/oauth2/authorization" required>
+                                <p class="form-help">Authorization Code Flow 재시작 엔드포인트 URI (Authorization Code Flow 사용 시 필수)</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" id="frontChannelLogoutUriLabel">Front Channel 로그아웃 URI</label>
+                                <input type="url" class="form-input" id="frontChannelLogoutUri"
+                                       value="https://tnitni.daekyo.com/frontchannel-logout">
+                                <p class="form-help">Front Channel 로그아웃 요청 URI (서비스의 SSO 연동이 '사용'인 경우 필수)</p>
+                                <div id="ssoWarning" style="display: none; margin-top: 8px; padding: 12px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px;">
+                                    <p style="margin: 0; color: #e65100; font-size: 13px; font-weight: 600;">⚠️ 이 서비스는 SSO 연동이 활성화되어 있습니다. Front Channel Logout URI는 필수 입력 항목입니다.</p>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Access Token 유효기간</label>
+                                    <select class="form-select" id="accessTokenExpiry">
+                                        <option value="1800">30분</option>
+                                        <option value="3600" selected>1시간</option>
+                                        <option value="7200">2시간</option>
+                                        <option value="86400">24시간</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Refresh Token 유효기간</label>
+                                    <select class="form-select" id="refreshTokenExpiry">
+                                        <option value="604800">7일</option>
+                                        <option value="1209600" selected>14일</option>
+                                        <option value="2592000">30일</option>
+                                        <option value="7776000">90일</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 사용 통계 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">사용 통계</h3>
+                            <div class="form-info-box">
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">오늘 인증 요청:</span>
+                                        <span class="form-info-value">1,234건</span>
+                                    </div>
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">이번 달 인증 요청:</span>
+                                        <span class="form-info-value">45,678건</span>
+                                    </div>
+                                </div>
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">마지막 인증 요청:</span>
+                                        <span class="form-info-value">2024-01-10 15:32:18</span>
+                                    </div>
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">활성 세션 수:</span>
+                                        <span class="form-info-value">892개</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 사용 설정 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">사용 설정</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">상태<span class="required">*</span></label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="isActive" value="Y" checked>
+                                            <span class="radio-custom"></span>
+                                            활성
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="isActive" value="N">
+                                            <span class="radio-custom"></span>
+                                            비활성
+                                        </label>
+                                    </div>
+                                    <p class="form-help warning">비활성화 시 해당 클라이언트로의 모든 인증 요청이 거부됩니다.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 등록/수정 정보 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">등록/수정 정보</h3>
+                            <div class="form-info-box">
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">등록자:</span>
+                                        <span class="form-info-value">이민수</span>
+                                    </div>
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">등록일시:</span>
+                                        <span class="form-info-value">2024-01-03 14:22:18</span>
+                                    </div>
+                                </div>
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">수정자:</span>
+                                        <span class="form-info-value">박지영</span>
+                                    </div>
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">수정일시:</span>
+                                        <span class="form-info-value">2024-01-08 09:15:30</span>
+                                    </div>
+                                </div>
+                                <div class="form-info-row">
+                                    <div class="form-info-item">
+                                        <span class="form-info-label">Secret 마지막 재발급:</span>
+                                        <span class="form-info-value">2024-01-03 14:22:18 (최초 발급)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 그룹 -->
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary" onclick="location.href='oauth-client.html'">목록</button>
+                            <button type="button" class="btn btn-danger" onclick="openModal('deleteModal')">삭제</button>
+                            <button type="submit" class="btn btn-primary">수정</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 수정 확인 모달 -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-icon">❓</div>
+            <p class="modal-title">수정하시겠습니까?</p>
+            <p class="modal-message">변경된 정보가 저장됩니다.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">취소</button>
+                <button class="btn btn-primary" onclick="submitForm()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 수정 완료 모달 -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-icon success">✓</div>
+            <p class="modal-title">수정 완료</p>
+            <p class="modal-message">클라이언트 정보가 수정되었습니다.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeModal('successModal')">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secret 재발급 확인 모달 -->
+    <div class="modal-overlay" id="regenerateModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠</div>
+            <p class="modal-title">Secret을 재발급하시겠습니까?</p>
+            <p class="modal-message">
+                기존 Client Secret은 <strong>즉시 무효화</strong>됩니다.<br>
+                연동 중인 모든 서비스에서 새 Secret으로 교체해야 합니다.<br><br>
+                <span style="color: #e74c3c;">이 작업은 되돌릴 수 없습니다.</span>
+            </p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('regenerateModal')">취소</button>
+                <button class="btn btn-danger" onclick="regenerateSecret()">재발급</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secret 재발급 완료 모달 -->
+    <div class="modal-overlay" id="newSecretModal">
+        <div class="modal" style="max-width: 550px;">
+            <div class="modal-icon success">✓</div>
+            <p class="modal-title">Secret 재발급 완료</p>
+            <div style="text-align: left; background: #f8f9fb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <div>
+                    <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">새 Client Secret</label>
+                    <div class="secret-display">
+                        <span class="secret-value" id="newClientSecret">sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+                        <button type="button" class="btn-copy" onclick="copyToClipboard('newClientSecret')">복사</button>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-box" style="margin-top: 0; text-align: left;">
+                <h4>새 Secret 보관 안내</h4>
+                <p>이 창을 닫으면 Secret을 다시 확인할 수 없습니다.<br>반드시 안전한 곳에 저장하세요.</p>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="closeModal('newSecretModal')">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠</div>
+            <p class="modal-title">삭제하시겠습니까?</p>
+            <p class="modal-message">
+                <strong>트니트니 웹</strong> 클라이언트를 삭제합니다.<br><br>
+                <span style="color: #e74c3c;">삭제 후 해당 Client ID/Secret으로의<br>모든 인증 요청이 실패합니다.</span>
+            </p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">취소</button>
+                <button class="btn btn-danger" onclick="deleteClient()">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // 클라이언트 상세 정보 (서비스 정보 포함)
+        const clientDetail = {
+            service: {
+                serviceId: 'TNITNI',
+                serviceName: '트니트니',
+                useSso: 'Y'  // 실제로는 API에서 조회
+            }
+        };
+
+        // 페이지 로드 시 SSO 검증
+        window.addEventListener('DOMContentLoaded', function() {
+            checkSsoRequirement();
+        });
+
+        // SSO 연동 확인 및 Front Channel 로그아웃 URI 필수 설정
+        function checkSsoRequirement() {
+            const service = clientDetail.service;
+            const frontChannelInput = document.getElementById('frontChannelLogoutUri');
+            const frontChannelLabel = document.getElementById('frontChannelLogoutUriLabel');
+            const ssoWarning = document.getElementById('ssoWarning');
+
+            if (service && service.useSso === 'Y') {
+                // SSO 사용 서비스: Front Channel 로그아웃 URI 필수
+                frontChannelInput.required = true;
+                frontChannelLabel.innerHTML = 'Front Channel 로그아웃 URI<span class="required">*</span>';
+                ssoWarning.style.display = 'block';
+            } else {
+                // SSO 미사용 서비스: Front Channel 로그아웃 URI 선택
+                frontChannelInput.required = false;
+                frontChannelLabel.textContent = 'Front Channel 로그아웃 URI';
+                ssoWarning.style.display = 'none';
+            }
+        }
+
+        // 폼 제출
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // SSO 연동 검증
+            const service = clientDetail.service;
+            const frontChannelUri = document.getElementById('frontChannelLogoutUri').value.trim();
+
+            if (service && service.useSso === 'Y' && !frontChannelUri) {
+                alert('SSO 연동 서비스는 Front Channel Logout URI가 필수입니다.');
+                document.getElementById('frontChannelLogoutUri').focus();
+                return;
+            }
+
+            openModal('confirmModal');
+        });
+
+        function submitForm() {
+            closeModal('confirmModal');
+            openModal('successModal');
+        }
+
+        // Secret 재발급
+        function regenerateSecret() {
+            closeModal('regenerateModal');
+
+            // 새 Secret 생성 (실제로는 서버에서 생성)
+            const newSecret = 'sk_live_' +
+                             Math.random().toString(36).substring(2) +
+                             Math.random().toString(36).substring(2);
+            document.getElementById('newClientSecret').textContent = newSecret;
+
+            openModal('newSecretModal');
+        }
+
+        // 클라이언트 삭제
+        function deleteClient() {
+            closeModal('deleteModal');
+            alert('삭제되었습니다.');
+            location.href = 'oauth-client.html';
+        }
+
+        // 클립보드 복사
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+            });
+        }
+    </script>
+</body>
+</html>

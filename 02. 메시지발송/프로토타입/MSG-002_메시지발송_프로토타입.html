@@ -1,0 +1,2734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메시지 발송 - 마카다미아 멤버스 CRM 관리자</title>
+    <link rel="stylesheet" href="../../common/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Screen switching */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* 서브 탭 */
+        .sub-tab-nav { background: #f8f9fb; padding: 12px 32px; border-bottom: 1px solid #e8eaed; }
+        .sub-tab-list { display: flex; gap: 8px; }
+        .sub-tab-item { padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; color: #666; background: white; border: 1px solid #ddd; transition: all 0.2s; }
+        .sub-tab-item:hover { border-color: #4a90d9; color: #4a90d9; }
+        .sub-tab-item.active { background: #4a90d9; color: white; border-color: #4a90d9; }
+
+        /* 2단 레이아웃 */
+        .two-column-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+        @media (max-width: 1200px) { .two-column-layout { grid-template-columns: 1fr; } }
+
+        /* 섹션 카드 */
+        .section-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; overflow: hidden; }
+        .section-header { background: #f8f9fb; padding: 14px 20px; border-bottom: 1px solid #e8eaed; display: flex; justify-content: space-between; align-items: center; }
+        .section-title { font-size: 15px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 8px; }
+        .section-title .required { color: #e53935; font-size: 12px; }
+        .section-body { padding: 20px; }
+
+        /* 회원 학습 상태 (학습 정보 조건 내) - 이전 member-status 카드에서 라디오 버튼으로 변경 */
+
+        /* 아코디언 */
+        .accordion { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 12px; }
+        .accordion-header { padding: 14px 16px; background: #fafafa; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; }
+        .accordion-header:hover { background: #f0f0f0; }
+        .accordion-icon { transition: transform 0.2s; }
+        .accordion.open .accordion-icon { transform: rotate(180deg); }
+        .accordion-body { padding: 16px; border-top: 1px solid #e0e0e0; display: none; }
+        .accordion.open .accordion-body { display: block; }
+
+        /* 태그/멀티셀렉트 */
+        .tag { background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+        .tag .remove { cursor: pointer; font-size: 14px; }
+        .tag .remove:hover { color: #e53935; }
+        .multi-select { border: 1px solid #ddd; border-radius: 8px; padding: 8px; min-height: 42px; display: flex; flex-wrap: wrap; gap: 6px; cursor: pointer; }
+        .multi-select:hover { border-color: #4a90d9; }
+
+        /* 범위/토글 */
+        .range-group { display: flex; align-items: center; gap: 8px; }
+        .range-group input { width: 100px; }
+        .range-separator { color: #666; }
+        .btn-toggle-group { display: flex; gap: 8px; }
+        .btn-toggle { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .btn-toggle:hover { border-color: #4a90d9; color: #4a90d9; }
+        .btn-toggle.active { background: #4a90d9; color: white; border-color: #4a90d9; }
+        .btn-check-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-check { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; user-select: none; }
+        .btn-check:hover { border-color: #4a90d9; color: #4a90d9; }
+        .btn-check.active { background: #4a90d9; color: white; border-color: #4a90d9; }
+        .btn-check-hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+        /* 메시지 미리보기 */
+        .message-preview { background: linear-gradient(180deg, #1a2a4a 0%, #243b67 100%); border-radius: 20px; padding: 20px; width: 100%; color: white; }
+        .message-preview-header { text-align: center; margin-bottom: 16px; font-size: 13px; color: rgba(255,255,255,0.7); }
+        .message-bubble { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; font-size: 14px; line-height: 1.6; }
+        .message-bubble .variable { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; color: #7dd3fc; }
+        .message-footer { margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.5); }
+        .variable-info { background: #f8f9fb; border-radius: 8px; padding: 12px 16px; margin-top: 16px; }
+        .variable-info-title { font-size: 12px; color: #666; margin-bottom: 8px; }
+        .variable-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .variable-item { font-size: 12px; color: #333; }
+        .variable-item code { background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
+
+        /* 통계 카드 */
+        .stats-card { background: linear-gradient(135deg, #4a90d9 0%, #3a7bc8 100%); border-radius: 12px; padding: 24px; color: white; }
+        .stats-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+        .stats-row.total { border-top: 1px solid rgba(255,255,255,0.3); margin-top: 12px; padding-top: 16px; font-size: 18px; font-weight: 600; }
+        .stats-label { font-size: 14px; }
+        .stats-value { font-weight: 600; }
+        .stats-minus { color: #fca5a5; }
+
+
+        /* 액션 바 */
+        .action-bar-fixed { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 32px; background: white; border-top: 1px solid #e8eaed; position: sticky; bottom: 40px; }
+
+        /* 라디오 */
+        .radio-group-inline { display: flex; gap: 20px; }
+        .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .radio-item input[type="radio"] { width: 16px; height: 16px; }
+
+        /* 확인 모달 */
+        .confirm-message { text-align: center; padding: 20px 0; }
+        .confirm-count { font-size: 32px; font-weight: 700; color: #4a90d9; margin-bottom: 8px; }
+        .confirm-text { color: #666; font-size: 15px; }
+
+        /* 메시지 작성 영역 */
+        .form-textarea { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.6; resize: vertical; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-textarea:focus { outline: none; border-color: #4a90d9; box-shadow: 0 0 0 3px rgba(74,144,217,0.1); }
+        .form-textarea::placeholder { color: #999; }
+        .byte-counter { text-align: right; }
+
+        /* ===== MSG-001 발송 목록 스타일 ===== */
+        .msg-status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: white; }
+        .msg-status-requested { background: #1890FF; }
+        .msg-status-review-wait { background: #FA8C16; }
+        .msg-status-test-confirmed { background: #1565C0; }
+        .msg-status-review-done { background: #13C2C2; }
+        .msg-status-sending { background: #FAAD14; }
+        .msg-status-complete { background: #52C41A; }
+        .msg-status-failed { background: #FF4D4F; }
+        .msg-status-cancelled { background: #8C8C8C; }
+        .msg-status-rejected { background: #722ED1; }
+
+        /* 대상 수 초기화 경고 */
+        .target-reset-warning { background: #FFF8E1; border: 1px solid #FFE082; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #E65100; display: none; margin-bottom: 16px; align-items: center; gap: 6px; }
+        .target-reset-warning.show { display: flex; }
+
+        /* 테스트 발송 영역 */
+        .test-send-area { background: #F0F7FF; border: 1px solid #D0E4FF; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+        .test-send-title { font-weight: 600; color: #1565C0; margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .test-send-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .test-send-row input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .test-send-row input:focus { outline: none; border-color: #4a90d9; box-shadow: 0 0 0 3px rgba(74,144,217,0.1); }
+        .test-send-note { font-size: 12px; color: #666; margin-bottom: 12px; }
+        .test-result-box { background: white; border: 1px solid #D0E4FF; border-radius: 8px; padding: 16px; display: none; }
+        .test-result-box.show { display: block; }
+        .test-result-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #333; }
+        .test-result-status { display: flex; align-items: center; gap: 6px; }
+        .test-result-status .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .test-result-status .dot.success { background: #52C41A; }
+        .test-result-status .dot.fail { background: #FF4D4F; }
+        .review-status-badge.review-status-test-confirmed { background: #E3F2FD; color: #1565C0; }
+
+        .msg-type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .msg-type-sms { background: #E6F7FF; color: #1890FF; }
+        .msg-type-lms { background: #E6F7FF; color: #1890FF; }
+        .msg-type-mms { background: #F9F0FF; color: #722ED1; }
+        .msg-type-email { background: #F6FFED; color: #52C41A; }
+        .msg-type-desc { font-size: 11px; color: #999; margin-left: 4px; font-weight: 400; }
+
+        .clickable-title { color: #4a90d9; cursor: pointer; font-weight: 500; }
+        .clickable-title:hover { text-decoration: underline; }
+
+        /* ===== MSG-003 발송 상세 ===== */
+        .detail-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .detail-info-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .detail-info-label { color: #666; font-size: 14px; min-width: 100px; font-weight: 500; }
+        .detail-info-value { color: #333; font-size: 14px; font-weight: 500; }
+
+        .progress-bar-container { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+        .progress-bar { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .progress-bar-fill.success { background: #52C41A; }
+        .progress-bar-fill.fail { background: #FF4D4F; }
+        .progress-percent { font-size: 14px; font-weight: 600; color: #333; min-width: 50px; }
+
+        .result-summary { display: flex; gap: 24px; margin-top: 16px; }
+        .result-item { flex: 1; padding: 20px; border-radius: 12px; text-align: center; }
+        .result-item.success-bg { background: #F6FFED; border: 1px solid #B7EB8F; }
+        .result-item.fail-bg { background: #FFF1F0; border: 1px solid #FFA39E; }
+        .result-item.total-bg { background: #E6F7FF; border: 1px solid #91D5FF; }
+        .result-item-label { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .result-item-value { font-size: 24px; font-weight: 700; }
+        .result-item.success-bg .result-item-value { color: #52C41A; }
+        .result-item.fail-bg .result-item-value { color: #FF4D4F; }
+        .result-item.total-bg .result-item-value { color: #1890FF; }
+
+        .process-steps { display: flex; align-items: center; gap: 0; margin: 20px 0; }
+        .process-step { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #f8f9fb; border-radius: 8px; font-size: 13px; color: #666; }
+        .process-step.done { background: #F6FFED; color: #52C41A; }
+        .process-step.current { background: #E6F7FF; color: #1890FF; font-weight: 600; }
+        .process-step-arrow { color: #ccc; font-size: 18px; margin: 0 4px; }
+
+        .view-toggle-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+        .view-toggle-btn { padding: 8px 20px; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        .view-toggle-btn.active { border-color: #4a90d9; background: #4a90d9; color: white; }
+
+        /* 반려 상태 Badge */
+        .msg-status-rejected { background: #F9F0FF; color: #722ED1; }
+
+        /* 검수 영역 */
+        .review-section { margin-top: 0; }
+        .review-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .review-info-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .review-info-label { color: #666; font-size: 14px; min-width: 80px; font-weight: 500; }
+        .review-info-value { color: #333; font-size: 14px; font-weight: 500; }
+        .review-status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .review-status-pending { background: #FFF7E6; color: #FA8C16; }
+        .review-status-approved { background: #E6FFFB; color: #13C2C2; }
+        .review-status-rejected { background: #F9F0FF; color: #722ED1; }
+        .reject-reason-box { background: #FFF1F0; border: 1px solid #FFA39E; border-radius: 8px; padding: 16px; margin-top: 12px; }
+        .reject-reason-title { font-weight: 600; color: #FF4D4F; font-size: 14px; margin-bottom: 8px; }
+        .reject-reason-text { color: #333; font-size: 14px; line-height: 1.6; }
+        .review-buttons { display: flex; gap: 12px; margin-top: 16px; }
+
+        /* ===== MSG-005 템플릿 등록 ===== */
+        .byte-counter { display: flex; justify-content: flex-end; margin-top: 6px; font-size: 12px; color: #999; }
+        .byte-counter .current { color: #333; font-weight: 600; }
+        .byte-counter .limit { color: #e74c3c; }
+
+        .phone-mockup { width: 280px; background: #1a1a1a; border-radius: 30px; padding: 40px 16px 30px; margin: 0 auto; }
+        .phone-screen { background: white; border-radius: 16px; min-height: 320px; padding: 16px; font-size: 13px; line-height: 1.7; color: #333; word-break: break-all; }
+        .phone-notch { width: 100px; height: 6px; background: #333; border-radius: 3px; margin: 0 auto 16px; }
+
+        /* ===== MSG-006 템플릿 상세 ===== */
+        .detail-row { display: flex; border-bottom: 1px solid #f0f0f0; }
+        .detail-label { width: 160px; padding: 14px 20px; background: #f8f9fb; font-weight: 600; color: #555; font-size: 14px; flex-shrink: 0; }
+        .detail-value { flex: 1; padding: 14px 20px; font-size: 14px; color: #333; }
+
+        /* ===== Prototype Bar ===== */
+        .prototype-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: #1a1a2e; color: #fff; display: flex; align-items: center; gap: 16px; padding: 8px 20px; font-size: 12px; height: 40px; }
+        .proto-badge { background: #ff6b6b; color: white; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; letter-spacing: 1px; }
+        .proto-desc { color: rgba(255,255,255,0.6); }
+        .proto-nav { display: flex; gap: 4px; margin-left: auto; }
+        .proto-nav button { padding: 4px 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 4px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+        .proto-nav button:hover { background: rgba(255,255,255,0.2); }
+        .proto-account { color: rgba(255,255,255,0.4); margin-left: 12px; }
+
+        /* Toast */
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 10px; color: white; font-size: 14px; font-weight: 500; z-index: 10000; transform: translateX(120%); transition: transform 0.3s ease; }
+        .toast.show { transform: translateX(0); }
+        .toast-success { background: #2e7d32; }
+        .toast-error { background: #e74c3c; }
+        .toast-info { background: #1565c0; }
+        .toast-warning { background: #e65100; }
+
+        /* 모달 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            min-width: 400px;
+            max-width: 600px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .modal-icon {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .modal-icon.warning { color: #e65100; }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .modal-message {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* 하단 여백 */
+        .main-content { padding-bottom: 40px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스 CRM</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">👥</span><span>회원관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📨</span><span>메시지 발송</span>
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="#" class="submenu-link active" data-screen="screen-msg-list">메시지 발송 관리</a></li>
+                            <li><a href="#" class="submenu-link" data-screen="screen-tpl-list">템플릿 관리</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span><span>통계</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item">
+                        <a href="../../04. 약관_처리방침 관리/약관관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">📋</span><span>약관/처리방침 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">👤</span><span>계정/권한 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link">
+                            <span class="nav-icon">⚙️</span><span>서비스 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span><span>이력 관리</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+
+            <!-- ============================================ -->
+            <!-- Screen 1: MSG-001 발송 목록 -->
+            <!-- ============================================ -->
+            <div class="screen active" id="screen-msg-list">
+                <header class="content-header">
+                    <div class="breadcrumb">
+                        <span>홈</span><span class="separator">›</span>
+                        <span>메시지 발송</span><span class="separator">›</span>
+                        <span class="current">메시지 발송 관리</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                        <button class="logout-btn">로그아웃</button>
+                    </div>
+                </header>
+                <div class="content-section">
+                    <div class="page-title-area">
+                        <h2 class="page-title">마케팅 메시지 발송</h2>
+                        <p class="page-desc">마케팅 메시지 발송 이력을 조회하고 관리합니다.</p>
+                    </div>
+
+                    <!-- 검색 카드 -->
+                    <div class="search-card">
+                        <div class="search-row">
+                            <div class="search-group">
+                                <label class="search-label">발송 유형</label>
+                                <select class="search-select">
+                                    <option>전체</option>
+                                    <option>SMS - 단문 문자 메시지</option>
+                                    <option>LMS - 장문 문자 메시지</option>
+                                </select>
+                            </div>
+                            <div class="search-group">
+                                <label class="search-label">발송 상태</label>
+                                <select class="search-select">
+                                    <option>전체</option>
+                                    <option>요청완료</option>
+                                    <option>검수대기</option>
+                                    <option>테스트발송완료</option>
+                                    <option>검수완료</option>
+                                    <option>발송중</option>
+                                    <option>완료</option>
+                                    <option>실패</option>
+                                    <option>반려</option>
+                                    <option>취소</option>
+                                </select>
+                            </div>
+                            <div class="search-group">
+                                <label class="search-label">요청일</label>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <input type="date" class="search-input" value="2026-01-01" style="min-width:140px;">
+                                    <span style="color:#666;">~</span>
+                                    <input type="date" class="search-input" value="2026-02-11" style="min-width:140px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="search-row" style="margin-top:12px;">
+                            <div class="search-group" style="flex:1;">
+                                <label class="search-label">제목</label>
+                                <input type="text" class="search-input" id="searchTitle" placeholder="제목을 입력하세요" maxlength="100" style="width:100%;">
+                            </div>
+                            <div class="search-group" style="flex:0 0 200px;">
+                                <label class="search-label">요청자</label>
+                                <input type="text" class="search-input" id="searchRequester" placeholder="요청자명 입력" maxlength="50" style="width:100%;">
+                            </div>
+                            <div class="search-group" style="margin-left:auto;flex-direction:row;align-items:flex-end;gap:8px;">
+                                <button class="btn btn-search" onclick="searchList()">검색</button>
+                                <button class="btn btn-secondary" onclick="resetSearch()">초기화</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 액션 바 -->
+                    <div class="action-bar">
+                        <span class="result-count">총 <strong>156</strong>건</span>
+                        <button class="btn btn-primary" onclick="showScreen('screen-msg-send')">+ 메시지 발송</button>
+                    </div>
+
+                    <!-- 테이블 -->
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th class="text-left">제목</th>
+                                    <th style="width:100px;">발송유형</th>
+                                    <th style="width:130px;">상태</th>
+                                    <th style="width:100px;">총 발송건수</th>
+                                    <th style="width:80px;">요청자</th>
+                                    <th style="width:160px;">요청일시</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>1</td>
+                                    <td class="text-left"><span class="clickable-title">2월 신규 가입자 환영 메시지</span></td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-complete">완료</span></td>
+                                    <td style="text-align:right;padding-right:16px;">74,734</td>
+                                    <td>홍길동</td>
+                                    <td>2026-02-11 09:00</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>2</td>
+                                    <td class="text-left"><span class="clickable-title">눈높이 국어 학습 안내 이벤트</span></td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-sending">발송중</span></td>
+                                    <td style="text-align:right;padding-right:16px;">15,230</td>
+                                    <td>김영희</td>
+                                    <td>2026-02-10 14:30</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>3</td>
+                                    <td class="text-left"><span class="clickable-title">서비스 점검 사전 안내</span></td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-review-done">검수완료</span></td>
+                                    <td style="text-align:right;padding-right:16px;">8,500</td>
+                                    <td>박민수</td>
+                                    <td>2026-02-10 11:20</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>4</td>
+                                    <td class="text-left"><span class="clickable-title">설 연휴 특별 혜택 안내</span></td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-test-confirmed">테스트발송완료</span></td>
+                                    <td style="text-align:right;padding-right:16px;">42,100</td>
+                                    <td>이수진</td>
+                                    <td>2026-02-10 09:15</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>5</td>
+                                    <td class="text-left"><span class="clickable-title">학부모 대상 교육 세미나 안내</span></td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-review-wait">검수대기</span></td>
+                                    <td style="text-align:right;padding-right:16px;">3,200</td>
+                                    <td>홍길동</td>
+                                    <td>2026-02-09 16:45</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>6</td>
+                                    <td class="text-left"><span class="clickable-title">1월 학습 리포트 발송</span></td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-complete">완료</span></td>
+                                    <td style="text-align:right;padding-right:16px;">25,678</td>
+                                    <td>김영희</td>
+                                    <td>2026-02-09 10:00</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>7</td>
+                                    <td class="text-left"><span class="clickable-title">VIP 회원 전용 프로모션 안내</span></td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-rejected">반려</span></td>
+                                    <td style="text-align:right;padding-right:16px;">5,400</td>
+                                    <td>최정우</td>
+                                    <td>2026-02-08 17:00</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>8</td>
+                                    <td class="text-left"><span class="clickable-title">재가입 혜택 안내 메시지</span></td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-failed">실패</span></td>
+                                    <td style="text-align:right;padding-right:16px;">12,350</td>
+                                    <td>박민수</td>
+                                    <td>2026-02-08 15:30</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>9</td>
+                                    <td class="text-left"><span class="clickable-title">대교닷컴 신규 기능 안내</span></td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-cancelled">취소</span></td>
+                                    <td style="text-align:right;padding-right:16px;">18,900</td>
+                                    <td>이수진</td>
+                                    <td>2026-02-08 11:00</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>10</td>
+                                    <td class="text-left"><span class="clickable-title">빨간펜 무료 체험 프로모션</span></td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-complete">완료</span></td>
+                                    <td style="text-align:right;padding-right:16px;">33,210</td>
+                                    <td>홍길동</td>
+                                    <td>2026-02-08 09:00</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-msg-detail')">
+                                    <td>11</td>
+                                    <td class="text-left"><span class="clickable-title">휴면 계정 사전 안내</span></td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td><span class="msg-status-badge msg-status-requested">요청완료</span></td>
+                                    <td style="text-align:right;padding-right:16px;">9,870</td>
+                                    <td>김영희</td>
+                                    <td>2026-02-07 10:30</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 검색 결과 없음 -->
+                    <div class="empty-state" id="emptyState" style="display:none;">
+                        <div style="text-align:center;padding:60px 20px;">
+                            <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">🔍</div>
+                            <p style="font-size:15px;color:#666;margin:0 0 8px;">검색 결과가 없습니다.</p>
+                            <p style="font-size:13px;color:#999;margin:0;">검색 조건을 변경하거나 초기화 후 다시 시도해 주세요.</p>
+                        </div>
+                    </div>
+
+                    <!-- 페이지네이션 -->
+                    <div class="pagination" id="pagination-msg-list"></div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- Screen 2: MSG-002 메시지 발송 -->
+            <!-- ============================================ -->
+            <div class="screen" id="screen-msg-send">
+                <header class="content-header">
+                    <div class="breadcrumb">
+                        <span>홈</span><span class="separator">›</span>
+                        <span>메시지 발송</span><span class="separator">›</span>
+                        <span class="current">마케팅 메시지 발송</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                        <button class="logout-btn">로그아웃</button>
+                    </div>
+                </header>
+
+                <!-- 서브 탭 -->
+                <div class="sub-tab-nav">
+                    <div class="sub-tab-list">
+                        <div class="sub-tab-item">상세 설정</div>
+                        <div class="sub-tab-item">대상자 직접 설정</div>
+                        <div class="sub-tab-item">대상 선택</div>
+                        <div class="sub-tab-item">발송 서비스</div>
+                        <div class="sub-tab-item active">메시지 발송</div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="page-title-area">
+                        <h2 class="page-title">마케팅 메시지 발송</h2>
+                        <p class="page-desc">마케팅 동의 회원에게 메시지를 발송합니다.</p>
+                    </div>
+
+                    <!-- 향후 고도화 안내 -->
+                    <div class="info-box" style="margin-bottom:24px;background:#fff3e0;border:1px solid #ffb74d;">
+                        <p style="color:#e65100;font-weight:600;">📌 향후 고도화 예정</p>
+                        <p style="margin-top:8px;font-size:14px;color:#666;">학습회원 관리 시스템 연동 후 다음 기능이 추가됩니다:</p>
+                        <ul style="margin-top:8px;margin-left:20px;font-size:13px;color:#666;">
+                            <li>자녀 학습 브랜드/제품/센터 조건</li>
+                            <li>본인 학습 상태(학습중/퇴회), 학습 브랜드/제품/센터 조건</li>
+                            <li>학습 상태별 마케팅 동의 유형 자동 연동</li>
+                        </ul>
+                    </div>
+
+                    <div class="two-column-layout">
+                        <!-- 왼쪽 컬럼 -->
+                        <div class="left-column">
+                            <!-- 대상자 조건 설정 -->
+                            <div class="section-card">
+                                <div class="section-header">
+                                    <div class="section-title">대상자 조건 설정</div>
+                                    <button class="btn btn-outline btn-sm">조건 초기화</button>
+                                </div>
+                                <div class="section-body">
+                                    <!-- 회원 기본정보 조건 -->
+                                    <div class="accordion open">
+                                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                                            <span>📋 회원 기본정보 조건</span>
+                                            <span class="accordion-icon">▼</span>
+                                        </div>
+                                        <div class="accordion-body">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">회원 유형</label>
+                                                    <div class="btn-check-group" id="memberTypeGroup">
+                                                        <button class="btn-check" onclick="toggleCheck(this)" data-value="student">학생</button>
+                                                        <button class="btn-check active" onclick="toggleCheck(this)" data-value="parent">학부모</button>
+                                                        <button class="btn-check" onclick="toggleCheck(this)" data-value="staff">조직원</button>
+                                                        <button class="btn-check" onclick="toggleCheck(this)" data-value="general">일반</button>
+                                                    </div>
+                                                    <p class="btn-check-hint">다중 선택 가능 · 미선택 시 전체</p>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">출생년도</label>
+                                                    <div class="range-group">
+                                                        <input type="number" class="form-input" placeholder="시작년도" value="1980" min="1920" max="2026" style="width:90px;" onchange="resetTargetCount()">
+                                                        <span>년</span>
+                                                        <span class="range-separator">~</span>
+                                                        <input type="number" class="form-input" placeholder="종료년도" value="1995" min="1920" max="2026" style="width:90px;" onchange="resetTargetCount()">
+                                                        <span>년</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">주소지 (시/도)</label>
+                                                    <select class="form-select" id="selectSido" onchange="onSidoChange(); resetTargetCount();">
+                                                        <option value="" selected>전체</option>
+                                                        <option value="서울특별시">서울특별시</option>
+                                                        <option value="부산광역시">부산광역시</option>
+                                                        <option value="대구광역시">대구광역시</option>
+                                                        <option value="인천광역시">인천광역시</option>
+                                                        <option value="광주광역시">광주광역시</option>
+                                                        <option value="대전광역시">대전광역시</option>
+                                                        <option value="울산광역시">울산광역시</option>
+                                                        <option value="세종특별자치시">세종특별자치시</option>
+                                                        <option value="경기도">경기도</option>
+                                                        <option value="강원특별자치도">강원특별자치도</option>
+                                                        <option value="충청북도">충청북도</option>
+                                                        <option value="충청남도">충청남도</option>
+                                                        <option value="전북특별자치도">전북특별자치도</option>
+                                                        <option value="전라남도">전라남도</option>
+                                                        <option value="경상북도">경상북도</option>
+                                                        <option value="경상남도">경상남도</option>
+                                                        <option value="제주특별자치도">제주특별자치도</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">주소지 (시/군/구)</label>
+                                                    <select class="form-select" id="selectSigungu" onchange="resetTargetCount();" disabled>
+                                                        <option value="" selected>전체</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">가입일</label>
+                                                    <div class="range-group">
+                                                        <input type="date" class="form-input" value="2025-01-01" style="width:150px;">
+                                                        <span class="range-separator">~</span>
+                                                        <input type="date" class="form-input" value="2026-01-30" style="width:150px;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 자녀 정보 조건 -->
+                                    <div class="accordion">
+                                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                                            <span>👶 자녀 정보 조건</span>
+                                            <span class="accordion-icon">▼</span>
+                                        </div>
+                                        <div class="accordion-body">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">자녀 학년</label>
+                                                    <div class="multi-select">
+                                                        <span class="tag">초1 <span class="remove">×</span></span>
+                                                        <span class="tag">초2 <span class="remove">×</span></span>
+                                                        <span class="tag">초3 <span class="remove">×</span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">자녀 출생년도</label>
+                                                    <div class="range-group">
+                                                        <input type="number" class="form-input" placeholder="시작년도" value="2016" min="1920" max="2026" style="width:90px;" onchange="resetTargetCount()">
+                                                        <span>년</span>
+                                                        <span class="range-separator">~</span>
+                                                        <input type="number" class="form-input" placeholder="종료년도" value="2019" min="1920" max="2026" style="width:90px;" onchange="resetTargetCount()">
+                                                        <span>년</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- 자녀 학습 브랜드/제품 - 향후 고도화 (학습회원 관리 시스템 연동 후) -->
+                                            <!-- <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">자녀 학습 브랜드</label>
+                                                    <select class="form-select"><option>전체</option><option selected>눈높이</option><option>빨간펜</option><option>교원</option></select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">자녀 학습 제품</label>
+                                                    <select class="form-select"><option>전체</option><option>눈높이 수학</option><option selected>눈높이 국어</option><option>눈높이 영어</option></select>
+                                                </div>
+                                            </div> -->
+                                        </div>
+                                    </div>
+
+                                    <!-- 학습 정보 조건 - 향후 고도화 (학습회원 관리 시스템 연동 후) -->
+                                    <!-- <div class="accordion">
+                                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                                            <span>📚 학습 정보 조건 (본인)</span>
+                                            <span class="accordion-icon">▼</span>
+                                        </div>
+                                        <div class="accordion-body">
+                                            <div class="form-row">
+                                                <div class="form-group" style="flex:1 1 100%;">
+                                                    <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+                                                        회원 학습 상태
+                                                        <span style="background:#e3f2fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px;">선택적 필터</span>
+                                                    </label>
+                                                    <div class="radio-group-inline" id="learningStatusRadio">
+                                                        <label class="radio-item"><input type="radio" name="learningStatus" value="all" checked onchange="onLearningStatusChange(this.value)"><span>전체</span></label>
+                                                        <label class="radio-item"><input type="radio" name="learningStatus" value="active" onchange="onLearningStatusChange(this.value)"><span>학습중</span></label>
+                                                        <label class="radio-item"><input type="radio" name="learningStatus" value="withdrawn" onchange="onLearningStatusChange(this.value)"><span>퇴회</span></label>
+                                                    </div>
+                                                    <p class="form-help" id="learningStatusHelp" style="margin-top:6px;font-size:12px;color:#666;">
+                                                        💡 전체: 학습중 회원(마케팅 동의) + 퇴회 회원(재가입 마케팅 동의) 모두 포함
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div style="border-top:1px solid #e0e0e0;padding-top:16px;margin-top:4px;">
+                                                <div class="form-row">
+                                                    <div class="form-group">
+                                                        <label class="form-label">학습 브랜드</label>
+                                                        <select class="form-select"><option selected>전체</option><option>눈높이</option><option>빨간펜</option></select>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="form-label">담당 센터/지점</label>
+                                                        <select class="form-select"><option selected>전체</option><option>서울 강남센터</option><option>서울 송파센터</option></select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> -->
+
+                                    <!-- 향후 고도화 예정 (서비스 이용 조건 통합) -->
+                                    <div class="accordion" style="border-color:#e0e0e0;opacity:0.5;pointer-events:none;">
+                                        <div class="accordion-header" style="background:#f5f5f5;cursor:default;">
+                                            <span style="color:#999;">🔒 향후 고도화 예정</span>
+                                            <span style="background:#fff3e0;color:#e65100;font-size:11px;padding:2px 10px;border-radius:10px;">예정</span>
+                                        </div>
+                                        <div class="accordion-body" style="display:none;background:#fafafa;">
+                                            <div style="display:flex;flex-direction:column;gap:10px;">
+                                                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border:1px dashed #ddd;border-radius:6px;">
+                                                    <span style="color:#bbb;font-size:18px;">🔧</span>
+                                                    <div><div style="font-weight:500;color:#999;font-size:14px;">서비스 이용 조건</div><div style="font-size:12px;color:#bbb;">이용 서비스, 가입/미가입, 복수 서비스 이용 여부</div></div>
+                                                </div>
+                                                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border:1px dashed #ddd;border-radius:6px;">
+                                                    <span style="color:#bbb;font-size:18px;">🏷️</span>
+                                                    <div><div style="font-weight:500;color:#999;font-size:14px;">유료 서비스 이용 여부</div><div style="font-size:12px;color:#bbb;">유료 서비스 이용 회원 대상 타겟팅</div></div>
+                                                </div>
+                                                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border:1px dashed #ddd;border-radius:6px;">
+                                                    <span style="color:#bbb;font-size:18px;">⏳</span>
+                                                    <div><div style="font-weight:500;color:#999;font-size:14px;">서비스 이용 기간</div><div style="font-size:12px;color:#bbb;">특정 기간 동안 서비스 이용 중인 회원</div></div>
+                                                </div>
+                                                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border:1px dashed #ddd;border-radius:6px;">
+                                                    <span style="color:#bbb;font-size:18px;">🎯</span>
+                                                    <div><div style="font-weight:500;color:#999;font-size:14px;">크로스보더 혜택 수신 이력</div><div style="font-size:12px;color:#bbb;">그룹사 간 혜택을 받은/받지 않은 회원</div></div>
+                                                </div>
+                                                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border:1px dashed #ddd;border-radius:6px;">
+                                                    <span style="color:#bbb;font-size:18px;">🏢</span>
+                                                    <div><div style="font-weight:500;color:#999;font-size:14px;">특정 그룹사 서비스 이용</div><div style="font-size:12px;color:#bbb;">특정 그룹사의 서비스를 이용 중인 회원</div></div>
+                                                </div>
+                                            </div>
+                                            <div style="margin-top:14px;padding:10px;background:#fff8e1;border-radius:6px;font-size:12px;color:#f57f17;">
+                                                ※ 위 조건들은 크로스보더 혜택 정책 수립 및 학습회원 관리 시스템 연동 후 순차적으로 추가될 예정입니다.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 마케팅 동의 안내 -->
+                                    <div class="info-box" style="margin-top:20px;">
+                                        <p>🔒 마카다미아 마케팅 수신 동의자에게만 발송됩니다. (시스템 필수 필터)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 발송 설정 -->
+                            <div class="section-card">
+                                <div class="section-header">
+                                    <div class="section-title">발송 설정</div>
+                                </div>
+                                <div class="section-body">
+                                    <div class="form-group">
+                                        <label class="form-label">발송 유형 <span class="required">*</span></label>
+                                        <div class="radio-group-inline" id="msgTypeRadio">
+                                            <label class="radio-item"><input type="radio" name="msgType" value="SMS" checked onchange="onMsgTypeChange(this.value)"><span>SMS<span class="msg-type-desc">단문 문자 (90byte, 한글 약 45자)</span></span></label>
+                                            <label class="radio-item"><input type="radio" name="msgType" value="LMS" onchange="onMsgTypeChange(this.value)"><span>LMS<span class="msg-type-desc">장문 문자 (1,000byte, 한글 약 500자)</span></span></label>
+                                        </div>
+                                        <p class="form-help" style="margin-top:8px;color:#666;font-size:12px;">💡 향후 고도화: E-mail 발송 (제목, 본문 HTML 지원)</p>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">템플릿 선택 (발송 사례)</label>
+                                            <select class="form-select" id="msgTemplateSelect" onchange="onTemplateSelect(this.value)">
+                                                <option value="">선택하세요 (직접 입력)</option>
+                                                <option value="welcome">가입인사</option>
+                                                <option value="dormant">휴면안내</option>
+                                                <option value="event">이벤트안내</option>
+                                                <option value="service">서비스오픈</option>
+                                            </select>
+                                            <p class="form-help">※ 미선택 시 직접 입력, 선택 시 제목과 본문이 우측 편집 영역에 자동 채워집니다.</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">귀속부서 코드 <span class="required">*</span></label>
+                                            <input type="text" id="deptCode" class="form-input" placeholder="예: N901" style="width:200px;">
+                                            <p class="form-help">💡 문자 발송 비용 정산을 위한 부서 코드입니다. 발송 건별로 귀속부서가 다를 수 있습니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 대상자 통계 -->
+                            <div class="section-card">
+                                <div class="section-header">
+                                    <div class="section-title">📊 대상자 통계</div>
+                                    <button class="btn btn-outline btn-sm" onclick="refreshStats()">대상 수 조회</button>
+                                </div>
+                                <div class="section-body">
+                                    <!-- 조건 변경 시 초기화 경고 -->
+                                    <div class="target-reset-warning" id="targetResetWarning">
+                                        ⚠️ 조건이 변경되었습니다. 대상 수를 다시 조회하세요.
+                                    </div>
+                                    <div class="stats-card" id="statsCard">
+                                        <div class="stats-row">
+                                            <span class="stats-label">조건 충족 대상 수</span>
+                                            <span class="stats-value" id="statsConditionCount">75,234 명</span>
+                                        </div>
+                                        <div class="stats-row">
+                                            <span class="stats-label stats-minus">(-) 권한 범위 외 제외</span>
+                                            <span class="stats-value stats-minus" id="statsPermExclude">500 명</span>
+                                        </div>
+                                        <div class="stats-row total">
+                                            <span class="stats-label">예상 발송 대상 수</span>
+                                            <span class="stats-value" id="statsTotalCount">74,734 명</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 오른쪽 컬럼 -->
+                        <div class="right-column">
+                            <!-- 메시지 작성 -->
+                            <div class="section-card">
+                                <div class="section-header">
+                                    <div class="section-title">✏️ 메시지 작성</div>
+                                </div>
+                                <div class="section-body">
+                                    <!-- 발송 제목 -->
+                                    <div class="form-group">
+                                        <label class="form-label">발송 제목 (실제 메시지 표시) <span class="required">*</span></label>
+                                        <input type="text" class="form-input" id="msgTitleInput" placeholder="발송 제목을 입력하세요 (예: 2024년 3월 프로모션 안내)" maxlength="100" oninput="updatePreview()">
+                                        <p class="form-help">※ 발송 건 관리용 제목이자 실제 SMS/LMS 메시지에 표시되는 제목입니다.</p>
+                                    </div>
+                                    <!-- 메시지 본문 -->
+                                    <div class="form-group">
+                                        <label class="form-label">메시지 본문 (항상 편집 가능) <span class="required">*</span></label>
+                                        <textarea class="form-textarea" id="msgContentArea" rows="8" placeholder="메시지 내용을 입력하세요" oninput="updateMsgByteCount();updateMsgPreview();"></textarea>
+                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+                                            <span id="msgByteWarning" style="font-size:12px;color:#e74c3c;display:none;">용량을 초과했습니다.</span>
+                                            <div class="byte-counter" style="font-size:12px;color:#666;">
+                                                <span id="msgByteCount" style="font-weight:600;">0</span> / <span id="msgByteLimit">90</span> bytes
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 미리보기 -->
+                            <div class="section-card">
+                                <div class="section-header">
+                                    <div class="section-title">📱 미리보기</div>
+                                </div>
+                                <div class="section-body" style="display:flex;justify-content:center;">
+                                    <div class="message-preview" style="width:100%;max-width:320px;">
+                                        <div class="message-preview-header" id="msgPreviewType">SMS 메시지</div>
+                                        <div class="message-bubble" id="msgPreviewBubble" style="min-height:80px;">
+                                            <!-- 상단 고정 영역: 광고 표시 + 제목 -->
+                                            <div id="msgPreviewTopFixed" style="color:rgba(255,255,255,0.8);margin-bottom:8px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.2);padding-bottom:6px;">
+                                                <span style="color:rgba(255,255,255,0.8);">(광고) 대교</span>
+                                                <span id="msgPreviewTitle" style="color:rgba(255,255,255,0.95);margin-left:4px;">
+                                                    <span style="color:rgba(255,255,255,0.4);font-style:italic;">제목을 입력하세요</span>
+                                                </span>
+                                            </div>
+                                            <!-- 본문 영역 (관리자 입력 내용) -->
+                                            <div id="msgPreviewContent" style="line-height:1.6;">
+                                                <span style="color:rgba(255,255,255,0.4);font-style:italic;">메시지를 입력하면 미리보기가 표시됩니다.</span>
+                                            </div>
+                                            <!-- 하단 고정 영역 -->
+                                            <div id="msgPreviewBottomFixed" style="color:rgba(255,255,255,0.8);margin-top:8px;font-weight:600;border-top:1px solid rgba(255,255,255,0.2);padding-top:6px;">
+                                                무료거부: 080-300-0000
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="variable-info">
+                                    <p style="margin-top:10px;font-size:12px;color:#666;">발신번호 : 010-300-0000</p>
+                                    <p style="margin-top:8px;font-size:12px;color:#1565C0;background:#E3F2FD;padding:8px 12px;border-radius:6px;">
+                                        💡 발송 시 상단에 <strong>'(광고) 대교 [발송 제목]'</strong>, 하단에 <strong>'무료거부: 080-300-0000'</strong>이 자동으로 추가됩니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 액션 바 -->
+                <div class="action-bar-fixed">
+                    <button class="btn btn-secondary" onclick="showScreen('screen-msg-list')">목록</button>
+                    <button class="btn btn-secondary" onclick="showToast('저장되었습니다.','success')">저장</button>
+                    <button class="btn btn-primary" id="sendBtn" onclick="validateAndSend()" title="대상 수를 먼저 조회하세요.">발송</button>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- Screen 3: MSG-003 발송 상세/결과 -->
+            <!-- ============================================ -->
+            <div class="screen" id="screen-msg-detail">
+                <header class="content-header">
+                    <div class="breadcrumb">
+                        <span>홈</span><span class="separator">›</span>
+                        <span>메시지 발송</span><span class="separator">›</span>
+                        <span class="current">마케팅 메시지 발송 - 상세</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                        <button class="logout-btn">로그아웃</button>
+                    </div>
+                </header>
+                <div class="content-section">
+                    <div class="page-title-area">
+                        <h2 class="page-title">마케팅 메시지 발송 - 상세</h2>
+                    </div>
+
+                    <!-- 테스트용 뷰 토글 -->
+                    <div class="view-toggle-bar">
+                        <button class="view-toggle-btn active" onclick="toggleDetailView('before', this)">검수 전</button>
+                        <button class="view-toggle-btn" onclick="toggleDetailView('test_confirmed', this)">테스트발송완료</button>
+                        <button class="view-toggle-btn" onclick="toggleDetailView('rejected', this)">반려</button>
+                        <button class="view-toggle-btn" onclick="toggleDetailView('after', this)">검수 완료 후</button>
+                    </div>
+
+                    <!-- 기본 정보 -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <div class="section-title">기본 정보</div>
+                        </div>
+                        <div class="section-body">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">상태</span>
+                                    <span class="detail-info-value" id="detail-status">
+                                        <span class="msg-status-badge msg-status-review-wait">검수대기</span>
+                                    </span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">이력ID</span>
+                                    <span class="detail-info-value"><span class="code">MSG-20260211-001</span></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">발송유형</span>
+                                    <span class="detail-info-value"><span class="msg-type-badge msg-type-sms">SMS</span><span class="msg-type-desc" style="margin-left:6px;">단문 문자 메시지</span></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">발송일시</span>
+                                    <span class="detail-info-value">2026-02-11 09:00</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">요청자</span>
+                                    <span class="detail-info-value">홍길동</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">요청일시</span>
+                                    <span class="detail-info-value">2026-02-10 17:30</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 발송 대상자 조건 -->
+                    <div class="section-card" id="detail-target-condition">
+                        <div class="section-header">
+                            <div class="section-title">발송 대상자 조건</div>
+                        </div>
+                        <div class="section-body">
+                            <div class="detail-info-grid" style="grid-template-columns: 1fr 1fr;">
+                                <!-- 회원 학습 상태 - 향후 고도화 (학습회원 관리 시스템 연동 후) -->
+                                <!-- <div class="detail-info-item">
+                                    <span class="detail-info-label">회원 학습 상태</span>
+                                    <span class="detail-info-value">전체 (학습중 + 퇴회)</span>
+                                </div> -->
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">회원 유형</span>
+                                    <span class="detail-info-value">학부모 회원</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">출생년도</span>
+                                    <span class="detail-info-value">1980년 ~ 1995년</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">주소지</span>
+                                    <span class="detail-info-value">서울특별시 송파구</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">자녀 학년</span>
+                                    <span class="detail-info-value">초등 1학년 ~ 초등 6학년</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">마케팅 수신 동의</span>
+                                    <span class="detail-info-value">동의</span>
+                                </div>
+                            </div>
+                            <!-- 예상 발송 대상 수 -->
+                            <div style="margin-top:20px; padding:20px; background:#f0f6ff; border:1px solid #d0e3ff; border-radius:10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <div style="font-size:13px; color:#666; margin-bottom:6px;">예상 발송 대상 수</div>
+                                        <div style="font-size:28px; font-weight:700; color:#4a90d9;" id="detail-expected-count">74,734 <span style="font-size:16px; font-weight:400; color:#666;">명</span></div>
+                                    </div>
+                                    <div style="display:flex; gap:24px;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:12px; color:#999; margin-bottom:4px;">전체 대상</div>
+                                            <div style="font-size:16px; font-weight:600; color:#333;">85,200명</div>
+                                        </div>
+                                        <div style="text-align:center;">
+                                            <div style="font-size:12px; color:#999; margin-bottom:4px;">수신거부 제외</div>
+                                            <div style="font-size:16px; font-weight:600; color:#e74c3c;">-8,420명</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 발송 형태 -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <div class="section-title">발송 형태</div>
+                        </div>
+                        <div class="section-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">발송 사례</label>
+                                    <span style="font-size:14px;color:#333;">가입인사</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">발송 방식</label>
+                                    <span style="font-size:14px;color:#333;">즉시 발송</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 발송 메시지 -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <div class="section-title">발송 메시지</div>
+                        </div>
+                        <div class="section-body">
+                            <div style="background:#f8f9fb;border-radius:8px;padding:20px;line-height:1.8;font-size:14px;color:#333;">
+                                <span style="background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:4px;">#{기관명}</span>
+                                <span style="background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:4px;">#{이름}</span>님,<br><br>
+                                신규 서비스 오픈 안내드립니다.<br>
+                                지금 바로 확인하세요!<br><br>
+                                <span style="background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:4px;">#{서비스명}</span>에서
+                                <span style="background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:4px;">#{브랜드}</span> 관련 새로운 혜택이 준비되어 있습니다.<br><br>
+                                ※ 무료거부 : 080-300-0000
+                            </div>
+
+                            <!-- 진행 과정 -->
+                            <div style="margin-top:24px;">
+                                <label class="form-label">진행 과정</label>
+                                <div class="process-steps" id="process-steps">
+                                    <div class="process-step done">✓ 요청완료</div>
+                                    <span class="process-step-arrow">→</span>
+                                    <div class="process-step current">● 검수대기</div>
+                                    <span class="process-step-arrow">→</span>
+                                    <div class="process-step">검수완료</div>
+                                    <span class="process-step-arrow">→</span>
+                                    <div class="process-step">발송중</div>
+                                    <span class="process-step-arrow">→</span>
+                                    <div class="process-step">완료</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 발송 결과 (검수 완료 후에만 표시) -->
+                    <div class="section-card" id="detail-result-section" style="display:none;">
+                        <div class="section-header">
+                            <div class="section-title">발송 결과</div>
+                        </div>
+                        <div class="section-body">
+                            <div class="result-summary">
+                                <div class="result-item success-bg">
+                                    <div class="result-item-label">성공</div>
+                                    <div class="result-item-value">70,234건</div>
+                                </div>
+                                <div class="result-item fail-bg">
+                                    <div class="result-item-label">실패</div>
+                                    <div class="result-item-value">1,300건</div>
+                                </div>
+                                <div class="result-item total-bg">
+                                    <div class="result-item-label">총 발송</div>
+                                    <div class="result-item-value">74,734건</div>
+                                </div>
+                            </div>
+                            <div class="progress-bar-container" style="margin-top:20px;">
+                                <span style="font-size:13px;color:#666;">성공률</span>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-fill success" style="width:98.2%;"></div>
+                                </div>
+                                <span class="progress-percent">98.2%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 검수 영역 (PENDING_REVIEW 상태) -->
+                    <div class="section-card" id="detail-review-section">
+                        <div class="section-header">
+                            <div class="section-title">검수 정보</div>
+                        </div>
+                        <div class="section-body">
+                            <div class="review-info-grid">
+                                <div class="review-info-item">
+                                    <span class="review-info-label">검수 상태</span>
+                                    <span class="review-info-value" id="review-status-badge">
+                                        <span class="review-status-badge review-status-pending">검수대기</span>
+                                    </span>
+                                </div>
+                                <div class="review-info-item" id="review-reviewer" style="display:none;">
+                                    <span class="review-info-label">검수자</span>
+                                    <span class="review-info-value">김관리</span>
+                                </div>
+                                <div class="review-info-item" id="review-date" style="display:none;">
+                                    <span class="review-info-label">검수일시</span>
+                                    <span class="review-info-value">2026-02-11 10:30</span>
+                                </div>
+                            </div>
+
+                            <!-- 테스트 발송 영역 (PENDING_REVIEW/TEST_CONFIRMED + 검수 권한자) -->
+                            <div class="test-send-area" id="test-send-area">
+                                <div class="test-send-title">📱 테스트 발송</div>
+                                <div class="test-send-row">
+                                    <input type="text" id="testRecipientInput" placeholder="010-0000-0000" />
+                                    <button class="btn btn-outline" onclick="handleTestSend()">테스트 발송</button>
+                                </div>
+                                <div class="test-send-note">※ 실제 메시지가 1건 발송됩니다. 수신 확인 후 "테스트 확인 완료"를 눌러주세요.</div>
+                                <div class="test-result-box" id="testResultBox">
+                                    <div class="test-result-item">
+                                        <span>발송 일시</span>
+                                        <span id="testResultTime">-</span>
+                                    </div>
+                                    <div class="test-result-item">
+                                        <span>수신번호</span>
+                                        <span id="testResultRecipient">-</span>
+                                    </div>
+                                    <div class="test-result-item">
+                                        <span>발송 상태</span>
+                                        <span class="test-result-status" id="testResultStatus"><span class="dot success"></span> 성공</span>
+                                    </div>
+                                    <div style="text-align:right;margin-top:12px;">
+                                        <button class="btn btn-primary btn-sm" onclick="handleTestConfirm()">테스트 확인 완료</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 반려 사유 (REJECTED 상태) -->
+                            <div class="reject-reason-box" id="reject-reason-box" style="display:none;">
+                                <div class="reject-reason-title">⚠️ 반려 사유</div>
+                                <div class="reject-reason-text">발송 대상자 조건이 너무 광범위합니다. 출생년도 조건을 세분화하고, 발송 메시지 내 개인정보 처리 안내 문구를 추가해 주세요.</div>
+                            </div>
+                            <!-- 검수 버튼 (TEST_CONFIRMED + 검수 권한자) -->
+                            <div class="review-buttons" id="review-action-buttons" style="display:none;">
+                                <button class="btn btn-primary" onclick="openModal('approveConfirmModal')">검수 승인</button>
+                                <button class="btn btn-danger" onclick="openModal('rejectReasonModal')">반려</button>
+                            </div>
+                            <!-- 검수 전 안내 (PENDING_REVIEW에서 검수 승인 비활성) -->
+                            <div class="review-buttons" id="review-pending-hint">
+                                <button class="btn btn-primary" disabled title="테스트 발송 확인을 먼저 완료하세요." style="opacity:0.5;cursor:not-allowed;">검수 승인</button>
+                                <button class="btn btn-danger" onclick="openModal('rejectReasonModal')">반려</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 버튼 영역 -->
+                    <div class="button-group" id="detail-buttons-before">
+                        <button class="btn btn-secondary" onclick="showScreen('screen-msg-list')">목록</button>
+                        <button class="btn btn-primary" onclick="showToast('수정 화면으로 이동합니다.','info')">수정</button>
+                        <button class="btn btn-danger" onclick="openModal('deleteConfirmModal')">삭제</button>
+                    </div>
+                    <div class="button-group" id="detail-buttons-rejected" style="display:none;">
+                        <button class="btn btn-secondary" onclick="showScreen('screen-msg-list')">목록</button>
+                        <button class="btn btn-primary" onclick="showToast('수정 화면으로 이동합니다.','info')">수정</button>
+                        <button class="btn btn-danger" onclick="openModal('deleteConfirmModal')">삭제</button>
+                    </div>
+                    <div class="button-group" id="detail-buttons-after" style="display:none;">
+                        <button class="btn btn-secondary" onclick="showScreen('screen-msg-list')">목록</button>
+                        <button class="btn btn-danger" onclick="showToast('발송이 취소되었습니다.','warning')">취소 발송</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- Screen 4: MSG-004 템플릿 목록 -->
+            <!-- ============================================ -->
+            <div class="screen" id="screen-tpl-list">
+                <header class="content-header">
+                    <div class="breadcrumb">
+                        <span>홈</span><span class="separator">›</span>
+                        <span>메시지 발송</span><span class="separator">›</span>
+                        <span class="current">템플릿 관리</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                        <button class="logout-btn">로그아웃</button>
+                    </div>
+                </header>
+                <div class="content-section">
+                    <div class="page-title-area">
+                        <h2 class="page-title">템플릿 관리</h2>
+                        <p class="page-desc">메시지 발송에 사용할 템플릿을 관리합니다.</p>
+                    </div>
+
+                    <!-- 검색 카드 -->
+                    <div class="search-card">
+                        <div class="search-row">
+                            <div class="search-group">
+                                <label class="search-label">템플릿 유형</label>
+                                <select class="search-select">
+                                    <option>전체</option>
+                                    <option>SMS - 단문 문자 메시지</option>
+                                    <option>LMS - 장문 문자 메시지</option>
+                                </select>
+                            </div>
+                            <div class="search-group">
+                                <label class="search-label">사용 여부</label>
+                                <select class="search-select">
+                                    <option>전체</option>
+                                    <option>사용</option>
+                                    <option>미사용</option>
+                                </select>
+                            </div>
+                            <div class="search-group">
+                                <label class="search-label">템플릿명</label>
+                                <input type="text" class="search-input" placeholder="템플릿명 검색">
+                            </div>
+                            <div class="search-group" style="margin-left:auto;flex-direction:row;align-items:flex-end;gap:8px;">
+                                <button class="btn btn-search" onclick="showToast('검색을 실행합니다.','info')">검색</button>
+                                <button class="btn btn-secondary" onclick="showToast('검색 조건을 초기화했습니다.','info')">초기화</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 액션 바 -->
+                    <div class="action-bar">
+                        <span class="result-count">총 <strong>45</strong>건</span>
+                        <button class="btn btn-primary" onclick="showScreen('screen-tpl-register')">+ 템플릿 등록</button>
+                    </div>
+
+                    <!-- 테이블 -->
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th style="width:80px;">유형</th>
+                                    <th class="text-left">템플릿명</th>
+                                    <th class="text-left">설명</th>
+                                    <th style="width:80px;">사용여부</th>
+                                    <th style="width:80px;">등록자</th>
+                                    <th style="width:120px;">등록일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>1</td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">가입 환영 메시지</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">신규 가입 회원 대상 환영 인사</td>
+                                    <td><span class="msg-status-badge" style="background:#52C41A;">사용</span></td>
+                                    <td>김관리</td>
+                                    <td>2026-01-15</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>2</td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">학습 안내 메시지</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">학습 시작 안내 및 일정 공지</td>
+                                    <td><span class="msg-status-badge" style="background:#52C41A;">사용</span></td>
+                                    <td>박운영</td>
+                                    <td>2026-01-10</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>3</td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">이벤트 프로모션 안내</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">이벤트 및 할인 프로모션 안내</td>
+                                    <td><span class="msg-status-badge" style="background:#52C41A;">사용</span></td>
+                                    <td>홍길동</td>
+                                    <td>2026-01-08</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>4</td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">월간 학습 리포트</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">월별 학습 성과 리포트 발송</td>
+                                    <td><span class="msg-status-badge" style="background:#52C41A;">사용</span></td>
+                                    <td>이담당</td>
+                                    <td>2025-12-20</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>5</td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">출석 체크 리마인드</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">출석 체크 참여 유도 안내</td>
+                                    <td><span class="msg-status-badge" style="background:#52C41A;">사용</span></td>
+                                    <td>김관리</td>
+                                    <td>2025-12-15</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>6</td>
+                                    <td><span class="msg-type-badge msg-type-sms">SMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">휴면 계정 안내</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">장기 미접속 회원 휴면 전환 안내</td>
+                                    <td><span class="msg-status-badge" style="background:#8C8C8C;">미사용</span></td>
+                                    <td>박운영</td>
+                                    <td>2025-12-01</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>7</td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">서비스 점검 안내</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">서비스 정기 점검 사전 안내</td>
+                                    <td><span class="msg-status-badge" style="background:#52C41A;">사용</span></td>
+                                    <td>홍길동</td>
+                                    <td>2025-11-20</td>
+                                </tr>
+                                <tr onclick="showScreen('screen-tpl-detail')">
+                                    <td>8</td>
+                                    <td><span class="msg-type-badge msg-type-lms">LMS</span></td>
+                                    <td class="text-left"><span class="clickable-title">재가입 혜택 안내</span></td>
+                                    <td class="text-left" style="color:#666;font-size:13px;">퇴회 회원 대상 재가입 혜택 안내</td>
+                                    <td><span class="msg-status-badge" style="background:#8C8C8C;">미사용</span></td>
+                                    <td>이담당</td>
+                                    <td>2025-11-10</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 페이지네이션 -->
+                    <div class="pagination" id="pagination-tpl-list"></div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- Screen 5: MSG-005 템플릿 등록 -->
+            <!-- ============================================ -->
+            <div class="screen" id="screen-tpl-register">
+                <header class="content-header">
+                    <div class="breadcrumb">
+                        <span>홈</span><span class="separator">›</span>
+                        <span>메시지 발송</span><span class="separator">›</span>
+                        <span>템플릿 관리</span><span class="separator">›</span>
+                        <span class="current">템플릿 등록</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                        <button class="logout-btn">로그아웃</button>
+                    </div>
+                </header>
+                <div class="content-section">
+                    <div class="page-title-area">
+                        <h2 class="page-title">템플릿 등록</h2>
+                        <p class="page-desc">새로운 메시지 템플릿을 등록합니다.</p>
+                    </div>
+
+                    <div class="two-column-layout">
+                        <div class="left-column">
+                            <!-- 기본 정보 -->
+                            <div class="form-card">
+                                <div class="form-section-title">기본 정보</div>
+                                <div class="form-group">
+                                    <label class="form-label">템플릿 유형 <span class="required">*</span></label>
+                                    <div class="radio-group-inline" id="tplTypeRadio">
+                                        <label class="radio-item"><input type="radio" name="tplType" value="SMS" checked onchange="onTplTypeChange(this.value)"><span>SMS<span class="msg-type-desc">단문 문자 (90byte, 한글 약 45자)</span></span></label>
+                                        <label class="radio-item"><input type="radio" name="tplType" value="LMS" onchange="onTplTypeChange(this.value)"><span>LMS<span class="msg-type-desc">장문 문자 (1,000byte, 한글 약 500자)</span></span></label>
+                                    </div>
+                                    <p class="form-help" style="margin-top:8px;color:#666;font-size:12px;">💡 향후 고도화: E-mail 발송 (제목, 본문 HTML 지원)</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">템플릿명 <span class="required">*</span></label>
+                                    <input type="text" class="form-input" placeholder="템플릿명을 입력하세요" id="tplNameInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">설명</label>
+                                    <input type="text" class="form-input" placeholder="템플릿 설명을 입력하세요">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">사용 여부</label>
+                                    <div class="radio-group-inline">
+                                        <label class="radio-item"><input type="radio" name="tplUse" checked><span>사용</span></label>
+                                        <label class="radio-item"><input type="radio" name="tplUse"><span>미사용</span></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 메시지 내용 -->
+                            <div class="form-card" style="margin-top:20px;">
+                                <div class="form-section-title">메시지 내용</div>
+                                <div class="form-group">
+                                    <label class="form-label">내용 <span class="required">*</span></label>
+                                    <textarea class="form-textarea" id="tplContentArea" rows="8" placeholder="메시지 내용을 입력하세요 (고정 영역 제외)" oninput="updateByteCount();updateTplPreview();">안녕하세요.
+
+마카다미아 멤버스에서 알려드립니다.
+새로운 소식을 확인해 보세요!
+
+감사합니다.</textarea>
+                                    <div class="byte-counter">
+                                        <span class="current" id="byteCount">78</span> / <span id="byteLimit">90</span> bytes
+                                    </div>
+                                </div>
+                                <p style="margin-top:10px;font-size:12px;color:#1565C0;background:#E3F2FD;padding:8px 12px;border-radius:6px;">
+                                    💡 발송 시 상단에 <strong>'(광고) 대교'</strong>, <strong>'발송 제목'</strong>, 하단에 <strong>'무료거부: 080-300-0000'</strong>이 자동으로 추가됩니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 미리보기 -->
+                        <div class="right-column">
+                            <div class="section-card" style="position:sticky;top:80px;">
+                                <div class="section-header">
+                                    <div class="section-title">📱 미리보기</div>
+                                </div>
+                                <div class="section-body" style="display:flex;justify-content:center;">
+                                    <div class="phone-mockup">
+                                        <div class="phone-notch"></div>
+                                        <div class="phone-screen" id="tplPreviewScreen">
+                                            <div style="color:#1565c0;font-weight:600;margin-bottom:12px;" id="tplPreviewType">SMS 메시지 (단문 문자)</div>
+                                            <div class="message-bubble" style="min-height:80px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;padding:16px;border-radius:12px;">
+                                                <!-- 상단 고정 영역 -->
+                                                <div id="tplPreviewTopFixed" style="color:rgba(255,255,255,0.8);margin-bottom:8px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.2);padding-bottom:6px;">
+                                                    (광고) 대교
+                                                </div>
+                                                <!-- 중간 변수 영역 (관리자 입력 내용) -->
+                                                <div id="tplPreviewContent" style="line-height:1.6;">
+                                                    안녕하세요.<br><br>마카다미아 멤버스에서 알려드립니다.<br>새로운 소식을 확인해 보세요!<br><br>감사합니다.
+                                                </div>
+                                                <!-- 하단 고정 영역 -->
+                                                <div id="tplPreviewBottomFixed" style="color:rgba(255,255,255,0.8);margin-top:8px;font-weight:600;border-top:1px solid rgba(255,255,255,0.2);padding-top:6px;">
+                                                    무료거부: 080-300-0000
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showScreen('screen-tpl-list')">취소</button>
+                        <button class="btn btn-primary" onclick="saveTpl()">저장</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- Screen 6: MSG-006 템플릿 상세/수정 -->
+            <!-- ============================================ -->
+            <div class="screen" id="screen-tpl-detail">
+                <header class="content-header">
+                    <div class="breadcrumb">
+                        <span>홈</span><span class="separator">›</span>
+                        <span>메시지 발송</span><span class="separator">›</span>
+                        <span>템플릿 관리</span><span class="separator">›</span>
+                        <span class="current">템플릿 상세</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                        <button class="logout-btn">로그아웃</button>
+                    </div>
+                </header>
+                <div class="content-section">
+                    <div class="page-title-area">
+                        <h2 class="page-title" id="tplDetailTitle">템플릿 상세</h2>
+                    </div>
+
+                    <!-- 테스트용 뷰 토글 -->
+                    <div class="view-toggle-bar">
+                        <button class="view-toggle-btn active" onclick="toggleTplMode('view', this)">조회 모드</button>
+                        <button class="view-toggle-btn" onclick="toggleTplMode('edit', this)">수정 모드</button>
+                    </div>
+
+                    <div class="two-column-layout">
+                        <div class="left-column">
+                            <!-- 조회 모드 -->
+                            <div id="tpl-view-mode">
+                                <div class="form-card">
+                                    <div class="form-section-title">기본 정보</div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">템플릿 ID</div>
+                                        <div class="detail-value"><span class="code">TPL-001</span></div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">유형</div>
+                                        <div class="detail-value"><span class="msg-type-badge msg-type-sms">SMS</span><span class="msg-type-desc" style="margin-left:8px;">단문 문자 메시지 (90byte, 한글 45자)</span></div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">템플릿명</div>
+                                        <div class="detail-value">가입 환영 메시지</div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">설명</div>
+                                        <div class="detail-value">신규 가입 회원 대상 환영 인사</div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">사용여부</div>
+                                        <div class="detail-value"><span class="msg-status-badge" style="background:#52C41A;">사용</span></div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">등록자</div>
+                                        <div class="detail-value">김관리</div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">등록일시</div>
+                                        <div class="detail-value">2026-01-15 10:30</div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">수정자</div>
+                                        <div class="detail-value">홍길동</div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-label">수정일시</div>
+                                        <div class="detail-value">2026-02-01 14:20</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-card" style="margin-top:20px;">
+                                    <div class="form-section-title">메시지 내용</div>
+                                    <div style="background:#f8f9fb;border-radius:8px;padding:20px;line-height:1.8;font-size:14px;color:#333;">
+                                        <span style="background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:4px;">#{회원명}</span>님, 안녕하세요!<br><br>
+                                        마카다미아 멤버스에 가입해 주셔서 감사합니다.<br>
+                                        다양한 혜택과 서비스를 만나보세요.<br><br>
+                                        ※ 무료거부 : 080-300-0000
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 수정 모드 -->
+                            <div id="tpl-edit-mode" style="display:none;">
+                                <div class="form-card">
+                                    <div class="form-section-title">기본 정보 수정</div>
+                                    <div class="form-group">
+                                        <label class="form-label">템플릿 ID</label>
+                                        <input type="text" class="form-input" value="TPL-001" disabled>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">유형</label>
+                                        <div style="display:flex;align-items:center;gap:8px;padding:10px 0;">
+                                            <span class="msg-type-badge msg-type-sms">SMS</span>
+                                            <span class="msg-type-desc" style="margin-left:4px;">단문 문자 메시지 (90byte, 한글 45자)</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">템플릿명 <span class="required">*</span></label>
+                                        <input type="text" class="form-input" value="가입 환영 메시지">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">설명</label>
+                                        <input type="text" class="form-input" value="신규 가입 회원 대상 환영 인사">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">사용 여부</label>
+                                        <div class="radio-group-inline">
+                                            <label class="radio-item"><input type="radio" name="tplEditUse" checked><span>사용</span></label>
+                                            <label class="radio-item"><input type="radio" name="tplEditUse"><span>미사용</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-card" style="margin-top:20px;">
+                                    <div class="form-section-title">메시지 내용 수정</div>
+                                    <div class="form-group">
+                                        <label class="form-label">내용 <span class="required">*</span></label>
+                                        <textarea class="form-textarea" rows="8" id="tplEditContent" oninput="updateEditPreview()">안녕하세요!
+
+마카다미아 멤버스에 가입해 주셔서 감사합니다.
+다양한 혜택과 서비스를 만나보세요.</textarea>
+                                    </div>
+                                    <p style="margin-top:10px;font-size:12px;color:#1565C0;background:#E3F2FD;padding:8px 12px;border-radius:6px;">
+                                        💡 발송 시 상단에 <strong>'(광고) 대교'</strong>, <strong>'발송 제목'</strong>, 하단에 <strong>'무료거부: 080-300-0000'</strong>이 자동으로 추가됩니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 미리보기 -->
+                        <div class="right-column">
+                            <div class="section-card" style="position:sticky;top:80px;">
+                                <div class="section-header">
+                                    <div class="section-title">📱 미리보기</div>
+                                </div>
+                                <div class="section-body" style="display:flex;justify-content:center;">
+                                    <div class="phone-mockup">
+                                        <div class="phone-notch"></div>
+                                        <div class="phone-screen" id="tplDetailPreviewScreen">
+                                            <div style="color:#1565c0;font-weight:600;margin-bottom:12px;">SMS 메시지 (단문 문자)</div>
+                                            <div class="message-bubble" style="min-height:80px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;padding:16px;border-radius:12px;">
+                                                <!-- 상단 고정 영역 -->
+                                                <div style="color:rgba(255,255,255,0.8);margin-bottom:8px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.2);padding-bottom:6px;">
+                                                    (광고) 대교
+                                                </div>
+                                                <!-- 중간 변수 영역 (관리자 입력 내용) -->
+                                                <div id="tplDetailPreview" style="line-height:1.6;">
+                                                    안녕하세요!<br><br>마카다미아 멤버스에 가입해 주셔서 감사합니다.<br>다양한 혜택과 서비스를 만나보세요.
+                                                </div>
+                                                <!-- 하단 고정 영역 -->
+                                                <div style="color:rgba(255,255,255,0.8);margin-top:8px;font-weight:600;border-top:1px solid rgba(255,255,255,0.2);padding-top:6px;">
+                                                    무료거부: 080-300-0000
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 조회 모드 버튼 -->
+                    <div class="button-group" id="tpl-view-buttons">
+                        <button class="btn btn-secondary" onclick="showScreen('screen-tpl-list')">목록</button>
+                        <button class="btn btn-primary" onclick="toggleTplMode('edit', null)">수정</button>
+                        <button class="btn btn-danger" onclick="openModal('tplDeleteModal')">삭제</button>
+                    </div>
+                    <!-- 수정 모드 버튼 -->
+                    <div class="button-group" id="tpl-edit-buttons" style="display:none;">
+                        <button class="btn btn-secondary" onclick="toggleTplMode('view', null)">취소</button>
+                        <button class="btn btn-primary" onclick="saveTplEdit()">저장</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 모달들 -->
+    <!-- ============================================ -->
+
+    <!-- 발송 확인 모달 -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-title">발송 확인</div>
+            <div class="modal-message">
+                <div class="confirm-message">
+                    <div class="confirm-count">74,734 건</div>
+                    <div class="confirm-text">총 발송 대상 수입니다.<br>발송하시겠습니까?</div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">취소</button>
+                <button class="btn btn-primary" onclick="closeModal('confirmModal');showToast('발송 요청이 완료되었습니다. 검수 대기 상태로 전환됩니다.','success');">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 (발송 상세) -->
+    <div class="modal-overlay" id="deleteConfirmModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠️</div>
+            <div class="modal-title">삭제 확인</div>
+            <div class="modal-message">이 발송 이력을 삭제하시겠습니까?<br>삭제된 데이터는 복구할 수 없습니다.</div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('deleteConfirmModal')">취소</button>
+                <button class="btn btn-danger" onclick="closeModal('deleteConfirmModal');showToast('삭제되었습니다.','success');showScreen('screen-msg-list');">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 검수 승인 및 예약시간 설정 모달 -->
+    <div class="modal-overlay" id="approveConfirmModal">
+        <div class="modal" style="min-width:520px;">
+            <div class="modal-icon" style="font-size:40px;">✅</div>
+            <div class="modal-title">검수 승인 및 예약시간 설정</div>
+            <div class="modal-message" style="text-align:left;">
+                <div style="margin-bottom:20px;">
+                    <div style="display:flex;gap:8px;margin-bottom:8px;"><span style="color:#666;min-width:90px;">이력ID:</span><span style="font-weight:600;">MSG-20260211-001</span></div>
+                    <div style="display:flex;gap:8px;margin-bottom:8px;"><span style="color:#666;min-width:90px;">발송 유형:</span><span>SMS</span></div>
+                    <div style="display:flex;gap:8px;"><span style="color:#666;min-width:90px;">발송 대상:</span><span>74,734명</span></div>
+                </div>
+
+                <!-- 예약 시간 입력 -->
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;font-weight:600;margin-bottom:8px;">발송 예약시간 <span style="color:#e53935;">*</span></label>
+                    <input type="datetime-local" id="approveScheduledAt" class="form-input" style="width:100%;">
+                    <p style="font-size:12px;color:#999;margin-top:4px;">💡 최소: 현재+10분, 최대: 현재+7일</p>
+                </div>
+
+                <!-- 안내 메시지 -->
+                <div style="background:#e3f2fd;padding:12px;border-radius:8px;font-size:13px;color:#1565c0;">
+                    ℹ️ 설정한 예약 시간에 자동 발송됩니다.
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('approveConfirmModal')">취소</button>
+                <button class="btn btn-primary" onclick="handleApproveScheduled()">승인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 반려 사유 입력 모달 -->
+    <div class="modal-overlay" id="rejectReasonModal">
+        <div class="modal" style="min-width:480px;">
+            <div class="modal-icon warning">⚠️</div>
+            <div class="modal-title" style="text-align:left;">발송 반려</div>
+            <div class="modal-message" style="text-align:left;">
+                <div style="display:flex;gap:8px;margin-bottom:16px;"><span style="color:#666;min-width:60px;">이력ID:</span><span style="font-weight:600;">MSG-20260211-001</span></div>
+                <div style="margin-bottom:8px;">
+                    <label style="font-weight:600;font-size:14px;color:#333;">반려 사유 <span style="color:#e53935;">*</span></label>
+                </div>
+                <textarea id="rejectReasonInput" style="width:100%;height:120px;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;" placeholder="반려 사유를 입력해주세요" maxlength="500"></textarea>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;">
+                    <span id="rejectReasonError" style="color:#e74c3c;font-size:12px;display:none;">반려 사유를 입력해주세요.</span>
+                    <span style="font-size:12px;color:#999;margin-left:auto;"><span id="rejectReasonCount">0</span>/500자</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('rejectReasonModal')">취소</button>
+                <button class="btn btn-danger" onclick="handleReject()">반려</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 (템플릿 상세) -->
+    <div class="modal-overlay" id="tplDeleteModal">
+        <div class="modal">
+            <div class="modal-icon warning">⚠️</div>
+            <div class="modal-title">템플릿 삭제</div>
+            <div class="modal-message">이 템플릿을 삭제하시겠습니까?<br>삭제된 템플릿은 복구할 수 없습니다.</div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('tplDeleteModal')">취소</button>
+                <button class="btn btn-danger" onclick="closeModal('tplDeleteModal');showToast('템플릿이 삭제되었습니다.','success');showScreen('screen-tpl-list');">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 프로토타입 바 -->
+    <div class="prototype-bar">
+        <span class="proto-badge">PROTOTYPE</span>
+        <span class="proto-desc">메시지 발송 모듈 프로토타입 (MSG-001~006) | v1.7: 대상수 초기화 + 테스트발송</span>
+        <div class="proto-nav">
+            <button onclick="showScreen('screen-msg-list')">발송 목록</button>
+            <button onclick="showScreen('screen-msg-send')">메시지 발송</button>
+            <button onclick="showScreen('screen-msg-detail')">발송 상세</button>
+            <button onclick="showScreen('screen-tpl-list')">템플릿 목록</button>
+            <button onclick="showScreen('screen-tpl-register')">템플릿 등록</button>
+            <button onclick="showScreen('screen-tpl-detail')">템플릿 상세</button>
+        </div>
+        <span class="proto-account">테스트: admin / test1234</span>
+    </div>
+
+    <script src="../../common/script.js"></script>
+    <script>
+        console.log('스크립트 로드 시작');
+
+        // ===== Pagination Controllers =====
+        var msgListPagination = null;
+        var tplListPagination = null;
+
+        // 발송 목록 상태 저장 (상세→목록 복귀 시 유지)
+        var msgListState = {
+            page: 1,
+            pageSize: 20,
+            searchTitle: '',
+            searchRequester: '',
+            searchType: 0,
+            searchStatus: 0,
+            scrollY: 0
+        };
+
+        function saveMsgListState() {
+            if (msgListPagination) {
+                var pState = msgListPagination.getState();
+                msgListState.page = pState.page;
+                msgListState.pageSize = pState.pageSize;
+            }
+            msgListState.searchTitle = document.getElementById('searchTitle') ? document.getElementById('searchTitle').value : '';
+            msgListState.searchRequester = document.getElementById('searchRequester') ? document.getElementById('searchRequester').value : '';
+            var selects = document.querySelectorAll('#screen-msg-list .search-select');
+            if (selects[0]) msgListState.searchType = selects[0].selectedIndex;
+            if (selects[1]) msgListState.searchStatus = selects[1].selectedIndex;
+            msgListState.scrollY = window.scrollY;
+        }
+
+        function restoreMsgListState() {
+            if (document.getElementById('searchTitle')) document.getElementById('searchTitle').value = msgListState.searchTitle;
+            if (document.getElementById('searchRequester')) document.getElementById('searchRequester').value = msgListState.searchRequester;
+            var selects = document.querySelectorAll('#screen-msg-list .search-select');
+            if (selects[0]) selects[0].selectedIndex = msgListState.searchType;
+            if (selects[1]) selects[1].selectedIndex = msgListState.searchStatus;
+            if (msgListPagination) {
+                msgListPagination.setState({
+                    page: msgListState.page,
+                    pageSize: msgListState.pageSize
+                });
+            }
+            // 검색 조건이 있었으면 다시 검색 적용
+            if (msgListState.searchTitle || msgListState.searchRequester) {
+                searchList(true); // silent 모드 (toast 없이)
+            }
+            setTimeout(function() { window.scrollTo(0, msgListState.scrollY); }, 50);
+        }
+
+        // ===== Screen Switching =====
+        var previousScreen = null;
+
+        function showScreen(screenId) {
+            console.log('showScreen 호출됨:', screenId);
+
+            // 현재 화면이 발송 목록이면 상태 저장
+            var currentScreen = document.querySelector('.screen.active');
+            if (currentScreen) {
+                previousScreen = currentScreen.id;
+                if (currentScreen.id === 'screen-msg-list') {
+                    saveMsgListState();
+                }
+            }
+
+            document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+            var target = document.getElementById(screenId);
+            console.log('대상 화면 요소:', target);
+            if (target) {
+                target.classList.add('active');
+                console.log('화면 전환 완료:', screenId);
+            } else {
+                console.error('화면을 찾을 수 없음:', screenId);
+            }
+
+            // Update sidebar active state
+            document.querySelectorAll('.submenu-link').forEach(function(link) {
+                link.classList.remove('active');
+                if (link.dataset.screen === screenId) link.classList.add('active');
+            });
+
+            // 발송 목록으로 돌아올 때 상태 복원
+            if (screenId === 'screen-msg-list' && previousScreen && previousScreen !== 'screen-msg-list') {
+                restoreMsgListState();
+                return; // 스크롤은 restoreMsgListState에서 처리
+            }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Attach click handlers to submenu links
+        document.querySelectorAll('.submenu-link[data-screen]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showScreen(this.dataset.screen);
+            });
+        });
+
+        // ===== Toast Notification =====
+        function showToast(message, type) {
+            type = type || 'success';
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.classList.add('show'); }, 10);
+            setTimeout(function() {
+                toast.classList.remove('show');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 4000);
+        }
+
+        // ===== Modal Functions =====
+        // openModal, closeModal은 script.js에 정의되어 있음
+
+        // ===== MSG-001 검색 Functions =====
+        function searchList(silent) {
+            var titleKeyword = document.getElementById('searchTitle').value.trim().toLowerCase();
+            var requesterKeyword = document.getElementById('searchRequester').value.trim().toLowerCase();
+            var table = document.querySelector('#screen-msg-list .data-table');
+            var rows = table.querySelectorAll('tbody tr');
+            var emptyState = document.getElementById('emptyState');
+            var tableCard = document.querySelector('#screen-msg-list .table-card');
+            var paginationEl = document.getElementById('pagination-msg-list');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var titleCell = row.querySelector('td:nth-child(3)');
+                var requesterCell = row.querySelector('td:nth-child(7)');
+                if (!titleCell || !requesterCell) return;
+                var titleText = (titleCell.textContent || '').toLowerCase();
+                var requesterText = (requesterCell.textContent || '').toLowerCase();
+                var titleMatch = !titleKeyword || titleText.indexOf(titleKeyword) !== -1;
+                var requesterMatch = !requesterKeyword || requesterText.indexOf(requesterKeyword) !== -1;
+                if (titleMatch && requesterMatch) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            document.querySelector('#screen-msg-list .result-count strong').textContent = visibleCount;
+            // 빈 상태 표시/숨김
+            if (visibleCount === 0) {
+                tableCard.style.display = 'none';
+                paginationEl.style.display = 'none';
+                emptyState.style.display = 'block';
+            } else {
+                tableCard.style.display = '';
+                paginationEl.style.display = '';
+                emptyState.style.display = 'none';
+                // 검색 결과에 맞게 페이지네이션 갱신
+                if (msgListPagination) {
+                    msgListPagination.updateTotal(visibleCount);
+                }
+            }
+            if (!silent) {
+                var msg = [];
+                if (titleKeyword) msg.push('제목 "' + titleKeyword + '"');
+                if (requesterKeyword) msg.push('요청자 "' + requesterKeyword + '"');
+                showToast(msg.length ? msg.join(', ') + '(으)로 검색하여 ' + visibleCount + '건 조회되었습니다.' : '전체 ' + visibleCount + '건 조회되었습니다.', 'info');
+            }
+        }
+
+        function resetSearch() {
+            document.getElementById('searchTitle').value = '';
+            document.getElementById('searchRequester').value = '';
+            var table = document.querySelector('#screen-msg-list .data-table');
+            var rows = table.querySelectorAll('tbody tr');
+            var emptyState = document.getElementById('emptyState');
+            var tableCard = document.querySelector('#screen-msg-list .table-card');
+            var paginationEl = document.getElementById('pagination-msg-list');
+            var totalCount = 0;
+            rows.forEach(function(row) {
+                row.style.display = '';
+                totalCount++;
+            });
+            document.querySelector('#screen-msg-list .result-count strong').textContent = totalCount;
+            document.querySelectorAll('#screen-msg-list .search-select').forEach(function(sel) { sel.selectedIndex = 0; });
+            // 빈 상태 숨기고 테이블 복원
+            tableCard.style.display = '';
+            paginationEl.style.display = '';
+            emptyState.style.display = 'none';
+            // 페이지네이션 원래 총건수로 복원
+            if (msgListPagination) {
+                msgListPagination.setState({ page: 1, totalItems: 156 });
+            }
+            showToast('검색 조건을 초기화했습니다.', 'info');
+        }
+
+        // Enter 키로 검색 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            var inputs = [document.getElementById('searchTitle'), document.getElementById('searchRequester')];
+            inputs.forEach(function(input) {
+                if (input) {
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') { searchList(); }
+                    });
+                }
+            });
+        });
+
+        // ===== MSG-002 Functions =====
+        function toggleAccordion(header) {
+            header.parentElement.classList.toggle('open');
+        }
+
+        // 회원 학습 상태 변경 - 향후 고도화 (학습회원 관리 시스템 연동 후)
+        /* function onLearningStatusChange(value) {
+            var helpEl = document.getElementById('learningStatusHelp');
+            if (!helpEl) return;
+            var helpTexts = {
+                'all': '💡 전체: 학습중 회원(마케팅 동의) + 퇴회 회원(재가입 마케팅 동의) 모두 포함',
+                'active': '💡 학습중: 발송 시점 기준 학습중인 회원 중 마케팅 수신 동의자만 대상',
+                'withdrawn': '💡 퇴회: 퇴회 후 5년 이내, 재가입 혜택 마케팅 동의자만 대상'
+            };
+            helpEl.textContent = helpTexts[value] || helpTexts['all'];
+            showToast('회원 학습 상태: ' + (value === 'all' ? '전체' : value === 'active' ? '학습중' : '퇴회') + ' 선택됨', 'info');
+        } */
+
+        // Button toggle groups
+        document.querySelectorAll('.btn-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.btn-toggle').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+            });
+        });
+
+        // ===== 주소지 Cascading Select 데이터 =====
+        var sigunguData = {
+            '서울특별시': ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
+            '부산광역시': ['강서구','금정구','기장군','남구','동구','동래구','부산진구','북구','사상구','사하구','서구','수영구','연제구','영도구','중구','해운대구'],
+            '대구광역시': ['군위군','남구','달서구','달성군','동구','북구','서구','수성구','중구'],
+            '인천광역시': ['강화군','계양구','남동구','동구','미추홀구','부평구','서구','연수구','옹진군','중구'],
+            '광주광역시': ['광산구','남구','동구','북구','서구'],
+            '대전광역시': ['대덕구','동구','서구','유성구','중구'],
+            '울산광역시': ['남구','동구','북구','울주군','중구'],
+            '세종특별자치시': [],
+            '경기도': ['가평군','고양시','과천시','광명시','광주시','구리시','군포시','김포시','남양주시','동두천시','부천시','성남시','수원시','시흥시','안산시','안성시','안양시','양주시','양평군','여주시','연천군','오산시','용인시','의왕시','의정부시','이천시','파주시','평택시','포천시','하남시','화성시'],
+            '강원특별자치도': ['강릉시','고성군','동해시','삼척시','속초시','양구군','양양군','영월군','원주시','인제군','정선군','철원군','춘천시','태백시','평창군','홍천군','화천군','횡성군'],
+            '충청북도': ['괴산군','단양군','보은군','영동군','옥천군','음성군','제천시','증평군','진천군','청주시','충주시'],
+            '충청남도': ['계룡시','공주시','금산군','논산시','당진시','보령시','부여군','서산시','서천군','아산시','예산군','천안시','청양군','태안군','홍성군'],
+            '전북특별자치도': ['고창군','군산시','김제시','남원시','무주군','부안군','순창군','완주군','익산시','임실군','장수군','전주시','정읍시','진안군'],
+            '전라남도': ['강진군','고흥군','곡성군','광양시','구례군','나주시','담양군','목포시','무안군','보성군','순천시','신안군','여수시','영광군','영암군','완도군','장성군','장흥군','진도군','함평군','해남군','화순군'],
+            '경상북도': ['경산시','경주시','고령군','구미시','김천시','문경시','봉화군','상주시','성주군','안동시','영덕군','영양군','영주시','영천시','예천군','울릉군','울진군','의성군','청도군','청송군','칠곡군','포항시'],
+            '경상남도': ['거제시','거창군','고성군','김해시','남해군','밀양시','사천시','산청군','양산시','의령군','진주시','창녕군','창원시','통영시','하동군','함안군','함양군','합천군'],
+            '제주특별자치도': ['제주시','서귀포시']
+        };
+
+        function onSidoChange() {
+            var sidoSelect = document.getElementById('selectSido');
+            var sigunguSelect = document.getElementById('selectSigungu');
+            var selectedSido = sidoSelect.value;
+
+            // 기존 옵션 초기화
+            sigunguSelect.innerHTML = '<option value="" selected>전체</option>';
+
+            if (!selectedSido) {
+                // "전체" 선택 시 2차 비활성화
+                sigunguSelect.disabled = true;
+                return;
+            }
+
+            var districts = sigunguData[selectedSido];
+
+            if (!districts || districts.length === 0) {
+                // 세종특별자치시: 하위 행정구역 없음 → 2차 비활성화
+                sigunguSelect.disabled = true;
+                return;
+            }
+
+            // 시/군/구 옵션 동적 로드
+            sigunguSelect.disabled = false;
+            districts.forEach(function(name) {
+                var opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                sigunguSelect.appendChild(opt);
+            });
+        }
+
+        var isTargetCountValid = true; // 대상 수 조회 상태 플래그
+
+        function resetTargetCount() {
+            isTargetCountValid = false;
+            document.getElementById('targetResetWarning').classList.add('show');
+            document.getElementById('statsConditionCount').textContent = '-';
+            document.getElementById('statsPermExclude').textContent = '-';
+            document.getElementById('statsTotalCount').textContent = '-';
+            // 발송 버튼 비활성화
+            var sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = '0.5';
+            sendBtn.style.cursor = 'not-allowed';
+            sendBtn.title = '대상 수를 먼저 조회하세요.';
+        }
+
+        function refreshStats() {
+            showToast('대상 수를 조회합니다...', 'info');
+            // 시뮬레이션: 1초 후 결과 표시
+            setTimeout(function() {
+                isTargetCountValid = true;
+                document.getElementById('targetResetWarning').classList.remove('show');
+                document.getElementById('statsConditionCount').textContent = '75,234 명';
+                document.getElementById('statsPermExclude').textContent = '500 명';
+                document.getElementById('statsTotalCount').textContent = '74,734 명';
+                // 발송 버튼 활성화
+                var sendBtn = document.getElementById('sendBtn');
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = '1';
+                sendBtn.style.cursor = 'pointer';
+                sendBtn.title = '';
+                showToast('대상 수 조회가 완료되었습니다. (74,734명)', 'success');
+            }, 1000);
+        }
+
+        // 발송 전 유효성 검사
+        function validateAndSend() {
+            // 귀속부서 코드 확인
+            var deptCode = document.getElementById('deptCode');
+            if (!deptCode || !deptCode.value) {
+                showToast('귀속부서 코드를 선택해주세요.', 'error');
+                if (deptCode) deptCode.focus();
+                return;
+            }
+
+            // 발송 방식 확인 (추가 유효성 검사 가능)
+            var messageContent = document.getElementById('messageContent');
+            if (!messageContent || !messageContent.value.trim()) {
+                showToast('메시지 내용을 입력해주세요.', 'error');
+                if (messageContent) messageContent.focus();
+                return;
+            }
+
+            // 모든 검사 통과 시 발송 확인 모달 열기
+            openModal('confirmModal');
+        }
+
+        // 대상자 조건 영역의 변경 감지 (select, input, radio, checkbox)
+        document.addEventListener('DOMContentLoaded', function() {
+            var conditionArea = document.getElementById('screen-msg-send');
+            if (conditionArea) {
+                conditionArea.addEventListener('change', function(e) {
+                    var tag = e.target.tagName;
+                    var type = e.target.type;
+                    // 조건 관련 입력 변경 시 대상 수 초기화 (메시지 작성 영역 제외)
+                    if ((tag === 'SELECT' || tag === 'INPUT') && !e.target.closest('.message-compose-area') && !e.target.closest('.action-bar-fixed')) {
+                        if (isTargetCountValid) {
+                            resetTargetCount();
+                        }
+                    }
+                });
+            }
+        });
+
+        function toggleMultiServiceCount() {
+            var checkbox = document.getElementById('useMultiService');
+            var countGroup = document.getElementById('multiServiceCountGroup');
+            countGroup.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function toggleCheck(btn) {
+            btn.classList.toggle('active');
+            var selected = btn.parentElement.querySelectorAll('.btn-check.active');
+            var names = [];
+            selected.forEach(function(b) { names.push(b.textContent); });
+            var label = names.length > 0 ? names.join(', ') + ' 선택됨' : '전체 (미선택)';
+            showToast('회원 유형: ' + label, 'info');
+            resetTargetCount();
+        }
+
+        // ===== MSG-003 Detail View Toggle =====
+        function toggleDetailView(mode, btn) {
+            // Toggle buttons
+            document.querySelectorAll('#screen-msg-detail .view-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+            if (btn) btn.classList.add('active');
+
+            var resultSection = document.getElementById('detail-result-section');
+            var reviewSection = document.getElementById('detail-review-section');
+            var beforeBtns = document.getElementById('detail-buttons-before');
+            var rejectedBtns = document.getElementById('detail-buttons-rejected');
+            var afterBtns = document.getElementById('detail-buttons-after');
+            var statusEl = document.getElementById('detail-status');
+            var steps = document.getElementById('process-steps');
+            var reviewStatusBadge = document.getElementById('review-status-badge');
+            var reviewReviewer = document.getElementById('review-reviewer');
+            var reviewDate = document.getElementById('review-date');
+            var rejectReasonBox = document.getElementById('reject-reason-box');
+            var reviewActionBtns = document.getElementById('review-action-buttons');
+            var reviewPendingHint = document.getElementById('review-pending-hint');
+            var testSendArea = document.getElementById('test-send-area');
+            var testResultBox = document.getElementById('testResultBox');
+
+            // 모든 버튼 그룹 숨기기
+            beforeBtns.style.display = 'none';
+            rejectedBtns.style.display = 'none';
+            afterBtns.style.display = 'none';
+            resultSection.style.display = 'none';
+            reviewSection.style.display = 'none';
+            reviewActionBtns.style.display = 'none';
+            reviewPendingHint.style.display = 'none';
+            testSendArea.style.display = 'none';
+            rejectReasonBox.style.display = 'none';
+            testResultBox.classList.remove('show');
+
+            if (mode === 'after') {
+                resultSection.style.display = 'block';
+                reviewSection.style.display = 'block';
+                afterBtns.style.display = 'flex';
+                statusEl.innerHTML = '<span class="msg-status-badge msg-status-complete">완료</span>';
+                steps.innerHTML = '<div class="process-step done">✓ 요청완료</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 검수대기</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 테스트확인</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 검수완료</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 발송중</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 완료</div>';
+                reviewStatusBadge.innerHTML = '<span class="review-status-badge review-status-approved">검수완료</span>';
+                reviewReviewer.style.display = 'flex';
+                reviewDate.style.display = 'flex';
+            } else if (mode === 'rejected') {
+                reviewSection.style.display = 'block';
+                rejectedBtns.style.display = 'flex';
+                statusEl.innerHTML = '<span class="msg-status-badge msg-status-rejected">반려</span>';
+                steps.innerHTML = '<div class="process-step done">✓ 요청완료</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 검수대기</div><span class="process-step-arrow">→</span><div class="process-step" style="background:#F9F0FF;color:#722ED1;font-weight:600;">● 반려</div>';
+                reviewStatusBadge.innerHTML = '<span class="review-status-badge review-status-rejected">반려</span>';
+                reviewReviewer.style.display = 'flex';
+                reviewDate.style.display = 'flex';
+                rejectReasonBox.style.display = 'block';
+            } else if (mode === 'test_confirmed') {
+                // 테스트 발송 완료 상태
+                reviewSection.style.display = 'block';
+                beforeBtns.style.display = 'none';
+                afterBtns.style.display = 'none';
+                statusEl.innerHTML = '<span class="msg-status-badge msg-status-test-confirmed">테스트발송완료</span>';
+                steps.innerHTML = '<div class="process-step done">✓ 요청완료</div><span class="process-step-arrow">→</span><div class="process-step done">✓ 검수대기</div><span class="process-step-arrow">→</span><div class="process-step current">● 테스트확인</div><span class="process-step-arrow">→</span><div class="process-step">검수완료</div><span class="process-step-arrow">→</span><div class="process-step">발송중</div><span class="process-step-arrow">→</span><div class="process-step">완료</div>';
+                reviewStatusBadge.innerHTML = '<span class="review-status-badge review-status-test-confirmed">테스트발송완료</span>';
+                reviewReviewer.style.display = 'none';
+                reviewDate.style.display = 'none';
+                // 테스트 발송 영역 표시 (재발송 가능) + 결과 표시
+                testSendArea.style.display = 'block';
+                testResultBox.classList.add('show');
+                document.getElementById('testResultTime').textContent = getNowString();
+                document.getElementById('testResultRecipient').textContent = '010-1234-5678';
+                // 검수 승인/반려 버튼 활성화
+                reviewActionBtns.style.display = 'flex';
+            } else {
+                // before (검수 전)
+                reviewSection.style.display = 'block';
+                beforeBtns.style.display = 'flex';
+                statusEl.innerHTML = '<span class="msg-status-badge msg-status-review-wait">검수대기</span>';
+                steps.innerHTML = '<div class="process-step done">✓ 요청완료</div><span class="process-step-arrow">→</span><div class="process-step current">● 검수대기</div><span class="process-step-arrow">→</span><div class="process-step">테스트확인</div><span class="process-step-arrow">→</span><div class="process-step">검수완료</div><span class="process-step-arrow">→</span><div class="process-step">발송중</div><span class="process-step-arrow">→</span><div class="process-step">완료</div>';
+                reviewStatusBadge.innerHTML = '<span class="review-status-badge review-status-pending">검수대기</span>';
+                reviewReviewer.style.display = 'none';
+                reviewDate.style.display = 'none';
+                // 테스트 발송 영역 표시 + 검수 승인 비활성화
+                testSendArea.style.display = 'block';
+                reviewPendingHint.style.display = 'flex';
+            }
+        }
+
+        // 테스트 발송 처리
+        function handleTestSend() {
+            var input = document.getElementById('testRecipientInput');
+            if (!input.value.trim()) {
+                showToast('테스트 수신번호를 입력하세요.', 'error');
+                return;
+            }
+            showToast('테스트 메시지를 발송합니다...', 'info');
+            setTimeout(function() {
+                document.getElementById('testResultBox').classList.add('show');
+                document.getElementById('testResultTime').textContent = getNowString();
+                document.getElementById('testResultRecipient').textContent = input.value;
+                document.getElementById('testResultStatus').innerHTML = '<span class="dot success"></span> 성공';
+                showToast('테스트 메시지가 발송되었습니다.', 'success');
+            }, 1000);
+        }
+
+        // 테스트 확인 완료 처리
+        function handleTestConfirm() {
+            if (confirm('테스트 메시지를 실제 기기에서 확인하셨습니까?')) {
+                showToast('테스트 확인이 완료되었습니다. 검수 승인 또는 반려를 진행하세요.', 'success');
+                // TEST_CONFIRMED 상태로 전환
+                toggleDetailView('test_confirmed', document.querySelectorAll('#screen-msg-detail .view-toggle-btn')[1]);
+            }
+        }
+
+        function getNowString() {
+            var d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+        }
+
+        // 검수 승인 처리 (예약 발송만 지원)
+        function handleApproveScheduled() {
+            var scheduledAt = document.getElementById('approveScheduledAt').value;
+
+            // 예약시간 검증
+            if (!scheduledAt) {
+                showToast('발송 예약시간을 설정하세요.', 'error');
+                return;
+            }
+
+            // 예약시간 검증 (현재 + 10분 이후, 7일 이내)
+            var now = new Date();
+            var minTime = new Date(now.getTime() + 10 * 60000);
+            var maxTime = new Date(now.getTime() + 7 * 24 * 60 * 60000);
+            var selected = new Date(scheduledAt);
+
+            if (selected < minTime) {
+                showToast('발송 예약시간은 현재 시간으로부터 10분 이후로 설정하세요.', 'error');
+                return;
+            }
+
+            if (selected > maxTime) {
+                showToast('발송 예약시간은 현재 시간으로부터 7일 이내로 설정하세요.', 'error');
+                return;
+            }
+
+            // 모달 닫기
+            closeModal('approveConfirmModal');
+
+            // 승인 처리
+            showToast('검수가 승인되었습니다. 예약 시간에 발송됩니다.', 'success');
+            toggleDetailView('after', document.querySelectorAll('#screen-msg-detail .view-toggle-btn')[3]);
+        }
+
+        // 검수 승인 처리 (구 버전 - 호환성 유지)
+        function handleApprove() {
+            handleApproveScheduled();
+        }
+
+        // 반려 처리
+        function handleReject() {
+            var input = document.getElementById('rejectReasonInput');
+            var errorEl = document.getElementById('rejectReasonError');
+            if (!input.value.trim()) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = '반려 사유를 입력해주세요.';
+                input.style.borderColor = '#e74c3c';
+                return;
+            }
+            if (input.value.length > 500) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = '반려 사유는 500자 이내로 입력해주세요.';
+                input.style.borderColor = '#e74c3c';
+                return;
+            }
+            closeModal('rejectReasonModal');
+            // 반려 사유 표시 업데이트
+            document.querySelector('.reject-reason-text').textContent = input.value;
+            showToast('반려 처리되었습니다.', 'warning');
+            toggleDetailView('rejected', document.querySelectorAll('#screen-msg-detail .view-toggle-btn')[2]);
+            // 입력값 초기화
+            input.value = '';
+            document.getElementById('rejectReasonCount').textContent = '0';
+            errorEl.style.display = 'none';
+            input.style.borderColor = '#ddd';
+        }
+
+        // 반려 사유 글자수 카운터
+        document.addEventListener('DOMContentLoaded', function() {
+            var rejectInput = document.getElementById('rejectReasonInput');
+            if (rejectInput) {
+                rejectInput.addEventListener('input', function() {
+                    document.getElementById('rejectReasonCount').textContent = this.value.length;
+                    if (this.value.trim()) {
+                        document.getElementById('rejectReasonError').style.display = 'none';
+                        this.style.borderColor = '#ddd';
+                    }
+                });
+            }
+        });
+
+        // ===== MSG-002 메시지 발송 - 직접 입력/편집 =====
+        var msgTemplateData = {
+            welcome: {
+                type: 'SMS',
+                title: '마카다미아 멤버스 가입 환영',
+                content: '안녕하세요!\n\n마카다미아 멤버스에 가입해 주셔서 감사합니다.\n다양한 혜택과 서비스를 만나보세요.\n\n감사합니다.'
+            },
+            dormant: {
+                type: 'LMS',
+                title: '장기 미이용 계정 안내',
+                content: '안녕하세요.\n\n마카다미아 멤버스에서 안내드립니다.\n회원님의 계정이 장기 미이용 상태입니다.\n\n지금 로그인하시면 특별 혜택을 드립니다:\n- 눈높이 체험 쿠폰 제공\n- 포인트 2배 적립 이벤트\n\n자세한 내용은 대교닷컴에서 확인하세요.\n\n감사합니다.\n마카다미아 멤버스 드림'
+            },
+            event: {
+                type: 'LMS',
+                title: '눈높이 특별 이벤트 안내',
+                content: '안녕하세요!\n\n마카다미아 멤버스에서 특별 이벤트를 안내드립니다.\n\n■ 이벤트 기간: 2024.03.01 ~ 진행중\n■ 대상: 대교닷컴 이용 회원\n■ 혜택: 눈높이 무료 체험 + 포인트 적립\n\n지금 바로 참여하세요!\n\n감사합니다.\n마카다미아 멤버스 드림'
+            },
+            service: {
+                type: 'LMS',
+                title: '신규 서비스 오픈 안내',
+                content: '안녕하세요.\n\n신규 서비스 오픈을 안내드립니다!\n\n대교닷컴에서 눈높이 관련 새로운 혜택이 준비되어 있습니다.\n지금 바로 확인하세요!\n\n문의: 1588-1234'
+            }
+        };
+
+        var currentMsgType = 'SMS';
+        var msgContentModified = false;
+
+        function onMsgTypeChange(type) {
+            currentMsgType = type;
+            var byteLimitEl = document.getElementById('msgByteLimit');
+            var previewType = document.getElementById('msgPreviewType');
+
+            var typeLabels = {
+                SMS: 'SMS 메시지 (단문 문자)',
+                LMS: 'LMS 메시지 (장문 문자)'
+            };
+            previewType.textContent = typeLabels[type] || type;
+
+            // 바이트 제한 설정 (고정 영역 포함)
+            if (type === 'SMS') byteLimitEl.textContent = '90';
+            else if (type === 'LMS') byteLimitEl.textContent = '1000';
+
+            updateMsgByteCount();
+        }
+
+        function updateMsgByteCount() {
+            var content = document.getElementById('msgContentArea');
+            var titleInput = document.getElementById('msgTitleInput');
+            if (!content) return;
+
+            // 관리자 입력 본문 바이트 계산
+            var contentBytes = 0;
+            for (var i = 0; i < content.value.length; i++) {
+                var c = content.value.charCodeAt(i);
+                contentBytes += (c > 127) ? 2 : 1;
+            }
+
+            // 발송 제목 바이트 계산
+            var titleBytes = 0;
+            if (titleInput && titleInput.value) {
+                for (var i = 0; i < titleInput.value.length; i++) {
+                    var c = titleInput.value.charCodeAt(i);
+                    titleBytes += (c > 127) ? 2 : 1;
+                }
+                // 제목 뒤 줄바꿈 1byte 추가
+                titleBytes += 1;
+            }
+
+            // 고정 영역 바이트 계산
+            // 상단: "(광고) 대교\n" = 약 18 byte
+            // 하단: "\n무료거부: 080-300-0000" = 약 34 byte
+            var fixedBytes = 52;
+
+            // 총 바이트 = 고정 영역 + 제목 + 본문
+            var totalBytes = fixedBytes + titleBytes + contentBytes;
+
+            var countEl = document.getElementById('msgByteCount');
+            var limitEl = document.getElementById('msgByteLimit');
+            var warningEl = document.getElementById('msgByteWarning');
+            if (countEl) countEl.textContent = totalBytes;
+
+            var limit = parseInt(limitEl.textContent);
+            if (isNaN(limit)) {
+                // E-mail (∞)
+                countEl.style.color = '#333';
+                if (warningEl) warningEl.style.display = 'none';
+            } else if (totalBytes > limit) {
+                countEl.style.color = '#e74c3c';
+                if (warningEl) {
+                    warningEl.textContent = '메시지가 ' + currentMsgType + ' 허용 용량을 초과했습니다. (' + totalBytes + 'byte / ' + limit + 'byte) ※ 고정 영역 약 52byte + 제목 포함';
+                    warningEl.style.display = 'inline';
+                }
+            } else {
+                countEl.style.color = '#333';
+                if (warningEl) warningEl.style.display = 'none';
+            }
+        }
+
+        // 발송 제목 입력 시 호출
+        function updatePreview() {
+            var titleInput = document.getElementById('msgTitleInput');
+            var titlePreview = document.getElementById('msgPreviewTitle');
+            if (titleInput && titlePreview) {
+                if (titleInput.value.trim()) {
+                    titlePreview.textContent = titleInput.value;
+                    titlePreview.style.color = 'rgba(255,255,255,0.95)';
+                    titlePreview.style.fontStyle = 'normal';
+                } else {
+                    titlePreview.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic;">제목을 입력하세요</span>';
+                }
+            }
+            // 제목이 변경되면 바이트 계산도 다시 수행
+            updateMsgByteCount();
+        }
+
+        function updateMsgPreview() {
+            var content = document.getElementById('msgContentArea');
+            var preview = document.getElementById('msgPreviewContent');
+            if (content && preview) {
+                if (content.value.trim()) {
+                    var html = content.value.replace(/\n/g, '<br>');
+                    preview.innerHTML = html;
+                } else {
+                    preview.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic;">메시지를 입력하면 미리보기가 표시됩니다.</span>';
+                }
+            }
+            msgContentModified = (content && content.value.trim().length > 0);
+        }
+
+        function insertMsgVariable(variable) {
+            var ta = document.getElementById('msgContentArea');
+            if (!ta) return;
+            var start = ta.selectionStart;
+            var end = ta.selectionEnd;
+            var val = ta.value;
+            ta.value = val.substring(0, start) + variable + val.substring(end);
+            ta.selectionStart = ta.selectionEnd = start + variable.length;
+            ta.focus();
+            updateMsgByteCount();
+            updateMsgPreview();
+        }
+
+        function onTemplateSelect(value) {
+            var contentArea = document.getElementById('msgContentArea');
+            var titleInput = document.getElementById('msgTitleInput');
+
+            if (!value) {
+                // "선택하세요 (직접 입력)" — 내용 유지
+                return;
+            }
+
+            var tpl = msgTemplateData[value];
+            if (!tpl) return;
+
+            // 기존 내용이 있으면 확인 팝업
+            if (msgContentModified && contentArea && contentArea.value.trim()) {
+                if (!confirm('현재 작성 중인 내용이 있습니다. 덮어쓰시겠습니까?')) {
+                    // 이전 선택으로 되돌리기 (빈 값)
+                    document.getElementById('msgTemplateSelect').value = '';
+                    return;
+                }
+            }
+
+            // 발송 유형 자동 설정
+            var radios = document.querySelectorAll('input[name="msgType"]');
+            radios.forEach(function(r) {
+                if (r.value === tpl.type) {
+                    r.checked = true;
+                    onMsgTypeChange(tpl.type);
+                }
+            });
+
+            // 발송 제목 채우기
+            if (titleInput && tpl.title) {
+                titleInput.value = tpl.title;
+            }
+
+            // 본문 내용 채우기
+            if (contentArea) {
+                contentArea.value = tpl.content;
+            }
+
+            updatePreview(); // 제목 미리보기 업데이트
+            updateMsgByteCount();
+            updateMsgPreview();
+            msgContentModified = true;
+
+            showToast('템플릿 "' + document.getElementById('msgTemplateSelect').options[document.getElementById('msgTemplateSelect').selectedIndex].text + '" 제목과 내용이 적용되었습니다. 자유롭게 수정하세요.', 'info');
+        }
+
+        // ===== MSG-005 Template Register =====
+        function onTplTypeChange(type) {
+            var byteLimitEl = document.getElementById('byteLimit');
+            var previewType = document.getElementById('tplPreviewType');
+
+            var typeLabels = {
+                SMS: 'SMS 메시지 (단문 문자)',
+                LMS: 'LMS 메시지 (장문 문자)'
+            };
+            previewType.textContent = typeLabels[type] || type;
+
+            // 바이트 제한 설정 (고정 영역 포함)
+            if (type === 'SMS') byteLimitEl.textContent = '90';
+            else if (type === 'LMS') byteLimitEl.textContent = '1000';
+
+            updateByteCount();
+        }
+
+        function updateByteCount() {
+            var content = document.getElementById('tplContentArea');
+            if (!content) return;
+
+            // 관리자 입력 본문 바이트 계산
+            var contentBytes = 0;
+            for (var i = 0; i < content.value.length; i++) {
+                var c = content.value.charCodeAt(i);
+                contentBytes += (c > 127) ? 2 : 1;
+            }
+
+            // 고정 영역 바이트 계산
+            // 상단: "(광고) 대교\n" = 약 18 byte
+            // 하단: "\n무료거부: 080-300-0000" = 약 34 byte
+            var fixedBytes = 52;
+
+            // 총 바이트 = 본문 + 고정 영역
+            var totalBytes = contentBytes + fixedBytes;
+
+            var countEl = document.getElementById('byteCount');
+            var limitEl = document.getElementById('byteLimit');
+            if (countEl) countEl.textContent = totalBytes;
+
+            var limit = parseInt(limitEl.textContent);
+            if (!isNaN(limit) && totalBytes > limit) {
+                countEl.style.color = '#e74c3c';
+            } else {
+                countEl.style.color = '#333';
+            }
+        }
+
+        function updateTplPreview() {
+            var content = document.getElementById('tplContentArea');
+            var preview = document.getElementById('tplPreviewContent');
+            if (content && preview) {
+                preview.innerHTML = content.value.replace(/\n/g, '<br>');
+            }
+        }
+
+        function saveTpl() {
+            var name = document.getElementById('tplNameInput');
+            if (name && !name.value.trim()) {
+                showToast('템플릿명을 입력해주세요.', 'error');
+                name.focus();
+                return;
+            }
+            showToast('템플릿이 등록되었습니다.', 'success');
+            setTimeout(function() { showScreen('screen-tpl-list'); }, 500);
+        }
+
+        // ===== MSG-006 Template Detail =====
+        function toggleTplMode(mode, btn) {
+            var viewMode = document.getElementById('tpl-view-mode');
+            var editMode = document.getElementById('tpl-edit-mode');
+            var viewBtns = document.getElementById('tpl-view-buttons');
+            var editBtns = document.getElementById('tpl-edit-buttons');
+            var titleEl = document.getElementById('tplDetailTitle');
+
+            // Toggle buttons
+            document.querySelectorAll('#screen-tpl-detail .view-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+            if (btn) {
+                btn.classList.add('active');
+            } else {
+                var btns = document.querySelectorAll('#screen-tpl-detail .view-toggle-btn');
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                if (mode === 'view' && btns[0]) btns[0].classList.add('active');
+                if (mode === 'edit' && btns[1]) btns[1].classList.add('active');
+            }
+
+            if (mode === 'edit') {
+                viewMode.style.display = 'none';
+                editMode.style.display = 'block';
+                viewBtns.style.display = 'none';
+                editBtns.style.display = 'flex';
+                titleEl.textContent = '템플릿 수정';
+            } else {
+                viewMode.style.display = 'block';
+                editMode.style.display = 'none';
+                viewBtns.style.display = 'flex';
+                editBtns.style.display = 'none';
+                titleEl.textContent = '템플릿 상세';
+            }
+        }
+
+        function updateEditPreview() {
+            var content = document.getElementById('tplEditContent');
+            var preview = document.getElementById('tplDetailPreview');
+            if (content && preview) {
+                preview.innerHTML = '<div style="color:#1565c0;font-weight:600;margin-bottom:8px;">SMS</div><div>' + content.value.replace(/\n/g, '<br>') + '</div>';
+            }
+        }
+
+        function saveTplEdit() {
+            showToast('템플릿이 수정되었습니다.', 'success');
+            toggleTplMode('view', null);
+        }
+
+        // ===== Pagination Init =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // MSG-001 발송 목록 페이지네이션 (기본 20건)
+            if (typeof initPagination === 'function') {
+                msgListPagination = initPagination('pagination-msg-list', 156, 20, function(page, pageSize) {
+                    // 프로토타입에서는 페이지 변경 시 토스트로 알림
+                    showToast(page + '페이지 (' + pageSize + '건/페이지) 조회', 'info');
+                });
+                // 템플릿 목록 페이지네이션 (기본 20건)
+                tplListPagination = initPagination('pagination-tpl-list', 45, 20);
+            }
+
+            // 템플릿 등록 화면 초기 바이트 계산
+            if (document.getElementById('tplContentArea')) {
+                updateByteCount();
+            }
+
+            // Sub-tab click handlers
+            document.querySelectorAll('.sub-tab-item').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    this.parentElement.querySelectorAll('.sub-tab-item').forEach(function(t) { t.classList.remove('active'); });
+                    this.classList.add('active');
+                });
+            });
+        });
+
+        // ===== 전역 함수 노출 (중요!) =====
+        // onclick 이벤트에서 접근할 수 있도록 window 객체에 명시적으로 할당
+        window.showScreen = showScreen;
+        window.showToast = showToast;
+        window.resetSearch = resetSearch;
+        window.toggleAccordion = toggleAccordion;
+        window.onLearningStatusChange = onLearningStatusChange;
+        window.onSidoChange = onSidoChange;
+        window.resetTargetCount = resetTargetCount;
+        window.refreshStats = refreshStats;
+        window.toggleMultiServiceCount = toggleMultiServiceCount;
+        window.toggleCheck = toggleCheck;
+        window.toggleDetailView = toggleDetailView;
+        window.handleTestSend = handleTestSend;
+        window.handleTestConfirm = handleTestConfirm;
+        window.handleApprove = handleApprove;
+        window.handleReject = handleReject;
+        window.onMsgTypeChange = onMsgTypeChange;
+        window.updateMsgByteCount = updateMsgByteCount;
+        window.updatePreview = updatePreview;
+        window.updateMsgPreview = updateMsgPreview;
+        window.insertMsgVariable = insertMsgVariable;
+        window.onTemplateSelect = onTemplateSelect;
+        window.onTplTypeChange = onTplTypeChange;
+        window.updateByteCount = updateByteCount;
+        window.updateTplPreview = updateTplPreview;
+        window.insertVariable = insertVariable;
+        window.saveTpl = saveTpl;
+        window.toggleTplMode = toggleTplMode;
+        window.insertEditVariable = insertEditVariable;
+        window.updateEditPreview = updateEditPreview;
+        window.saveTplEdit = saveTplEdit;
+        window.searchList = searchList;
+
+        console.log('전역 함수 노출 완료 - showScreen:', typeof showScreen);
+    </script>
+</body>
+</html>

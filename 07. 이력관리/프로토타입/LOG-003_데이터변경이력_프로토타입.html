@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 변경 이력 - 마카다미아 멤버스 CRM 관리자</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../common/styles.css">
+    <style>
+        /* 이력관리 탭 네비게이션 */
+        .log-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .log-tab {
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #888;
+            cursor: pointer;
+            border: none;
+            background: none;
+            position: relative;
+            transition: color 0.2s;
+            text-decoration: none;
+        }
+        .log-tab:hover { color: #333; }
+        .log-tab.active { color: #4a90d9; }
+        .log-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #4a90d9;
+        }
+
+        /* 검색 그리드 */
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .search-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .search-field label { font-size: 13px; font-weight: 600; color: #555; }
+        .search-field input, .search-field select {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            background: #fff;
+        }
+        .search-field input:focus, .search-field select:focus { outline: none; border-color: #4a90d9; }
+        .search-actions { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+
+        /* 날짜 범위 */
+        .date-range { display: flex; align-items: center; gap: 8px; }
+        .date-range input { flex: 1; }
+        .date-range .separator { color: #999; font-weight: 500; }
+
+        /* 데이터 유형 뱃지 */
+        .entity-member { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #e3f2fd; color: #1565c0; }
+        .entity-admin { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #e8eaf6; color: #283593; }
+        .entity-terms { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #e0f2f1; color: #00695c; }
+        .entity-service { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #e8f5e9; color: #2e7d32; }
+        .entity-oauth { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #f3e5f5; color: #6a1b9a; }
+        .entity-role { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #fff3e0; color: #e65100; }
+        .entity-message { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #fce4ec; color: #ad1457; }
+        .entity-template { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #fbe9e7; color: #bf360c; }
+
+        /* 변경 유형 뱃지 */
+        .change-create { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #e8f5e9; color: #2e7d32; }
+        .change-update { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #fff3e0; color: #e65100; }
+        .change-delete { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #ffebee; color: #c62828; }
+
+        /* 정렬 헤더 */
+        .sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        .sortable:hover { color: #4a90d9; }
+        .sort-icon { font-size: 10px; margin-left: 4px; opacity: 0.4; }
+        .sortable.active .sort-icon { opacity: 1; color: #4a90d9; }
+
+        /* 페이지 크기 선택 */
+        .pagination-wrapper { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+        .page-size-select { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; }
+        .page-size-select select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+
+        /* Excel 다운로드 버튼 */
+        .btn-excel { background-color: #217346; color: #fff; padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-excel:hover { background-color: #1a5c38; }
+
+        /* 상세 패널 */
+        .detail-panel {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            margin-top: 20px;
+            overflow: hidden;
+            animation: slideDown 0.3s ease;
+        }
+        .detail-panel.show { display: block; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .detail-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background-color: #f8f9fb;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .detail-panel-title { font-size: 15px; font-weight: 700; color: #333; }
+        .detail-close { background: none; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; color: #666; }
+        .detail-close:hover { background-color: #eee; }
+
+        .detail-body { padding: 24px; }
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .detail-item { display: flex; flex-direction: column; gap: 4px; }
+        .detail-item .label { font-size: 12px; font-weight: 600; color: #888; }
+        .detail-item .value { font-size: 14px; color: #333; }
+
+        /* 변경 비교 테이블 */
+        .compare-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4a90d9;
+        }
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .compare-table th {
+            background-color: #f8f9fb;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .compare-table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .compare-table tbody tr:last-child td { border-bottom: none; }
+        .compare-table .field-name {
+            font-weight: 600;
+            color: #333;
+            width: 150px;
+            background-color: #fafafa;
+        }
+        .compare-table .before-value { color: #999; width: 300px; }
+        .compare-table .after-value {
+            color: #333;
+            background-color: #fff7e6;
+            font-weight: 500;
+        }
+
+        /* 활성 행 */
+        .data-table tbody tr.active-row { background-color: #e8f0fe !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item"><a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link"><span class="nav-icon">👥</span>회원관리</a></li>
+                    <li class="nav-item"><a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link"><span class="nav-icon">✉️</span>메시지 발송</a></li>
+                    <li class="nav-item"><a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link"><span class="nav-icon">📊</span>통계</a></li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item"><a href="../../04. 약관_처리방침 관리/약관관리_prototype.html" class="nav-link"><span class="nav-icon">📋</span>약관/처리방침 관리</a></li>
+                    <li class="nav-item"><a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link"><span class="nav-icon">👤</span>계정/권한 관리</a></li>
+                    <li class="nav-item"><a href="../../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link"><span class="nav-icon">🔗</span>서비스 관리</a></li>
+                    <li class="nav-item active expanded">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            이력 관리
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="LOG-001_로그인이력_프로토타입.html" class="submenu-link">로그인 이력</a></li>
+                            <li><a href="LOG-002_관리자활동이력_프로토타입.html" class="submenu-link">관리자 활동 이력</a></li>
+                            <li><a href="LOG-003_데이터변경이력_프로토타입.html" class="submenu-link active">데이터 변경 이력</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>이력 관리</span>
+                    <span class="separator">›</span>
+                    <span class="current">데이터 변경 이력</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+                <div class="page-title-area">
+                    <h2 class="page-title">데이터 변경 이력</h2>
+                    <p class="page-desc">CRM 시스템의 주요 데이터 변경 이력을 조회하고 변경 전/후 값을 비교합니다.</p>
+                </div>
+
+                <!-- 이력관리 탭 -->
+                <div class="log-tabs">
+                    <a href="LOG-001_로그인이력_프로토타입.html" class="log-tab">로그인 이력</a>
+                    <a href="LOG-002_관리자활동이력_프로토타입.html" class="log-tab">관리자 활동 이력</a>
+                    <a href="LOG-003_데이터변경이력_프로토타입.html" class="log-tab active">데이터 변경 이력</a>
+                </div>
+
+                <!-- 검색 영역 -->
+                <div class="search-card">
+                    <div class="search-grid">
+                        <div class="search-field">
+                            <label>데이터 유형</label>
+                            <select>
+                                <option value="">전체</option>
+                                <option value="MEMBER">회원정보</option>
+                                <option value="ADMIN">관리자</option>
+                                <option value="TERMS">약관</option>
+                                <option value="SERVICE">서비스</option>
+                                <option value="OAUTH_CLIENT">OAuth 클라이언트</option>
+                                <option value="ROLE_GROUP">권한그룹</option>
+                                <option value="MESSAGE">메시지 발송</option>
+                                <option value="TEMPLATE">템플릿</option>
+                            </select>
+                        </div>
+                        <div class="search-field">
+                            <label>변경 유형</label>
+                            <select>
+                                <option value="">전체</option>
+                                <option value="CREATE">등록</option>
+                                <option value="UPDATE">수정</option>
+                                <option value="DELETE">삭제</option>
+                            </select>
+                        </div>
+                        <div class="search-field">
+                            <label>변경자명</label>
+                            <input type="text" placeholder="변경자명을 입력하세요">
+                        </div>
+                        <div class="search-field">
+                            <label>대상 식별자</label>
+                            <input type="text" placeholder="회원번호, 관리자ID 등을 입력하세요">
+                        </div>
+                        <div class="search-field" style="grid-column: span 2;">
+                            <label>변경일시</label>
+                            <div class="date-range">
+                                <input type="date" value="2026-02-03">
+                                <span class="separator">~</span>
+                                <input type="date" value="2026-02-10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="search-actions">
+                        <button class="btn btn-search">검색</button>
+                        <button class="btn btn-secondary">초기화</button>
+                    </div>
+                </div>
+
+                <!-- 액션 영역 -->
+                <div class="action-bar">
+                    <div class="result-count">총 <strong>3,456</strong>건</div>
+                    <button class="btn-excel">📥 Excel 다운로드</button>
+                </div>
+
+                <!-- 테이블 -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="50">No</th>
+                                <th width="110" class="sortable">데이터 유형 <span class="sort-icon">↕</span></th>
+                                <th width="80" class="sortable">변경 유형 <span class="sort-icon">↕</span></th>
+                                <th width="90" class="sortable">변경자 <span class="sort-icon">↕</span></th>
+                                <th width="130" class="sortable">대상 식별자 <span class="sort-icon">↕</span></th>
+                                <th width="80">변경 항목 수</th>
+                                <th width="160" class="sortable active">변경일시 <span class="sort-icon">↓</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr onclick="toggleDetail(this, 1)" style="cursor:pointer;">
+                                <td>3456</td>
+                                <td><span class="entity-member">회원정보</span></td>
+                                <td><span class="change-update">수정</span></td>
+                                <td>홍길동</td>
+                                <td><span class="code">M000012345</span></td>
+                                <td>3건</td>
+                                <td>2026-02-10 14:32:15</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 2)" style="cursor:pointer;">
+                                <td>3455</td>
+                                <td><span class="entity-terms">약관</span></td>
+                                <td><span class="change-create">등록</span></td>
+                                <td>김철수</td>
+                                <td><span class="code">TRM-00015</span></td>
+                                <td>-</td>
+                                <td>2026-02-10 13:55:30</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 3)" style="cursor:pointer;">
+                                <td>3454</td>
+                                <td><span class="entity-admin">관리자</span></td>
+                                <td><span class="change-update">수정</span></td>
+                                <td>이영희</td>
+                                <td><span class="code">admin-007</span></td>
+                                <td>2건</td>
+                                <td>2026-02-10 11:20:08</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 4)" style="cursor:pointer;">
+                                <td>3453</td>
+                                <td><span class="entity-service">서비스</span></td>
+                                <td><span class="change-update">수정</span></td>
+                                <td>최민수</td>
+                                <td><span class="code">TNITNI</span></td>
+                                <td>1건</td>
+                                <td>2026-02-10 10:15:22</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 5)" style="cursor:pointer;">
+                                <td>3452</td>
+                                <td><span class="entity-oauth">OAuth 클라이언트</span></td>
+                                <td><span class="change-create">등록</span></td>
+                                <td>박지민</td>
+                                <td><span class="code">CLI-00089</span></td>
+                                <td>-</td>
+                                <td>2026-02-10 09:45:33</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 6)" style="cursor:pointer;">
+                                <td>3451</td>
+                                <td><span class="entity-member">회원정보</span></td>
+                                <td><span class="change-update">수정</span></td>
+                                <td>강수진</td>
+                                <td><span class="code">M000067890</span></td>
+                                <td>2건</td>
+                                <td>2026-02-10 09:30:11</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 7)" style="cursor:pointer;">
+                                <td>3450</td>
+                                <td><span class="entity-role">권한그룹</span></td>
+                                <td><span class="change-update">수정</span></td>
+                                <td>홍길동</td>
+                                <td><span class="code">ROLE-003</span></td>
+                                <td>4건</td>
+                                <td>2026-02-09 17:20:45</td>
+                            </tr>
+                            <tr onclick="toggleDetail(this, 8)" style="cursor:pointer;">
+                                <td>3449</td>
+                                <td><span class="entity-template">템플릿</span></td>
+                                <td><span class="change-delete">삭제</span></td>
+                                <td>홍길동</td>
+                                <td><span class="code">TPL-00032</span></td>
+                                <td>-</td>
+                                <td>2026-02-09 16:10:30</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 변경 상세 정보 패널 -->
+                <div class="detail-panel" id="detailPanel">
+                    <div class="detail-panel-header">
+                        <span class="detail-panel-title">🔍 변경 상세 정보</span>
+                        <button class="detail-close" onclick="closeDetail()">닫기 ✕</button>
+                    </div>
+                    <div class="detail-body">
+                        <div class="detail-info-grid">
+                            <div class="detail-item">
+                                <span class="label">변경자</span>
+                                <span class="value" id="d-admin">홍길동 (hong.gildong)</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">변경일시</span>
+                                <span class="value" id="d-time">2026-02-10 14:32:15</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">접속 IP</span>
+                                <span class="value" id="d-ip">192.168.1.10</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">데이터 유형</span>
+                                <span class="value" id="d-entity"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">대상 식별자</span>
+                                <span class="value" id="d-entityId">M000012345</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">변경 유형</span>
+                                <span class="value" id="d-type"></span>
+                            </div>
+                        </div>
+
+                        <!-- 변경 전/후 비교 테이블 -->
+                        <div id="compareSection">
+                            <h4 class="compare-section-title">변경 항목 비교</h4>
+                            <table class="compare-table" id="compareTable">
+                                <thead>
+                                    <tr>
+                                        <th width="150">변경 항목</th>
+                                        <th>변경 전 값</th>
+                                        <th>변경 후 값</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compareBody">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 등록/삭제 메시지 -->
+                        <div id="actionMessage" style="display:none; padding: 20px; background: #f8f9fb; border-radius: 8px; text-align: center; color: #666; font-size: 14px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div class="pagination-wrapper">
+                    <div class="page-size-select">
+                        <span>페이지당</span>
+                        <select>
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>건</span>
+                    </div>
+                    <div class="pagination">
+                        <button class="page-btn">«</button>
+                        <button class="page-btn">‹</button>
+                        <button class="page-num active">1</button>
+                        <button class="page-num">2</button>
+                        <button class="page-num">3</button>
+                        <button class="page-num">4</button>
+                        <button class="page-num">5</button>
+                        <button class="page-num">6</button>
+                        <button class="page-num">7</button>
+                        <button class="page-num">8</button>
+                        <button class="page-num">9</button>
+                        <button class="page-num">10</button>
+                        <button class="page-btn">›</button>
+                        <button class="page-btn">»</button>
+                    </div>
+                    <div style="width: 120px;"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let activeRow = null;
+
+        const detailData = {
+            1: {
+                admin: '홍길동 (hong.gildong)', time: '2026-02-10 14:32:15', ip: '192.168.1.10',
+                entity: '<span class="entity-member">회원정보</span>', entityId: 'M000012345',
+                type: '<span class="change-update">수정</span>',
+                mode: 'update',
+                changes: [
+                    { field: '이름', before: '홍길동', after: '홍길순' },
+                    { field: '휴대폰번호', before: '010-****-1234', after: '010-****-5678' },
+                    { field: '주소', before: '서울시 강남구 역삼동 123-4', after: '서울시 서초구 반포동 567-8' }
+                ]
+            },
+            2: {
+                admin: '김철수 (kim.chulsoo)', time: '2026-02-10 13:55:30', ip: '10.0.0.55',
+                entity: '<span class="entity-terms">약관</span>', entityId: 'TRM-00015',
+                type: '<span class="change-create">등록</span>',
+                mode: 'create',
+                message: '신규 데이터가 등록되었습니다.<br><br>• 약관 항목: 개인정보 처리방침<br>• 버전: v3.0<br>• 시행예정일: 2026-03-01'
+            },
+            3: {
+                admin: '이영희 (lee.younghee)', time: '2026-02-10 11:20:08', ip: '172.16.0.22',
+                entity: '<span class="entity-admin">관리자</span>', entityId: 'admin-007',
+                type: '<span class="change-update">수정</span>',
+                mode: 'update',
+                changes: [
+                    { field: '권한그룹', before: '일반관리자', after: '대교관리자' },
+                    { field: '상태', before: '잠금', after: '사용중' }
+                ]
+            },
+            4: {
+                admin: '최민수 (choi.minsoo)', time: '2026-02-10 10:15:22', ip: '10.0.1.33',
+                entity: '<span class="entity-service">서비스</span>', entityId: 'TNITNI',
+                type: '<span class="change-update">수정</span>',
+                mode: 'update',
+                changes: [
+                    { field: '서비스 설명', before: '유아 영어 교육 서비스', after: '유아/초등 영어 교육 서비스 (개편)' }
+                ]
+            },
+            5: {
+                admin: '박지민 (park.jimin)', time: '2026-02-10 09:45:33', ip: '192.168.2.105',
+                entity: '<span class="entity-oauth">OAuth 클라이언트</span>', entityId: 'CLI-00089',
+                type: '<span class="change-create">등록</span>',
+                mode: 'create',
+                message: '신규 데이터가 등록되었습니다.<br><br>• 서비스: 트니트니<br>• 환경: Production<br>• Client ID: tnitni_prod_client'
+            },
+            6: {
+                admin: '강수진 (kang.sujin)', time: '2026-02-10 09:30:11', ip: '172.16.0.45',
+                entity: '<span class="entity-member">회원정보</span>', entityId: 'M000067890',
+                type: '<span class="change-update">수정</span>',
+                mode: 'update',
+                changes: [
+                    { field: '이메일', before: 'old****@email.com', after: 'new****@email.com' },
+                    { field: '마카다미아 마케팅 수신 동의', before: '동의', after: '미동의' }
+                ]
+            },
+            7: {
+                admin: '홍길동 (hong.gildong)', time: '2026-02-09 17:20:45', ip: '192.168.1.10',
+                entity: '<span class="entity-role">권한그룹</span>', entityId: 'ROLE-003',
+                type: '<span class="change-update">수정</span>',
+                mode: 'update',
+                changes: [
+                    { field: '그룹명', before: '일반관리자', after: '일반관리자 (제한)' },
+                    { field: '회원관리 권한', before: '조회/수정', after: '조회만' },
+                    { field: '메시지 발송 권한', before: '발송 가능', after: '조회만' },
+                    { field: '통계 권한', before: '전체', after: '소속만' }
+                ]
+            },
+            8: {
+                admin: '홍길동 (hong.gildong)', time: '2026-02-09 16:10:30', ip: '192.168.1.10',
+                entity: '<span class="entity-template">템플릿</span>', entityId: 'TPL-00032',
+                type: '<span class="change-delete">삭제</span>',
+                mode: 'delete',
+                message: '데이터가 삭제되었습니다.<br><br>• 템플릿명: [이벤트] 여름 특가 안내<br>• 발송 유형: SMS<br>• 등록일: 2025-07-15'
+            }
+        };
+
+        function toggleDetail(row, id) {
+            const panel = document.getElementById('detailPanel');
+
+            if (activeRow === row) {
+                panel.classList.remove('show');
+                row.classList.remove('active-row');
+                activeRow = null;
+                return;
+            }
+
+            if (activeRow) activeRow.classList.remove('active-row');
+            row.classList.add('active-row');
+            activeRow = row;
+
+            const d = detailData[id];
+            document.getElementById('d-admin').textContent = d.admin;
+            document.getElementById('d-time').textContent = d.time;
+            document.getElementById('d-ip').textContent = d.ip;
+            document.getElementById('d-entity').innerHTML = d.entity;
+            document.getElementById('d-entityId').textContent = d.entityId;
+            document.getElementById('d-type').innerHTML = d.type;
+
+            const compareSection = document.getElementById('compareSection');
+            const actionMessage = document.getElementById('actionMessage');
+            const compareBody = document.getElementById('compareBody');
+
+            if (d.mode === 'update') {
+                compareSection.style.display = 'block';
+                actionMessage.style.display = 'none';
+                compareBody.innerHTML = '';
+                d.changes.forEach(c => {
+                    compareBody.innerHTML += `
+                        <tr>
+                            <td class="field-name">${c.field}</td>
+                            <td class="before-value">${c.before}</td>
+                            <td class="after-value">${c.after}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                compareSection.style.display = 'none';
+                actionMessage.style.display = 'block';
+                actionMessage.innerHTML = d.message;
+            }
+
+            panel.classList.add('show');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPanel').classList.remove('show');
+            if (activeRow) {
+                activeRow.classList.remove('active-row');
+                activeRow = null;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마카다미아 멤버스 - 약관 항목 관리</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>마카다미아 멤버스</h1>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- 사용자 권한 메뉴 -->
+                    <li class="nav-item">
+                        <a href="../../01. 회원관리/프로토타입/회원관리_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            회원관리
+                            <span class="arrow">▼</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../02. 메시지발송/prototype/MSG-002_메시지발송_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">✉️</span>
+                            메시지 발송
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../03. 통계/프로토타입/통계_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            통계
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 메뉴 구분선 -->
+                <div class="menu-divider"></div>
+
+                <!-- 관리자 전용 메뉴 섹션 -->
+                <div class="menu-section-header">관리자 전용</div>
+                <ul>
+                    <li class="nav-item active expanded">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            약관/처리방침 관리
+                            <span class="arrow rotate">▼</span>
+                        </a>
+                        <ul class="submenu show">
+                            <li><a href="index.html" class="submenu-link active">약관 항목 관리</a></li>
+                            <li><a href="daekyo-terms.html" class="submenu-link">대교 약관</a></li>
+                            <li><a href="group-terms.html" class="submenu-link">그룹사 약관</a></li>
+                            <li><a href="signup-config.html" class="submenu-link">회원가입 약관 구성</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../05. 계정_권한관리/계정_권한관리_prototype.html" class="nav-link">
+                            <span class="nav-icon">🔑</span>
+                            계정/권한 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../06. 서비스 관리/02. 프로토타입/index.html" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            서비스 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../../07. 이력관리/프로토타입/LOG-001_로그인이력_프로토타입.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            이력 관리
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span>약관/처리방침 관리</span>
+                    <span class="separator">›</span>
+                    <span class="current">약관 항목 관리</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">홍길동</span> <span class="user-divider">|</span> <span class="user-group">대교</span>
+                    <button class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <section class="content-section">
+                <div class="page-title-area">
+                    <h2 class="page-title">약관 항목 관리</h2>
+                    <p class="page-desc">대교 및 그룹사에서 사용할 약관/동의서 항목을 관리합니다.</p>
+                </div>
+
+                <!-- 검색 영역 -->
+                <div class="search-card">
+                    <div class="search-row">
+                        <div class="search-group">
+                            <label class="search-label">소속</label>
+                            <select class="search-select" id="searchOwnerType" onchange="handleSearchOwnerChange(this)">
+                                <option value="">전체</option>
+                                <option value="DAEKYO">대교</option>
+                                <option value="GROUP_A">에듀캠프</option>
+                                <option value="GROUP_B">대교 뉴이프</option>
+                            </select>
+                        </div>
+                        <div class="search-group" id="searchServiceGroup" style="display:none;">
+                            <label class="search-label">서비스</label>
+                            <select class="search-select" id="searchService">
+                                <option value="">전체</option>
+                                <option value="SVC_1">트니트니</option>
+                                <option value="SVC_2">오감올리</option>
+                            </select>
+                        </div>
+                        <div class="search-group">
+                            <label class="search-label">관리 단위</label>
+                            <select class="search-select">
+                                <option value="">전체</option>
+                                <option value="COMMON">그룹사(대교) 공통</option>
+                                <option value="SERVICE">서비스 단위</option>
+                            </select>
+                        </div>
+                        <div class="search-group">
+                            <label class="search-label">항목명</label>
+                            <input type="text" class="search-input" placeholder="항목명을 입력하세요">
+                        </div>
+                        <div class="search-group">
+                            <label class="search-label">사용 여부</label>
+                            <select class="search-select">
+                                <option value="">전체</option>
+                                <option value="Y">사용</option>
+                                <option value="N">미사용</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-search">검색</button>
+                    </div>
+                </div>
+
+                <!-- 액션 영역 -->
+                <div class="action-bar">
+                    <div class="result-count">총 <strong>12</strong>건</div>
+                    <button class="btn btn-primary" onclick="location.href='item-register.html'">+ 항목 등록</button>
+                </div>
+
+                <!-- 테이블 -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="50">NO</th>
+                                <th width="100">소속</th>
+                                <th width="100">관리 단위</th>
+                                <th width="160">항목 코드</th>
+                                <th>항목명</th>
+                                <th width="90">동의 목적</th>
+                                <th width="80">동의 유형</th>
+                                <th width="80">사용 여부</th>
+                                <th width="100">등록일</th>
+                                <th width="100">수정일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr onclick="location.href='item-detail.html'">
+                                <td>12</td>
+                                <td><span class="badge badge-daekyo">대교</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">TERMS_USE</td>
+                                <td class="text-left">이용약관</td>
+                                <td><span style="font-size:12px;color:#555;">서비스이용</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-07-01</td>
+                                <td>2023-12-15</td>
+                            </tr>
+                            <tr>
+                                <td>11</td>
+                                <td><span class="badge badge-daekyo">대교</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">PRIVACY_COLLECT</td>
+                                <td class="text-left">개인정보 수집·이용 동의</td>
+                                <td><span style="font-size:12px;color:#555;">개인정보</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-07-01</td>
+                                <td>2023-12-15</td>
+                            </tr>
+                            <tr>
+                                <td>11</td>
+                                <td><span class="badge badge-daekyo">대교</span></td>
+                                <td><span class="badge badge-mgmt-service">트니트니</span></td>
+                                <td class="code">THIRD_PARTY</td>
+                                <td class="text-left">개인정보 제3자 제공 동의</td>
+                                <td><span style="font-size:12px;color:#555;">제3자제공</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-07-01</td>
+                                <td>2023-12-15</td>
+                            </tr>
+                            <tr>
+                                <td>10</td>
+                                <td><span class="badge badge-daekyo">대교</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">THIRD_PARTY_MKT</td>
+                                <td class="text-left">마케팅 목적 제3자 제공 동의</td>
+                                <td><span style="font-size:12px;color:#555;">제3자제공(마케팅)</span></td>
+                                <td><span class="badge badge-optional">선택</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-07-01</td>
+                                <td>2023-12-15</td>
+                            </tr>
+                            <tr>
+                                <td>9</td>
+                                <td><span class="badge badge-daekyo">대교</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">MARKETING_SMS</td>
+                                <td class="text-left">마카다미아 마케팅 수신 동의</td>
+                                <td><span style="font-size:12px;color:#555;">마케팅</span></td>
+                                <td><span class="badge badge-optional">선택</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-07-01</td>
+                                <td>2023-12-15</td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td><span class="badge badge-group">에듀캠프</span></td>
+                                <td><span class="badge badge-mgmt-service">트니트니</span></td>
+                                <td class="code">TERMS_USE</td>
+                                <td class="text-left">이용약관</td>
+                                <td><span style="font-size:12px;color:#555;">서비스이용</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-08-01</td>
+                                <td>2023-12-20</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td><span class="badge badge-group">에듀캠프</span></td>
+                                <td><span class="badge badge-mgmt-service">트니트니</span></td>
+                                <td class="code">THIRD_PARTY</td>
+                                <td class="text-left">개인정보 제3자 제공 동의</td>
+                                <td><span style="font-size:12px;color:#555;">제3자제공</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-08-01</td>
+                                <td>2023-12-20</td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td><span class="badge badge-group">에듀캠프</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">THIRD_PARTY_MKT</td>
+                                <td class="text-left">마케팅 목적 제3자 제공 동의</td>
+                                <td><span style="font-size:12px;color:#555;">제3자제공(마케팅)</span></td>
+                                <td><span class="badge badge-optional">선택</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-08-01</td>
+                                <td>2023-12-20</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><span class="badge badge-group">에듀캠프</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">MARKETING_SMS</td>
+                                <td class="text-left">마카다미아 마케팅 수신 동의</td>
+                                <td><span style="font-size:12px;color:#555;">마케팅</span></td>
+                                <td><span class="badge badge-optional">선택</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-08-01</td>
+                                <td>2023-12-20</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><span class="badge badge-group">대교 뉴이프</span></td>
+                                <td><span class="badge badge-mgmt-service">오감올리</span></td>
+                                <td class="code">TERMS_USE</td>
+                                <td class="text-left">이용약관</td>
+                                <td><span style="font-size:12px;color:#555;">서비스이용</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-09-01</td>
+                                <td>2024-01-05</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><span class="badge badge-group">대교 뉴이프</span></td>
+                                <td><span class="badge badge-mgmt-service">오감올리</span></td>
+                                <td class="code">PRIVACY_COLLECT</td>
+                                <td class="text-left">개인정보 수집·이용 동의</td>
+                                <td><span style="font-size:12px;color:#555;">개인정보</span></td>
+                                <td><span class="badge badge-required">필수</span></td>
+                                <td><span class="status status-inactive">미사용</span></td>
+                                <td>2023-09-01</td>
+                                <td>2024-01-05</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td><span class="badge badge-group">대교 뉴이프</span></td>
+                                <td><span class="badge badge-mgmt-common">공통</span></td>
+                                <td class="code">MARKETING_SMS</td>
+                                <td class="text-left">마카다미아 마케팅 수신 동의</td>
+                                <td><span style="font-size:12px;color:#555;">마케팅</span></td>
+                                <td><span class="badge badge-optional">선택</span></td>
+                                <td><span class="status status-active">사용</span></td>
+                                <td>2023-09-01</td>
+                                <td>2024-01-05</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div class="pagination">
+                    <button class="page-btn" disabled>«</button>
+                    <button class="page-btn" disabled>‹</button>
+                    <button class="page-num active">1</button>
+                    <button class="page-num">2</button>
+                    <button class="page-btn">›</button>
+                    <button class="page-btn">»</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        .badge-mgmt-common { background: #f0f0f0; color: #8C8C8C; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-mgmt-service { background: #e6f4ff; color: #1890FF; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    </style>
+    <script src="script.js"></script>
+    <script>
+        // 소속 변경 시 서비스 필터 표시/숨김
+        function handleSearchOwnerChange(el) {
+            const serviceGroup = document.getElementById('searchServiceGroup');
+            if (el.value && el.value !== 'DAEKYO') {
+                serviceGroup.style.display = '';
+            } else {
+                serviceGroup.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
